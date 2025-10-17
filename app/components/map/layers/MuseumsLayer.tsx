@@ -18,7 +18,17 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
   const popupRef = useRef<mapboxgl.Popup | null>(null)
 
   useEffect(() => {
-    if (!map || layerInitialized.current) return
+    if (!map) {
+      console.log('🏛️ Museums layer waiting for map...')
+      return
+    }
+    
+    if (layerInitialized.current) {
+      console.log('🏛️ Museums layer already initialized')
+      return
+    }
+
+    console.log('🏛️ Initializing museums layer...')
 
     const handleClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
       if (!e.features || e.features.length === 0) return
@@ -61,15 +71,22 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
 
     const initializeLayer = async () => {
       try {
+        console.log('🏛️ Loading museum icon...')
         // Load custom museum icon
         const iconImage = await loadImage('/icons/museum.svg')
         if (!map.hasImage('museum-icon')) {
           map.addImage('museum-icon', iconImage)
+          console.log('✅ Museum icon loaded')
         }
 
+        console.log('🏛️ Fetching museums GeoJSON...')
         // Fetch museums GeoJSON data
         const response = await fetch('/data/museums.geojson')
+        if (!response.ok) {
+          throw new Error(`Failed to fetch museums.geojson: ${response.status}`)
+        }
         const data = await response.json()
+        console.log('✅ Museums data loaded:', data.features?.length, 'features')
 
         // Add source
         if (!map.getSource(SOURCE_ID)) {
@@ -77,6 +94,7 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
             type: 'geojson',
             data: data,
           })
+          console.log('✅ Museums source added')
         }
 
         // Add layer
@@ -92,6 +110,7 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
               visibility: visible ? 'visible' : 'none',
             },
           })
+          console.log('✅ Museums layer added with visibility:', visible ? 'visible' : 'none')
         }
 
         // Add click handler for popups
@@ -107,8 +126,9 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
         })
 
         layerInitialized.current = true
+        console.log('✅ Museums layer fully initialized!')
       } catch (error) {
-        console.error('Error initializing museums layer:', error)
+        console.error('❌ Error initializing museums layer:', error)
       }
     }
 
@@ -132,10 +152,12 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
     if (!map || !layerInitialized.current) return
 
     if (map.getLayer(LAYER_ID)) {
+      const visibility = visible ? 'visible' : 'none'
+      console.log('🏛️ Updating museums visibility to:', visibility)
       map.setLayoutProperty(
         LAYER_ID,
         'visibility',
-        visible ? 'visible' : 'none'
+        visibility
       )
     }
   }, [map, visible])
