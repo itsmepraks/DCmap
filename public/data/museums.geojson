@@ -1,0 +1,102 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0199, 38.8913]
+      },
+      "properties": {
+        "NAME": "Smithsonian National Museum of Natural History",
+        "ADDRESS": "10th St. & Constitution Ave. NW, Washington, DC 20560",
+        "DESCRIPTION": "The world's most visited natural history museum featuring dinosaur exhibits, gems, and cultural artifacts."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0200, 38.8886]
+      },
+      "properties": {
+        "NAME": "National Museum of African American History and Culture",
+        "ADDRESS": "1400 Constitution Ave. NW, Washington, DC 20560",
+        "DESCRIPTION": "The only national museum devoted exclusively to African American history and culture."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0266, 38.8913]
+      },
+      "properties": {
+        "NAME": "National Museum of American History",
+        "ADDRESS": "1300 Constitution Ave. NW, Washington, DC 20560",
+        "DESCRIPTION": "Explores American history through exhibitions on science, technology, culture, and the arts."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0199, 38.8882]
+      },
+      "properties": {
+        "NAME": "National Museum of the American Indian",
+        "ADDRESS": "4th St. & Independence Ave. SW, Washington, DC 20560",
+        "DESCRIPTION": "Dedicated to the life, languages, literature, history, and arts of Native Americans."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0161, 38.8881]
+      },
+      "properties": {
+        "NAME": "Smithsonian National Air and Space Museum",
+        "ADDRESS": "600 Independence Ave. SW, Washington, DC 20560",
+        "DESCRIPTION": "Houses the largest collection of historic aircraft and spacecraft in the world."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0401, 38.9072]
+      },
+      "properties": {
+        "NAME": "The Phillips Collection",
+        "ADDRESS": "1600 21st St. NW, Washington, DC 20009",
+        "DESCRIPTION": "America's first museum of modern art featuring Impressionist and American modern art."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0474, 38.9171]
+      },
+      "properties": {
+        "NAME": "National Museum of Women in the Arts",
+        "ADDRESS": "1250 New York Ave. NW, Washington, DC 20005",
+        "DESCRIPTION": "The only major museum in the world solely dedicated to celebrating women's achievements in the visual arts."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0129, 38.8976]
+      },
+      "properties": {
+        "NAME": "National Portrait Gallery",
+        "ADDRESS": "8th St. & G Pl. NW, Washington, DC 20001",
+        "DESCRIPTION": "Features portraits of notable Americans who have shaped U.S. history and culture."
+      }
+    }
+  ]
+}
+
