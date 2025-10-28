@@ -175,8 +175,54 @@ _No critical issues at this time_
 
 ---
 
-**Last Updated**: October 27, 2025
-**Current Phase**: Phase 2 - F4 Complete ✅ + Complete UI Redesign ✅ + Live Location ✅ + 3D Maps ✅ + Minecraft Walk Mode ✅ + Immersive Walking Experience ✅ | F5 Pending
+### Build Error Fixes - October 28, 2025
+
+**Issue Discovered:**
+- Vercel build failing with TypeScript error in `TreesLayer.tsx` line 293
+- Error: `Argument of type 'string' is not assignable to parameter of type 'Listener$1<"click">'`
+- Similar issue in `MuseumsLayer.tsx` lines 157-158
+- Root cause: Incorrect usage of `map.off()` - passing layer names as strings instead of function references
+
+**What Was Fixed:**
+1. **TreesLayer.tsx (COMPLETED)**
+   - Added `handlersRef` to store event handler function references
+   - Updated all event listeners (click, mouseenter, mouseleave) to store handlers in ref
+   - Fixed cleanup function to properly remove listeners using stored function references
+   - Prevents TypeScript error and ensures proper memory cleanup
+
+2. **MuseumsLayer.tsx (COMPLETED)**
+   - Added `handlersRef` for click, mouseEnter, mouseLeave handlers
+   - Stored all handler functions in refs before adding to map
+   - Updated cleanup to use handler references instead of anonymous functions
+   - Ensures proper event listener removal on unmount
+
+**Technical Details:**
+```typescript
+// Before (INCORRECT):
+map.on('click', 'layer-id', () => { /* handler */ })
+map.off('click', 'layer-id')  // ❌ Error: can't pass string as listener
+
+// After (CORRECT):
+handlersRef.current.click = (e) => { /* handler */ }
+map.on('click', 'layer-id', handlersRef.current.click)
+map.off('click', 'layer-id', handlersRef.current.click)  // ✅ Works!
+```
+
+**Files Modified:**
+- `app/components/map/layers/TreesLayer.tsx` - Fixed event listener cleanup
+- `app/components/map/layers/MuseumsLayer.tsx` - Fixed event listener cleanup
+
+**Result:**
+- Build now passes TypeScript validation
+- No more `Argument of type 'string'` errors
+- Proper memory management with correct cleanup
+- All event listeners properly removed on unmount
+- No new errors introduced
+
+---
+
+**Last Updated**: October 28, 2025
+**Current Phase**: Phase 2 - F4 Complete ✅ + Complete UI Redesign ✅ + Live Location ✅ + 3D Maps ✅ + Minecraft Walk Mode ✅ + Immersive Walking Experience ✅ + Build Errors Fixed ✅ | F5 Pending
 **Next Up**: User Testing & Heat Map Layer (F5) Implementation
 
 ---

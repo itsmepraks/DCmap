@@ -21,6 +21,15 @@ interface TreesLayerProps {
 export default function TreesLayer({ visible, season = 'summer' }: TreesLayerProps) {
   const { map } = useMap()
   const isInitialized = useRef(false)
+  // Store event handler refs for proper cleanup
+  const handlersRef = useRef<{
+    clusterClick?: (e: mapboxgl.MapMouseEvent) => void
+    unclusteredClick?: (e: mapboxgl.MapMouseEvent) => void
+    clusterMouseEnter?: () => void
+    clusterMouseLeave?: () => void
+    unclusteredMouseEnter?: () => void
+    unclusteredMouseLeave?: () => void
+  }>({})
 
   // Initialize layer on mount
   useEffect(() => {
@@ -186,7 +195,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
         map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
 
         // Click handler for clusters - zoom in
-        map.on('click', 'trees-clusters', (e) => {
+        handlersRef.current.clusterClick = (e: mapboxgl.MapMouseEvent) => {
           const features = map.queryRenderedFeatures(e.point, {
             layers: ['trees-clusters']
           })
@@ -205,10 +214,11 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
               })
             })
           }
-        })
+        }
+        map.on('click', 'trees-clusters', handlersRef.current.clusterClick)
 
         // Click handler for individual trees - show popup
-        map.on('click', 'trees-unclustered', (e) => {
+        handlersRef.current.unclusteredClick = (e: mapboxgl.MapMouseEvent) => {
           if (!e.features || e.features.length === 0) return
 
           const feature = e.features[0]
@@ -256,21 +266,26 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
             .setLngLat(coordinates)
             .setHTML(popupContent)
             .addTo(map)
-        })
+        }
+        map.on('click', 'trees-unclustered', handlersRef.current.unclusteredClick)
 
         // Change cursor on hover
-        map.on('mouseenter', 'trees-clusters', () => {
+        handlersRef.current.clusterMouseEnter = () => {
           map.getCanvas().style.cursor = 'pointer'
-        })
-        map.on('mouseleave', 'trees-clusters', () => {
+        }
+        handlersRef.current.clusterMouseLeave = () => {
           map.getCanvas().style.cursor = ''
-        })
-        map.on('mouseenter', 'trees-unclustered', () => {
+        }
+        handlersRef.current.unclusteredMouseEnter = () => {
           map.getCanvas().style.cursor = 'pointer'
-        })
-        map.on('mouseleave', 'trees-unclustered', () => {
+        }
+        handlersRef.current.unclusteredMouseLeave = () => {
           map.getCanvas().style.cursor = ''
-        })
+        }
+        map.on('mouseenter', 'trees-clusters', handlersRef.current.clusterMouseEnter)
+        map.on('mouseleave', 'trees-clusters', handlersRef.current.clusterMouseLeave)
+        map.on('mouseenter', 'trees-unclustered', handlersRef.current.unclusteredMouseEnter)
+        map.on('mouseleave', 'trees-unclustered', handlersRef.current.unclusteredMouseLeave)
 
         isInitialized.current = true
         console.log('✅ TreesLayer initialized successfully')
@@ -284,18 +299,31 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
     // Cleanup on unmount
     return () => {
       if (map && isInitialized.current) {
+        // Remove event listeners first
+        if (handlersRef.current.clusterClick) {
+          map.off('click', 'trees-clusters', handlersRef.current.clusterClick)
+        }
+        if (handlersRef.current.unclusteredClick) {
+          map.off('click', 'trees-unclustered', handlersRef.current.unclusteredClick)
+        }
+        if (handlersRef.current.clusterMouseEnter) {
+          map.off('mouseenter', 'trees-clusters', handlersRef.current.clusterMouseEnter)
+        }
+        if (handlersRef.current.clusterMouseLeave) {
+          map.off('mouseleave', 'trees-clusters', handlersRef.current.clusterMouseLeave)
+        }
+        if (handlersRef.current.unclusteredMouseEnter) {
+          map.off('mouseenter', 'trees-unclustered', handlersRef.current.unclusteredMouseEnter)
+        }
+        if (handlersRef.current.unclusteredMouseLeave) {
+          map.off('mouseleave', 'trees-unclustered', handlersRef.current.unclusteredMouseLeave)
+        }
+        
+        // Then remove layers and source
         if (map.getLayer('trees-unclustered')) map.removeLayer('trees-unclustered')
         if (map.getLayer('trees-cluster-count')) map.removeLayer('trees-cluster-count')
         if (map.getLayer('trees-clusters')) map.removeLayer('trees-clusters')
         if (map.getSource('trees-source')) map.removeSource('trees-source')
-        
-        // Remove event listeners
-        map.off('click', 'trees-clusters')
-        map.off('click', 'trees-unclustered')
-        map.off('mouseenter', 'trees-clusters')
-        map.off('mouseleave', 'trees-clusters')
-        map.off('mouseenter', 'trees-unclustered')
-        map.off('mouseleave', 'trees-unclustered')
       }
     }
   }, [map])

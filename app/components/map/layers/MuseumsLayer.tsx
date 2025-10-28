@@ -16,6 +16,11 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
   const { map } = useMap()
   const layerInitialized = useRef(false)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
+  const handlersRef = useRef<{
+    click?: (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => void
+    mouseEnter?: () => void
+    mouseLeave?: () => void
+  }>({})
 
   useEffect(() => {
     if (!map) {
@@ -131,16 +136,18 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
         }
 
         // Add click handler for popups
-        map.on('click', LAYER_ID, handleClick)
+        handlersRef.current.click = handleClick
+        map.on('click', LAYER_ID, handlersRef.current.click)
 
         // Change cursor on hover
-        map.on('mouseenter', LAYER_ID, () => {
+        handlersRef.current.mouseEnter = () => {
           map.getCanvas().style.cursor = 'pointer'
-        })
-
-        map.on('mouseleave', LAYER_ID, () => {
+        }
+        handlersRef.current.mouseLeave = () => {
           map.getCanvas().style.cursor = ''
-        })
+        }
+        map.on('mouseenter', LAYER_ID, handlersRef.current.mouseEnter)
+        map.on('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
 
         layerInitialized.current = true
         console.log('✅ Museums layer fully initialized!')
@@ -153,9 +160,15 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
 
     return () => {
       if (map && layerInitialized.current) {
-        map.off('click', LAYER_ID, handleClick)
-        map.off('mouseenter', LAYER_ID, () => {})
-        map.off('mouseleave', LAYER_ID, () => {})
+        if (handlersRef.current.click) {
+          map.off('click', LAYER_ID, handlersRef.current.click)
+        }
+        if (handlersRef.current.mouseEnter) {
+          map.off('mouseenter', LAYER_ID, handlersRef.current.mouseEnter)
+        }
+        if (handlersRef.current.mouseLeave) {
+          map.off('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
+        }
 
         if (popupRef.current) {
           popupRef.current.remove()
