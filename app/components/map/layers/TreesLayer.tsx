@@ -366,6 +366,8 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
     updateSeasonalAppearance()
 
     function updateSeasonalAppearance() {
+      if (!map) return
+
       // Color mapping for seasons
       const seasonColors = {
         spring: '#FFB7CE',  // PINK
@@ -375,12 +377,12 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
       }
 
       // Update tree icons
-      if (map!.getLayer('trees-unclustered')) {
+      if (map.getLayer('trees-unclustered')) {
         const iconName = `tree-${season}`
         console.log(`🍂 Changing season to: ${season}, using icon: ${iconName}`)
         
-        if (map!.hasImage(iconName)) {
-          map!.setLayoutProperty('trees-unclustered', 'icon-image', iconName)
+        if (map.hasImage(iconName)) {
+          map.setLayoutProperty('trees-unclustered', 'icon-image', iconName)
           console.log(`✅ Tree icons changed to: ${season}`)
         } else {
           console.error(`❌ Icon not found: ${iconName}`)
@@ -390,8 +392,8 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
       }
 
       // Update cluster colors to match season
-      if (map!.getLayer('trees-clusters')) {
-        map!.setPaintProperty('trees-clusters', 'circle-color', seasonColors[season])
+      if (map.getLayer('trees-clusters')) {
+        map.setPaintProperty('trees-clusters', 'circle-color', seasonColors[season])
         console.log(`✅ Cluster color changed to: ${seasonColors[season]} (${season})`)
       } else {
         console.warn('⚠️ trees-clusters layer not found')

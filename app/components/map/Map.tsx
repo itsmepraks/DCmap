@@ -452,7 +452,7 @@ export default function Map({
           <ParksLayer visible={layersVisible.trees} season={currentSeason} />
           <TreesLayer visible={layersVisible.trees} season={currentSeason} />
           <MuseumsLayer visible={layersVisible.museums} />
-          <LandmarksLayer map={map} visible={layersVisible.landmarks || true} visitedLandmarks={visitedLandmarks} />
+          <LandmarksLayer map={map} visible={layersVisible.landmarks} visitedLandmarks={visitedLandmarks} />
           {!isWalking && (
             <PlayerAvatar 
               map={map}

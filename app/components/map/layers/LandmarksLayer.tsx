@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import type mapboxgl from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 
 interface LandmarksLayerProps {
   map: mapboxgl.Map | null
@@ -196,7 +196,7 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks }: Landm
             </div>
           `
 
-          new (window as any).mapboxgl.Popup({
+          new mapboxgl.Popup({
             closeButton: true,
             closeOnClick: true,
             maxWidth: '320px'

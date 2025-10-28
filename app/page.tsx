@@ -21,6 +21,7 @@ export default function Home() {
     museums: false,
     trees: false,
     heatmap: false,
+    landmarks: true, // Landmarks visible by default for game mode
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)

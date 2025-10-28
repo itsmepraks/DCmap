@@ -9,7 +9,7 @@ export interface LayerVisibility {
   museums: boolean
   trees: boolean
   heatmap: boolean
-  landmarks?: boolean
+  landmarks: boolean
 }
 
 export type LayerId = keyof LayerVisibility

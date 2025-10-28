@@ -119,6 +119,8 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
     updateParkSeasonalColors()
 
     function updateParkSeasonalColors() {
+      if (!map) return
+
       // Color mapping for seasons - matches tree colors
       const seasonColors = {
         spring: { fill: '#FFB7CE', outline: '#E88FAE' },  // PINK
@@ -130,9 +132,9 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
       const colors = seasonColors[season]
 
       // Update park colors
-      if (map!.getLayer('parks-seasonal')) {
-        map!.setPaintProperty('parks-seasonal', 'fill-color', colors.fill)
-        map!.setPaintProperty('parks-seasonal', 'fill-outline-color', colors.outline)
+      if (map.getLayer('parks-seasonal')) {
+        map.setPaintProperty('parks-seasonal', 'fill-color', colors.fill)
+        map.setPaintProperty('parks-seasonal', 'fill-outline-color', colors.outline)
         console.log(`✅ Park colors changed to: ${colors.fill} (${season})`)
       } else {
         console.warn('⚠️ parks-seasonal layer not found')

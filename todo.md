@@ -177,47 +177,89 @@ _No critical issues at this time_
 
 ### Build Error Fixes - October 28, 2025
 
-**Issue Discovered:**
+**First Error - Event Listener Cleanup (FIXED)**
 - Vercel build failing with TypeScript error in `TreesLayer.tsx` line 293
 - Error: `Argument of type 'string' is not assignable to parameter of type 'Listener$1<"click">'`
 - Similar issue in `MuseumsLayer.tsx` lines 157-158
 - Root cause: Incorrect usage of `map.off()` - passing layer names as strings instead of function references
 
-**What Was Fixed:**
+**Fix 1: Event Listener References**
 1. **TreesLayer.tsx (COMPLETED)**
    - Added `handlersRef` to store event handler function references
    - Updated all event listeners (click, mouseenter, mouseleave) to store handlers in ref
    - Fixed cleanup function to properly remove listeners using stored function references
-   - Prevents TypeScript error and ensures proper memory cleanup
 
 2. **MuseumsLayer.tsx (COMPLETED)**
    - Added `handlersRef` for click, mouseEnter, mouseLeave handlers
    - Stored all handler functions in refs before adding to map
    - Updated cleanup to use handler references instead of anonymous functions
-   - Ensures proper event listener removal on unmount
+
+**Second Error - Boolean Type Mismatch (FIXED)**
+- Error: `Type 'boolean | undefined' is not assignable to type 'boolean'` in `Sidebar.tsx` line 97
+- Root cause: `LayerVisibility.landmarks` was optional, causing `layersVisible[config.id]` to potentially be undefined
+
+**Fix 2: Type Safety & Consistency**
+1. **Sidebar.tsx (COMPLETED)**
+   - Added nullish coalescing operator: `enabled={layersVisible[config.id] ?? false}`
+   - Ensures enabled prop always receives a boolean value
+
+2. **app/page.tsx (COMPLETED)**
+   - Added `landmarks: true` to initial `layersVisible` state
+   - Ensures all layer properties are always defined
+
+3. **app/types/map.ts (COMPLETED)**
+   - Changed `landmarks?: boolean` to `landmarks: boolean` (required)
+   - Makes type system consistent with actual usage
+
+4. **app/components/map/Map.tsx (COMPLETED)**
+   - Removed fallback `|| true` from LandmarksLayer visible prop
+   - Now cleanly uses `layersVisible.landmarks` directly
+
+**Fix 3: Import & Type Assertions (COMPLETED)**
+1. **LandmarksLayer.tsx (COMPLETED)**
+   - Changed `import type mapboxgl` to `import mapboxgl` (proper import)
+   - Replaced `(window as any).mapboxgl.Popup` with `mapboxgl.Popup`
+   - Eliminates unsafe type assertions and window access
+
+2. **TreesLayer.tsx & ParksLayer.tsx (COMPLETED)**
+   - Added null guards in nested functions: `if (!map) return`
+   - Replaced non-null assertions (`map!`) with proper null checks
+   - TypeScript can now correctly infer map is non-null
 
 **Technical Details:**
 ```typescript
-// Before (INCORRECT):
-map.on('click', 'layer-id', () => { /* handler */ })
-map.off('click', 'layer-id')  // ❌ Error: can't pass string as listener
-
-// After (CORRECT):
+// Event listener fix:
 handlersRef.current.click = (e) => { /* handler */ }
 map.on('click', 'layer-id', handlersRef.current.click)
-map.off('click', 'layer-id', handlersRef.current.click)  // ✅ Works!
+map.off('click', 'layer-id', handlersRef.current.click)  // ✅
+
+// Boolean type fix:
+enabled={layersVisible[config.id] ?? false}  // ✅
+
+// Non-null assertion fix:
+function updateSomething() {
+  if (!map) return  // ✅ Proper guard
+  map.someMethod()  // Now TypeScript knows map is non-null
+}
 ```
 
 **Files Modified:**
-- `app/components/map/layers/TreesLayer.tsx` - Fixed event listener cleanup
-- `app/components/map/layers/MuseumsLayer.tsx` - Fixed event listener cleanup
+- `app/components/map/layers/TreesLayer.tsx` - Event listeners + null guards
+- `app/components/map/layers/MuseumsLayer.tsx` - Event listeners
+- `app/components/map/layers/LandmarksLayer.tsx` - Import fix + Popup usage
+- `app/components/map/layers/ParksLayer.tsx` - Null guards
+- `app/components/ui/Sidebar.tsx` - Boolean fallback
+- `app/page.tsx` - Added landmarks to state
+- `app/types/map.ts` - Made landmarks required
+- `app/components/map/Map.tsx` - Removed unnecessary fallback
 
 **Result:**
-- Build now passes TypeScript validation
-- No more `Argument of type 'string'` errors
-- Proper memory management with correct cleanup
-- All event listeners properly removed on unmount
-- No new errors introduced
+- ✅ All TypeScript compilation errors fixed
+- ✅ Strict null checks passing
+- ✅ No unsafe type assertions
+- ✅ Proper memory management with event listener cleanup
+- ✅ Type system is now consistent and safe
+- ✅ Ready for production deployment
 
 ---
 

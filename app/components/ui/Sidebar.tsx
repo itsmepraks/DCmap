@@ -94,7 +94,7 @@ export default function Sidebar({
                     id={config.id}
                     label={config.label}
                     description={config.description}
-                    enabled={layersVisible[config.id]}
+                    enabled={layersVisible[config.id] ?? false}
                     onToggle={() => onToggleLayer(config.id)}
                   />
                 ))}
