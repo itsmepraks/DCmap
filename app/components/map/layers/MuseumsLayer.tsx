@@ -44,12 +44,28 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360
       }
 
-      // Create popup HTML
+      // Create popup HTML with bold styling
       const popupHTML = `
-        <div class="museum-popup">
-          <h3 class="text-base font-bold text-gray-900 mb-2">${properties.NAME}</h3>
-          ${properties.ADDRESS ? `<p class="text-xs text-gray-600 mb-2">${properties.ADDRESS}</p>` : ''}
-          ${properties.DESCRIPTION ? `<p class="text-sm text-gray-700">${properties.DESCRIPTION}</p>` : ''}
+        <div class="popup-wrapper" style="padding: 0; margin: -15px; border-radius: 12px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #5DA5DB 0%, #3A7CA5 100%); padding: 16px; border-bottom: 3px solid #3A7CA5;">
+            <h3 style="margin: 0; color: white; font-size: 18px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+              🏛️ ${properties.NAME}
+            </h3>
+          </div>
+          <div style="padding: 16px; background: white;">
+            ${properties.ADDRESS ? `
+              <div style="margin-bottom: 12px;">
+                <span style="color: #8D7B68; font-size: 12px; font-weight: 600; text-transform: uppercase;">Address</span>
+                <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px; font-weight: 500;">${properties.ADDRESS}</p>
+              </div>
+            ` : ''}
+            ${properties.DESCRIPTION ? `
+              <div>
+                <span style="color: #8D7B68; font-size: 12px; font-weight: 600; text-transform: uppercase;">About</span>
+                <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px; line-height: 1.5;">${properties.DESCRIPTION}</p>
+              </div>
+            ` : ''}
+          </div>
         </div>
       `
 
@@ -62,7 +78,8 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
       popupRef.current = new mapboxgl.Popup({
         closeButton: true,
         closeOnClick: true,
-        maxWidth: '300px',
+        maxWidth: '340px',
+        className: 'custom-popup'
       })
         .setLngLat(coordinates)
         .setHTML(popupHTML)

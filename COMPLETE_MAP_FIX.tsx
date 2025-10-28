@@ -1,3 +1,6 @@
+// This is the CORRECT Map.tsx with all fixes
+// Copy this to replace app/components/map/Map.tsx
+
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -7,7 +10,6 @@ import type { LayerVisibility } from '@/app/types/map'
 import MuseumsLayer from './layers/MuseumsLayer'
 import TreesLayer from './layers/TreesLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
-import ParksLayer from './layers/ParksLayer'
 import PlayerAvatar from './PlayerAvatar'
 import { checkNearbyLandmarks, findNearestLandmark, getBearing } from '@/app/lib/proximityDetector'
 
@@ -35,62 +37,45 @@ export default function Map({
   const mapContainer = useRef<HTMLDivElement>(null)
   const { map, setMap } = useMap()
   const isInitialized = useRef(false)
+  
+  // Player state
   const [playerPosition, setPlayerPosition] = useState({ lng: -77.0369, lat: 38.9072 })
   const [playerBearing, setPlayerBearing] = useState(0)
   const [isMoving, setIsMoving] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
 
+  // Initialize map only once
   useEffect(() => {
-    // Only initialize once
-    if (isInitialized.current) {
-      return
-    }
+    if (isInitialized.current || !mapContainer.current) return
 
-    if (!mapContainer.current) {
-      return
-    }
-
-    // Validate environment variable
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-    console.log('🗺️ Initializing map...')
-    console.log('Token exists:', !!token)
-    console.log('Token length:', token?.length)
-    console.log('Token preview:', token?.substring(0, 20) + '...')
-    
-    if (!token || token.includes('placeholder')) {
-      console.error(
-        '❌ Please set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN in your .env.local file. ' +
-        'Get your token from https://account.mapbox.com/access-tokens/'
-      )
+    if (!token) {
+      console.error('❌ Missing Mapbox token')
       return
     }
 
-    // Mark as initialized immediately to prevent double initialization
     isInitialized.current = true
-
     mapboxgl.accessToken = token
 
     try {
-      console.log('🎨 Creating map with style:', process.env.NEXT_PUBLIC_MAPBOX_STYLE)
       const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
         style: process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11',
-        center: [-77.0369, 38.9072], // D.C. coordinates
+        center: [-77.0369, 38.9072], // DC center
         zoom: 11,
-        pitch: 0, // Start flat, user can tilt manually
+        pitch: 0,
         bearing: 0,
-        // Enable 3D terrain and buildings
-        antialias: true, // Smooth 3D rendering
-        maxPitch: 85, // Allow steep tilt like Apple Maps
+        antialias: true,
+        maxPitch: 85
       })
 
       // Add navigation controls
       mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
       mapInstance.on('load', () => {
-        console.log('✅ Map loaded successfully!')
+        console.log('✅ Map loaded!')
         
-        // Add 3D terrain source
+        // Add 3D terrain
         mapInstance.addSource('mapbox-dem', {
           type: 'raster-dem',
           url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
@@ -98,13 +83,12 @@ export default function Map({
           maxzoom: 14
         })
         
-        // Set the terrain on the map with exaggerated height
         mapInstance.setTerrain({ 
           source: 'mapbox-dem', 
-          exaggeration: 1.5 // Make hills more pronounced like Apple Maps
+          exaggeration: 1.5
         })
         
-        // Add atmospheric sky layer for realism
+        // Add sky
         mapInstance.addLayer({
           id: 'sky',
           type: 'sky',
@@ -115,9 +99,8 @@ export default function Map({
           }
         })
         
-        // Add 3D building layer
+        // Add 3D buildings
         const layers = mapInstance.getStyle().layers
-        // Find the first symbol layer to insert buildings before labels
         let firstSymbolId: string | undefined
         for (const layer of layers || []) {
           if (layer.type === 'symbol') {
@@ -126,7 +109,6 @@ export default function Map({
           }
         }
         
-        // Add 3D buildings
         if (!mapInstance.getLayer('3d-buildings')) {
           mapInstance.addLayer(
             {
@@ -137,7 +119,7 @@ export default function Map({
               type: 'fill-extrusion',
               minzoom: 13,
               paint: {
-                'fill-extrusion-color': '#C1604A', // Terracotta color from your theme!
+                'fill-extrusion-color': '#C1604A',
                 'fill-extrusion-height': [
                   'interpolate',
                   ['linear'],
@@ -153,7 +135,6 @@ export default function Map({
                   13.05, ['get', 'min_height']
                 ],
                 'fill-extrusion-opacity': 0.85,
-                // Add lighting for depth and realism
                 'fill-extrusion-ambient-occlusion-intensity': 0.5,
                 'fill-extrusion-ambient-occlusion-radius': 3
               }
@@ -162,69 +143,54 @@ export default function Map({
           )
         }
         
-        console.log('🏗️ 3D buildings and terrain enabled!')
+        console.log('🏗️ 3D ready!')
         setMap(mapInstance)
       })
 
-      mapInstance.on('error', (e) => {
-        console.error('❌ Map error:', e.error)
-      })
-
-      // Cleanup on unmount
       return () => {
-        console.log('🧹 Cleaning up map instance on unmount')
         mapInstance.remove()
         isInitialized.current = false
       }
     } catch (error) {
-      console.error('❌ Error creating map:', error)
+      console.error('❌ Map error:', error)
       isInitialized.current = false
     }
   }, [])
 
-  // Handle 3D view toggle with smooth animation
+  // Handle 3D toggle
   useEffect(() => {
     if (!map) return
 
+    console.log(`🎮 3D mode: ${is3D ? 'ON' : 'OFF'}`)
+    
     map.easeTo({
       pitch: is3D ? 60 : 0,
       duration: 1000,
-      easing: (t) => t * (2 - t) // Smooth ease-out
+      easing: (t) => t * (2 - t)
     })
-
-    console.log(`🎮 ${is3D ? 'Entering' : 'Exiting'} 3D mode`)
   }, [map, is3D])
 
-  // Minecraft-style first-person walking controls
+  // Handle walking mode
   useEffect(() => {
     if (!map || !isWalking) return
 
-    // Movement speed (meters per second)
-    const WALK_SPEED = 0.00008 // Adjusted for Minecraft-like feel
-    const RUN_SPEED = 0.00016 // 2x speed when running
-    const TURN_SPEED = 0.5
-
-    // Keys currently pressed
+    const WALK_SPEED = 0.00008
+    const RUN_SPEED = 0.00016
     const keys: { [key: string]: boolean } = {}
     let isShiftPressed = false
-    
-    // Mouse state for looking around
     let isDragging = false
     let lastMouseX = 0
     let lastMouseY = 0
 
-    // Enter true first-person street mode with natural perspective
-    const center = map.getCenter()
+    // Enter street view
     map.easeTo({
-      pitch: 70, // Natural eye-level view (like real person)
-      zoom: 18.5, // Natural street level - not too close
-      bearing: 0,
+      pitch: 85,
+      zoom: 20,
       duration: 1000
     })
 
-    console.log('🚶 Walking mode activated! Use WASD to move, drag to look around')
+    console.log('🚶 Walk mode ON - WASD to move, Shift to run')
 
-    // Keyboard controls
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase()
       if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
@@ -246,9 +212,8 @@ export default function Map({
       }
     }
 
-    // Mouse controls for looking around
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 0) { // Left click
+      if (e.button === 0) {
         isDragging = true
         lastMouseX = e.clientX
         lastMouseY = e.clientY
@@ -262,13 +227,11 @@ export default function Map({
       const deltaX = e.clientX - lastMouseX
       const deltaY = e.clientY - lastMouseY
 
-      // Rotate view (bearing)
       const newBearing = map.getBearing() + deltaX * 0.3
       map.setBearing(newBearing)
 
-      // Adjust pitch (looking up/down) - natural head movement range
       const currentPitch = map.getPitch()
-      const newPitch = Math.max(30, Math.min(85, currentPitch - deltaY * 0.2))
+      const newPitch = Math.max(0, Math.min(85, currentPitch - deltaY * 0.2))
       map.setPitch(newPitch)
 
       lastMouseX = e.clientX
@@ -280,23 +243,18 @@ export default function Map({
       map.getCanvas().style.cursor = ''
     }
 
-    // Animation loop for smooth movement with realistic head bob
     let animationFrame: number
     let lastProximityCheck = Date.now()
-    let walkCycle = 0 // For camera bobbing effect
 
     const moveCamera = () => {
       const bearing = map.getBearing()
       const center = map.getCenter()
-      
-      // Determine current speed (run or walk)
       const currentSpeed = isShiftPressed ? RUN_SPEED : WALK_SPEED
       
       let deltaLng = 0
       let deltaLat = 0
       let moving = false
 
-      // Forward/Backward (W/S)
       if (keys['w'] || keys['arrowup']) {
         const rad = (bearing * Math.PI) / 180
         deltaLng += Math.sin(rad) * currentSpeed
@@ -309,8 +267,6 @@ export default function Map({
         deltaLat -= Math.cos(rad) * currentSpeed
         moving = true
       }
-
-      // Strafe Left/Right (A/D)
       if (keys['a'] || keys['arrowleft']) {
         const rad = ((bearing - 90) * Math.PI) / 180
         deltaLng += Math.sin(rad) * currentSpeed
@@ -324,46 +280,22 @@ export default function Map({
         moving = true
       }
 
-      // Update moving state
       setIsMoving(moving)
 
-      // Apply movement with realistic head bobbing
       if (deltaLng !== 0 || deltaLat !== 0) {
-        // Increment walk cycle for bobbing effect
-        walkCycle += isShiftPressed ? 0.15 : 0.08
-        
-        // Calculate subtle head bob (like real person walking)
-        const bobIntensity = isShiftPressed ? 0.3 : 0.15
-        const pitchBob = Math.sin(walkCycle) * bobIntensity
-        const zoomBob = Math.sin(walkCycle * 2) * 0.05
-        
-        // Apply natural camera bob
-        const basePitch = 70
-        map.setPitch(basePitch + pitchBob)
-        map.setZoom(18.5 + zoomBob)
-        
         const newCenter = [center.lng + deltaLng, center.lat + deltaLat]
         map.setCenter(newCenter as [number, number])
         setPlayerPosition({ lng: newCenter[0], lat: newCenter[1] })
-      } else {
-        // Reset to neutral position when stopped
-        walkCycle = 0
-        map.setPitch(70)
-        map.setZoom(18.5)
       }
 
-      // Update bearing
-      const currentBearing = map.getBearing()
-      setPlayerBearing(currentBearing)
+      setPlayerBearing(map.getBearing())
 
-      // Check for nearby landmarks every 500ms
+      // Check landmarks every 500ms
       const now = Date.now()
       if (now - lastProximityCheck > 500) {
         lastProximityCheck = now
-        
         const playerPos = { lng: center.lng, lat: center.lat }
         
-        // Check for discoveries
         const nearby = checkNearbyLandmarks(playerPos, landmarks, visitedLandmarks, 50)
         nearby.forEach(discovery => {
           const landmarkData = landmarks.find(l => l.id === discovery.id)
@@ -372,7 +304,6 @@ export default function Map({
           }
         })
 
-        // Find nearest landmark for compass
         const nearest = findNearestLandmark(playerPos, landmarks)
         if (nearest && onPlayerPositionChange) {
           const landmarkBearing = getBearing(playerPos, nearest.coordinates)
@@ -392,10 +323,8 @@ export default function Map({
       animationFrame = requestAnimationFrame(moveCamera)
     }
 
-    // Start animation loop
     animationFrame = requestAnimationFrame(moveCamera)
 
-    // Add event listeners
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
     const canvas = map.getCanvas()
@@ -403,7 +332,6 @@ export default function Map({
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
 
-    // Disable default map interactions while walking
     map.scrollZoom.disable()
     map.boxZoom.disable()
     map.dragRotate.disable()
@@ -412,9 +340,8 @@ export default function Map({
     map.doubleClickZoom.disable()
     map.touchZoomRotate.disable()
 
-    // Cleanup
     return () => {
-      console.log('🚶 Exiting walking mode')
+      console.log('🚶 Walk mode OFF')
       cancelAnimationFrame(animationFrame)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
@@ -422,11 +349,9 @@ export default function Map({
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
 
-      // Reset movement states
       setIsMoving(false)
       setIsRunning(false)
 
-      // Re-enable default interactions
       map.scrollZoom.enable()
       map.boxZoom.enable()
       map.dragRotate.enable()
@@ -435,7 +360,6 @@ export default function Map({
       map.doubleClickZoom.enable()
       map.touchZoomRotate.enable()
 
-      // Return to normal view
       map.easeTo({
         pitch: 0,
         zoom: 11,
@@ -449,9 +373,8 @@ export default function Map({
       <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full" />
       {map && (
         <>
-          <ParksLayer visible={layersVisible.trees} season={currentSeason} />
-          <TreesLayer visible={layersVisible.trees} season={currentSeason} />
           <MuseumsLayer visible={layersVisible.museums} />
+          <TreesLayer visible={layersVisible.trees} season={currentSeason} />
           <LandmarksLayer map={map} visible={layersVisible.landmarks || true} visitedLandmarks={visitedLandmarks} />
           {!isWalking && (
             <PlayerAvatar 

@@ -1,5 +1,65 @@
 {
   "type": "FeatureCollection",
-  "features": []
+  "features": [
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0369, 38.8895]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 18, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0420, 38.8875]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 20, "CONDITION": "Excellent", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0385, 38.8910]}, "properties": {"COMMON_NAME": "Kwanzan Cherry", "SPECIES": "Prunus serrulata", "DBH": 16, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0450, 38.8850]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 22, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0395, 38.8920]}, "properties": {"COMMON_NAME": "Kwanzan Cherry", "SPECIES": "Prunus serrulata", "DBH": 19, "CONDITION": "Excellent", "SEASON_TYPE": "cherry"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0469, 38.8947]}, "properties": {"COMMON_NAME": "Red Maple", "SPECIES": "Acer rubrum", "DBH": 24, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0512, 38.8965]}, "properties": {"COMMON_NAME": "Sugar Maple", "SPECIES": "Acer saccharum", "DBH": 28, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0435, 38.8980]}, "properties": {"COMMON_NAME": "Red Oak", "SPECIES": "Quercus rubra", "DBH": 32, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0390, 38.8995]}, "properties": {"COMMON_NAME": "Pin Oak", "SPECIES": "Quercus palustris", "DBH": 26, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0425, 38.9010]}, "properties": {"COMMON_NAME": "White Oak", "SPECIES": "Quercus alba", "DBH": 36, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0325, 38.9050]}, "properties": {"COMMON_NAME": "American Elm", "SPECIES": "Ulmus americana", "DBH": 30, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0280, 38.9075]}, "properties": {"COMMON_NAME": "Willow Oak", "SPECIES": "Quercus phellos", "DBH": 22, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0350, 38.9090]}, "properties": {"COMMON_NAME": "American Linden", "SPECIES": "Tilia americana", "DBH": 28, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0305, 38.9110]}, "properties": {"COMMON_NAME": "Tulip Tree", "SPECIES": "Liriodendron tulipifera", "DBH": 34, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0195, 38.9125]}, "properties": {"COMMON_NAME": "Eastern Redbud", "SPECIES": "Cercis canadensis", "DBH": 12, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0230, 38.9145]}, "properties": {"COMMON_NAME": "Flowering Dogwood", "SPECIES": "Cornus florida", "DBH": 14, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0265, 38.9160]}, "properties": {"COMMON_NAME": "Red Maple", "SPECIES": "Acer rubrum", "DBH": 20, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0210, 38.9175]}, "properties": {"COMMON_NAME": "Sweetgum", "SPECIES": "Liquidambar styraciflua", "DBH": 26, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-76.9950, 38.9050]}, "properties": {"COMMON_NAME": "London Plane", "SPECIES": "Platanus acerifolia", "DBH": 38, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-76.9985, 38.9075]}, "properties": {"COMMON_NAME": "Norway Maple", "SPECIES": "Acer platanoides", "DBH": 24, "CONDITION": "Fair", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0020, 38.9095]}, "properties": {"COMMON_NAME": "Silver Maple", "SPECIES": "Acer saccharinum", "DBH": 32, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0565, 38.9185]}, "properties": {"COMMON_NAME": "Northern Red Oak", "SPECIES": "Quercus rubra", "DBH": 30, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0600, 38.9210]}, "properties": {"COMMON_NAME": "Scarlet Oak", "SPECIES": "Quercus coccinea", "DBH": 28, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0525, 38.9230]}, "properties": {"COMMON_NAME": "American Beech", "SPECIES": "Fagus grandifolia", "DBH": 34, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0145, 38.9280]}, "properties": {"COMMON_NAME": "Ginkgo", "SPECIES": "Ginkgo biloba", "DBH": 22, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0180, 38.9305]}, "properties": {"COMMON_NAME": "Black Walnut", "SPECIES": "Juglans nigra", "DBH": 26, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0125, 38.9320]}, "properties": {"COMMON_NAME": "Hackberry", "SPECIES": "Celtis occidentalis", "DBH": 24, "CONDITION": "Fair", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0695, 38.9115]}, "properties": {"COMMON_NAME": "River Birch", "SPECIES": "Betula nigra", "DBH": 18, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0730, 38.9145]}, "properties": {"COMMON_NAME": "Yellow Birch", "SPECIES": "Betula alleghaniensis", "DBH": 20, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0665, 38.9165]}, "properties": {"COMMON_NAME": "Paper Birch", "SPECIES": "Betula papyrifera", "DBH": 16, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0485, 38.9350]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 18, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0520, 38.9375]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 21, "CONDITION": "Excellent", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0455, 38.9390]}, "properties": {"COMMON_NAME": "Kwanzan Cherry", "SPECIES": "Prunus serrulata", "DBH": 17, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0250, 38.9420]}, "properties": {"COMMON_NAME": "Southern Magnolia", "SPECIES": "Magnolia grandiflora", "DBH": 28, "CONDITION": "Excellent", "SEASON_TYPE": "evergreen"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0285, 38.9445]}, "properties": {"COMMON_NAME": "American Holly", "SPECIES": "Ilex opaca", "DBH": 22, "CONDITION": "Good", "SEASON_TYPE": "evergreen"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0315, 38.9465]}, "properties": {"COMMON_NAME": "Eastern Red Cedar", "SPECIES": "Juniperus virginiana", "DBH": 18, "CONDITION": "Good", "SEASON_TYPE": "evergreen"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-76.9895, 38.9200]}, "properties": {"COMMON_NAME": "Callery Pear", "SPECIES": "Pyrus calleryana", "DBH": 16, "CONDITION": "Fair", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-76.9930, 38.9225]}, "properties": {"COMMON_NAME": "Black Cherry", "SPECIES": "Prunus serotina", "DBH": 24, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-76.9865, 38.9245]}, "properties": {"COMMON_NAME": "Honeylocust", "SPECIES": "Gleditsia triacanthos", "DBH": 20, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0820, 38.9280]}, "properties": {"COMMON_NAME": "Bald Cypress", "SPECIES": "Taxodium distichum", "DBH": 32, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0855, 38.9310]}, "properties": {"COMMON_NAME": "Dawn Redwood", "SPECIES": "Metasequoia glyptostroboides", "DBH": 26, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0355, 38.8800]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 19, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0380, 38.8825]}, "properties": {"COMMON_NAME": "Yoshino Cherry", "SPECIES": "Prunus yedoensis", "DBH": 17, "CONDITION": "Excellent", "SEASON_TYPE": "cherry"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0410, 38.8845]}, "properties": {"COMMON_NAME": "Kwanzan Cherry", "SPECIES": "Prunus serrulata", "DBH": 18, "CONDITION": "Good", "SEASON_TYPE": "cherry"}},
+    
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0155, 38.8950]}, "properties": {"COMMON_NAME": "Red Maple", "SPECIES": "Acer rubrum", "DBH": 25, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0190, 38.8975]}, "properties": {"COMMON_NAME": "Sugar Maple", "SPECIES": "Acer saccharum", "DBH": 29, "CONDITION": "Excellent", "SEASON_TYPE": "deciduous"}},
+    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-77.0225, 38.8995]}, "properties": {"COMMON_NAME": "Norway Maple", "SPECIES": "Acer platanoides", "DBH": 23, "CONDITION": "Good", "SEASON_TYPE": "deciduous"}}
+  ]
 }
-

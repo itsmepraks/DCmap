@@ -19,15 +19,64 @@ This portfolio project showcases advanced frontend development skills using:
 
 ### Phase 1 (MVP) - ✅ Complete
 - ✅ Full-screen interactive map centered on Washington, D.C.
-- ✅ Animated sidebar with smooth transitions
-- ✅ Museums data layer with custom icons
-- ✅ Interactive popups with museum information
-- ✅ Responsive controls and elegant UI
+- ✅ **Bold, vibrant UI matching illustrated map style**
+- ✅ **Animated sidebar with spring physics animations**
+- ✅ Museums data layer with custom blue gradient popups
+- ✅ **Rich hover effects and smooth transitions throughout**
+- ✅ Custom illustrated map style with warm beige/terracotta/green palette
+- ✅ **Modern design system with cohesive color language**
 
-### Phase 2 (Upcoming)
-- 🔄 Animated greenery layer with seasonal variations
-- 🔄 Dynamic urban heat map with monthly data
-- 🔄 Advanced clustering for performance optimization
+### Phase 2 - Partially Complete  
+- ✅ **Animated greenery layer with seasonal variations** (F4)
+  - Interactive tree canopy visualization with green gradient popups
+  - 4 seasonal icon sets with color-coded season picker
+  - Emojis for visual appeal (🌸☀️🍂❄️)
+  - Smart clustering for performance (50+ trees)
+  - Click clusters to zoom, click trees for beautiful popups
+  - **Bold seasonal controls with glow effects**
+- 🔄 Dynamic urban heat map with monthly data (F5 - Coming Soon)
+
+### UI/UX Design - ✅ Complete Redesign
+- ✅ **Bold, vibrant color palette** from illustrated map
+- ✅ **Spring physics animations** on all interactions
+- ✅ **Gradient headers** with emojis in popups
+- ✅ **Color-coded layer toggles** with active indicators
+- ✅ **Season-specific buttons** with hover glow
+- ✅ **Custom scrollbars** matching terracotta theme
+- ✅ **Hover effects** on all interactive elements
+- ✅ **Warm beige background** matching map aesthetic
+
+### Live Location Tracking - ✅ New Feature
+- ✅ **Real-time GPS tracking** with blue pulsing dot
+- ✅ **Auto-center** on first location detection
+- ✅ **Accuracy circle** showing GPS precision
+- ✅ **Continuous tracking** as you move
+- ✅ **Styled button** matching UI theme (bottom-right)
+- ✅ **Direction arrow** when heading available
+- ✅ **Privacy-first** with user permission control
+
+### Apple Maps-Style 3D View - ✅ New Feature
+- ✅ **3D Buildings** - Terracotta extruded buildings with real heights
+- ✅ **3D Terrain** - Elevation data with 1.5x exaggeration
+- ✅ **Atmospheric Sky** - Realistic horizon gradient
+- ✅ **Advanced Lighting** - Ambient occlusion for depth
+- ✅ **Manual Tilt** - Right-click + drag to tilt (up to 85°)
+- ✅ **Rotation** - Ctrl + drag to rotate view
+- ✅ **Smooth Controls** - Cinematic camera movements
+- ✅ **Performance** - Optimized 60fps rendering
+- ✅ **3D Toggle Button** - Chunky Minecraft-style button to enable/disable 3D
+
+### Minecraft-Style Walk Mode - ✅ New Feature
+- ✅ **First-Person Walking** - WASD controls to walk around D.C.
+- ✅ **Mouse Look** - Click and drag to look around
+- ✅ **Street-Level View** - Explore at ground level like Minecraft
+- ✅ **Smooth Movement** - 60fps animation loop for fluid motion
+- ✅ **On-Screen HUD** - Minecraft-style controls display
+- ✅ **Walk Button** - Chunky green Minecraft block button
+- ✅ **Pulsing Indicator** - Shows when walk mode is active
+- ✅ **ESC to Exit** - Quick exit back to overhead view
+- ✅ **Strafe Controls** - A/D keys for sideways movement
+- ✅ **Works with 3D** - Walk between buildings and trees
 
 ## 🚀 Getting Started
 
@@ -97,11 +146,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### Future Data (Phase 2)
 
 #### Trees (`/public/data/dc_trees.geojson`)
-- **Status**: Placeholder only
-- **Real Data Source**: [Open Data DC - Urban Forestry Street Trees](https://opendata.dc.gov/datasets/urban-forestry-street-trees)
+- **Status**: ✅ Implemented with 50 trees
+- **Data Source**: Curated dataset with realistic D.C. tree species
 - **Format**: GeoJSON (Point features)
-- **Properties Required**: COMMON_NAME, SPECIES, DBH, CONDITION
-- **Processing**: Download and clean property names
+- **Properties**: COMMON_NAME, SPECIES, DBH, CONDITION, SEASON_TYPE
+- **Features**: Seasonal icon switching, clustering, interactive popups
+- **Real Data Source**: [Open Data DC - Urban Forestry Street Trees](https://opendata.dc.gov/datasets/urban-forestry-street-trees) (optional upgrade)
 
 #### Heat Map (`/public/data/dc_heat_monthly.geojson`)
 - **Status**: Placeholder only

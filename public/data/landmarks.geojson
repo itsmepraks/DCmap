@@ -1,0 +1,157 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0365, 38.8977]
+      },
+      "properties": {
+        "id": "white-house",
+        "name": "The White House",
+        "description": "The official residence and workplace of the President of the United States since 1800.",
+        "funFact": "The White House has 132 rooms, 35 bathrooms, and 6 levels!",
+        "category": "government",
+        "icon": "🏛️"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0090, 38.8899]
+      },
+      "properties": {
+        "id": "us-capitol",
+        "name": "U.S. Capitol",
+        "description": "The iconic dome of American democracy, home to the U.S. Congress.",
+        "funFact": "The Capitol's dome weighs 8.9 million pounds and stands 288 feet tall!",
+        "category": "government",
+        "icon": "🏛️"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0502, 38.8893]
+      },
+      "properties": {
+        "id": "lincoln-memorial",
+        "name": "Lincoln Memorial",
+        "description": "A tribute to President Abraham Lincoln with his iconic seated statue.",
+        "funFact": "Lincoln's statue is 19 feet tall and weighs 175 tons!",
+        "category": "memorial",
+        "icon": "⭐"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0353, 38.8895]
+      },
+      "properties": {
+        "id": "washington-monument",
+        "name": "Washington Monument",
+        "description": "The world's tallest stone structure and obelisk, honoring George Washington.",
+        "funFact": "At 555 feet, it was the world's tallest structure from 1884 to 1889!",
+        "category": "memorial",
+        "icon": "🗼"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0365, 38.8814]
+      },
+      "properties": {
+        "id": "jefferson-memorial",
+        "name": "Jefferson Memorial",
+        "description": "A neoclassical memorial dedicated to Thomas Jefferson, the third U.S. President.",
+        "funFact": "The memorial's bronze statue of Jefferson weighs 5 tons!",
+        "category": "memorial",
+        "icon": "⭐"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0230, 38.8882]
+      },
+      "properties": {
+        "id": "national-mall",
+        "name": "National Mall",
+        "description": "The heart of monumental Washington, a 2-mile green space lined with museums.",
+        "funFact": "Over 24 million people visit the National Mall each year!",
+        "category": "park",
+        "icon": "🌳"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0260, 38.8890]
+      },
+      "properties": {
+        "id": "smithsonian-castle",
+        "name": "Smithsonian Castle",
+        "description": "The iconic red sandstone building and home to the Smithsonian Institution.",
+        "funFact": "The Castle contains the crypt of James Smithson, the institution's founder!",
+        "category": "museum",
+        "icon": "🏰"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0044, 38.8906]
+      },
+      "properties": {
+        "id": "supreme-court",
+        "name": "Supreme Court",
+        "description": "The highest court in the United States, with its iconic marble columns.",
+        "funFact": "The inscription 'Equal Justice Under Law' is above the main entrance!",
+        "category": "government",
+        "icon": "⚖️"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0047, 38.8893]
+      },
+      "properties": {
+        "id": "library-of-congress",
+        "name": "Library of Congress",
+        "description": "The world's largest library with over 170 million items in its collection.",
+        "funFact": "The library adds 12,000 items to its collection every working day!",
+        "category": "culture",
+        "icon": "📚"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0685, 38.8783]
+      },
+      "properties": {
+        "id": "arlington-cemetery",
+        "name": "Arlington National Cemetery",
+        "description": "A military cemetery honoring those who served the United States.",
+        "funFact": "Over 400,000 service members and their families are buried here!",
+        "category": "memorial",
+        "icon": "🎖️"
+      }
+    }
+  ]
+}
+
+
