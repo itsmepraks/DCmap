@@ -10,7 +10,7 @@
 
 **Two ways:**
 - **Press `ESC` key** on your keyboard
-- **Click the green WALK button** at the bottom-left again (it will be darker when active)
+- **Click the green WALK button** at the bottom-right again (it will be darker when active)
 
 The tooltip says: "Exit Walk Mode (ESC)"
 
@@ -20,7 +20,7 @@ The tooltip says: "Exit Walk Mode (ESC)"
 
 The minimap only appears when you're in **Walk Mode**. Here's how to use it:
 
-1. Click the **WALK** button (bottom-left, green Minecraft-style button)
+1. Click the **WALK** button (bottom-right, green Minecraft-style button)
 2. Look at the **BOTTOM-LEFT corner** - minimap appears there with label "📍 YOUR LOCATION"
 3. The minimap shows:
    - **Your position** as a colored dot
@@ -87,8 +87,8 @@ NEXT_PUBLIC_MAPBOX_TOKEN=your_token_here
 - **Season Selector** - Change seasonal appearance (when Greenery is ON)
 
 ### **Map View Controls**
-- **3D Toggle** (bottom-left) - Switch between 2D and 3D view
-- **Walk Mode** (bottom-left, green) - First-person exploration mode
+- **3D Toggle** (bottom-right) - Switch between 2D and 3D view
+- **Walk Mode** (bottom-right, green) - First-person exploration mode
 
 ### **Walk Mode Controls**
 - **W** - Move forward
@@ -160,16 +160,18 @@ NEXT_PUBLIC_MAPBOX_TOKEN=your_token_here
 │                    MAP VIEW                       │
 │                                                   │
 │                                                   │
-│ Minimap                                           │
-│ 3D   WALK                                         │
+│ Minimap                                  3D  WALK │
+│                                                   │
 └─────────────────────────────────────────────────┘
 ```
 
 **Left Side:**
 - ☰ Sidebar toggle (top-left)
 - 📍 Minimap (bottom-left, when walking)
-- 3D toggle button (bottom-left)
-- WALK mode button (bottom-left)
+
+**Right Side:**
+- 3D toggle button (bottom-right)
+- WALK mode button (bottom-right)
 
 **Top:**
 - Progress HUD (center)

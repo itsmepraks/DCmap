@@ -117,7 +117,7 @@ export default function Minimap({ isVisible, playerLat, playerLng, playerBearing
             <div className="absolute -top-8 left-0 z-10 bg-white/95 px-3 py-1 rounded-lg shadow-md border-2 border-blue-500">
               <span className="text-xs font-bold text-blue-600">📍 YOUR LOCATION</span>
             </div>
-            
+
             <div
               className="rounded-2xl overflow-hidden shadow-lg"
               style={{
@@ -129,7 +129,7 @@ export default function Minimap({ isVisible, playerLat, playerLng, playerBearing
               }}
             >
               <div ref={minimapContainerRef} className="w-full h-full" />
-            </div>
+              </div>
           </div>
         </motion.div>
       )}

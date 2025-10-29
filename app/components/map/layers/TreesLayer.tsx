@@ -150,12 +150,12 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
                   22    // Large clusters when far
                 ],
                 18, [
-                  'step',
-                  ['get', 'point_count'],
+                'step',
+                ['get', 'point_count'],
                   25,   // Small clusters when close (3D mode)
-                  10,
+                10,
                   35,   // Medium clusters when close
-                  25,
+                25,
                   45    // Large clusters when close - VERY VISIBLE
                 ]
               ],
@@ -377,13 +377,13 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
     
     try {
       if (map.getLayer && map.getLayer('trees-clusters')) {
-        map.setLayoutProperty('trees-clusters', 'visibility', visibility)
-      }
+      map.setLayoutProperty('trees-clusters', 'visibility', visibility)
+    }
       if (map.getLayer && map.getLayer('trees-cluster-count')) {
-        map.setLayoutProperty('trees-cluster-count', 'visibility', visibility)
-      }
+      map.setLayoutProperty('trees-cluster-count', 'visibility', visibility)
+    }
       if (map.getLayer && map.getLayer('trees-unclustered')) {
-        map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
+      map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
       }
     } catch (error) {
       console.debug('Trees visibility update skipped:', error)
@@ -422,26 +422,26 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
       }
 
       try {
-        // Update tree icons
+      // Update tree icons
         if (map.getLayer && map.getLayer('trees-unclustered')) {
-          const iconName = `tree-${season}`
-          console.log(`🍂 Changing season to: ${season}, using icon: ${iconName}`)
-          
+        const iconName = `tree-${season}`
+        console.log(`🍂 Changing season to: ${season}, using icon: ${iconName}`)
+        
           if (map.hasImage(iconName)) {
             map.setLayoutProperty('trees-unclustered', 'icon-image', iconName)
-            console.log(`✅ Tree icons changed to: ${season}`)
-          } else {
-            console.error(`❌ Icon not found: ${iconName}`)
-          }
+          console.log(`✅ Tree icons changed to: ${season}`)
         } else {
-          console.debug('trees-unclustered layer not yet available')
+          console.error(`❌ Icon not found: ${iconName}`)
         }
+      } else {
+          console.debug('trees-unclustered layer not yet available')
+      }
 
-        // Update cluster colors to match season
+      // Update cluster colors to match season
         if (map.getLayer && map.getLayer('trees-clusters')) {
           map.setPaintProperty('trees-clusters', 'circle-color', seasonColors[season])
-          console.log(`✅ Cluster color changed to: ${seasonColors[season]} (${season})`)
-        } else {
+        console.log(`✅ Cluster color changed to: ${seasonColors[season]} (${season})`)
+      } else {
           console.debug('trees-clusters layer not yet available')
         }
       } catch (error) {

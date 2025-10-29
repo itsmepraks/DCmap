@@ -16,7 +16,7 @@ export default function WalkModeToggle({ isWalking, onToggle }: WalkModeTogglePr
       whileTap={{ scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       onClick={onToggle}
-      className="fixed bottom-8 left-28 z-30 group"
+      className="fixed bottom-8 right-8 z-30 group"
       style={{
         width: '64px',
         height: '64px',
