@@ -50,31 +50,31 @@ export default function Sidebar({
     <AnimatePresence>
       {isOpen && (
         <motion.aside
-          initial={{ x: -400, opacity: 0 }}
+          initial={{ x: -350, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: -400, opacity: 0 }}
+          exit={{ x: -350, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed top-0 left-0 h-full w-96 z-10 overflow-y-auto"
+          className="fixed top-0 left-0 h-full w-80 z-10 overflow-y-auto"
           style={{
             background: 'linear-gradient(135deg, #EFE6D5 0%, #F5EBD9 100%)',
             boxShadow: theme.shadows.xl,
             borderRight: `3px solid ${theme.colors.terracotta}`
           }}
         >
-          <div className="p-8">
-            {/* Bold colorful header */}
-            <div className="mb-8 pb-6 border-b-2" style={{ borderColor: theme.colors.terracotta }}>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-[#7ED957] via-[#5DA5DB] to-[#F2A65A] bg-clip-text text-transparent mb-1">
+          <div className="p-5">
+            {/* Compact header */}
+            <div className="mb-5 pb-4 border-b-2" style={{ borderColor: theme.colors.terracotta }}>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#7ED957] via-[#5DA5DB] to-[#F2A65A] bg-clip-text text-transparent mb-1">
                 Anima DC
               </h1>
-              <p className="text-sm font-medium" style={{ color: theme.colors.text.secondary }}>
-                Interactive Data Layers
+              <p className="text-xs font-medium" style={{ color: theme.colors.text.secondary }}>
+                Explore Washington DC
               </p>
             </div>
 
-            <div className="space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: theme.colors.text.light }}>
-                Data Layers
+            <div className="space-y-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: theme.colors.text.light }}>
+                Layers
               </h2>
               <motion.div
                 initial="hidden"
@@ -104,10 +104,10 @@ export default function Sidebar({
             {/* Seasonal Controls - Show when Trees layer is active */}
             {layersVisible.trees && (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-6"
+                transition={{ delay: 0.15 }}
+                className="mt-4"
               >
                 <SeasonalControls
                   currentSeason={currentSeason}
@@ -116,40 +116,40 @@ export default function Sidebar({
               </motion.div>
             )}
 
-            {/* Game Stats & Progress */}
+            {/* Compact Game Stats */}
             {gameStats && onOpenStats && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-6"
+                transition={{ delay: 0.2 }}
+                className="mt-4"
               >
                 <div
-                  className="p-4 rounded-xl"
+                  className="p-3 rounded-lg"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(126, 217, 87, 0.2) 0%, rgba(93, 165, 219, 0.2) 100%)',
+                    background: 'linear-gradient(135deg, rgba(126, 217, 87, 0.15) 0%, rgba(93, 165, 219, 0.15) 100%)',
                     border: '2px solid #7ED957',
-                    boxShadow: theme.shadows.md
+                    boxShadow: theme.shadows.sm
                   }}
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <h3
-                      className="text-sm font-bold"
+                      className="text-xs font-bold"
                       style={{ color: theme.colors.text.primary }}
                     >
-                      🎮 Exploration Progress
+                      🎮 Progress
                     </h3>
                     <div
-                      className="text-lg font-bold"
+                      className="text-sm font-bold"
                       style={{ color: theme.colors.primary }}
                     >
                       {gameStats.visited}/{gameStats.total}
                     </div>
                   </div>
                   
-                  {/* Progress bar */}
+                  {/* Compact progress bar */}
                   <div
-                    className="h-2 rounded-full overflow-hidden mb-3"
+                    className="h-2 rounded-full overflow-hidden mb-2"
                     style={{
                       background: 'rgba(0,0,0,0.1)'
                     }}
@@ -166,30 +166,26 @@ export default function Sidebar({
                   </div>
 
                   <motion.button
-                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onOpenStats}
-                    className="w-full py-2 rounded-lg font-semibold text-sm"
+                    className="w-full py-1.5 rounded-lg font-semibold text-xs"
                     style={{
                       background: 'linear-gradient(135deg, #7ED957 0%, #5DA5DB 100%)',
                       color: '#FFF',
                       border: '2px solid #4A7C24',
-                      boxShadow: theme.shadows.sm,
-                      textShadow: '1px 1px 0 rgba(0,0,0,0.3)'
+                      boxShadow: theme.shadows.sm
                     }}
                   >
-                    📊 View All Landmarks
+                    📊 View All
                   </motion.button>
                 </div>
               </motion.div>
             )}
 
-            <div className="mt-8 pt-6 border-t-2" style={{ borderColor: theme.colors.accent }}>
-              <p className="text-xs mb-2" style={{ color: theme.colors.text.light }}>
-                🗺️ Click map markers for details • Pan and zoom to explore
-              </p>
-              <p className="text-xs font-semibold" style={{ color: theme.colors.text.secondary }}>
-                🏗️ 3D Mode: Right-click + drag to tilt • Ctrl + drag to rotate
+            <div className="mt-5 pt-4 border-t-2" style={{ borderColor: theme.colors.accent }}>
+              <p className="text-xs" style={{ color: theme.colors.text.light }}>
+                💡 Click map to jump anywhere • Zoom with mouse wheel
               </p>
             </div>
           </div>

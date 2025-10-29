@@ -10,37 +10,36 @@ interface SidebarToggleProps {
 export default function SidebarToggle({ isOpen, onToggle }: SidebarToggleProps) {
   return (
     <motion.button
-      initial={{ scale: 0, rotate: -180 }}
-      animate={{ scale: 1, rotate: 0 }}
-      whileHover={{ scale: 1.1, rotate: 5 }}
-      whileTap={{ scale: 0.9 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       onClick={onToggle}
-      className="fixed top-8 left-8 z-30 p-4 rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-white/50"
+      className="fixed top-6 left-6 z-30 w-11 h-11 rounded-full shadow-lg flex items-center justify-center transition-colors"
       style={{
-        background: 'linear-gradient(135deg, #7ED957 0%, #5DA5DB 100%)',
-        boxShadow: '0 8px 24px rgba(126, 217, 87, 0.4)'
+        background: isOpen ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        border: `1px solid ${isOpen ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
       }}
-      aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
     >
-      <div className="w-7 h-7 flex flex-col justify-center items-center gap-2">
-        <motion.span
-          animate={isOpen ? { rotate: 45, y: 10 } : { rotate: 0, y: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="w-full h-1 bg-white rounded-full shadow-sm"
-        />
-        <motion.span
-          animate={isOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="w-full h-1 bg-white rounded-full shadow-sm"
-        />
-        <motion.span
-          animate={isOpen ? { rotate: -45, y: -10 } : { rotate: 0, y: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="w-full h-1 bg-white rounded-full shadow-sm"
-        />
-      </div>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={isOpen ? '#FFF' : '#1F2937'}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {isOpen ? (
+          <path d="M18 6L6 18M6 6l12 12" />
+        ) : (
+          <>
+            <path d="M3 12h18" />
+            <path d="M3 6h18" />
+            <path d="M3 18h18" />
+          </>
+        )}
+      </svg>
     </motion.button>
   )
 }
-

@@ -1,174 +1,138 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import mapboxgl from 'mapbox-gl'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface MinimapProps {
   isVisible: boolean
-  playerPosition: { lng: number; lat: number }
-  landmarks: Array<{
-    id: string
-    name: string
-    coordinates: [number, number]
-    visited: boolean
-  }>
+  playerLat: number
+  playerLng: number
+  playerBearing: number
 }
 
-export default function Minimap({ isVisible, playerPosition, landmarks }: MinimapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null)
-  const map = useRef<mapboxgl.Map | null>(null)
-  const playerMarker = useRef<mapboxgl.Marker | null>(null)
-  const landmarkMarkers = useRef<mapboxgl.Marker[]>([])
+export default function Minimap({ isVisible, playerLat, playerLng, playerBearing }: MinimapProps) {
+  const minimapContainerRef = useRef<HTMLDivElement>(null)
+  const minimapRef = useRef<mapboxgl.Map | null>(null)
+  const markerRef = useRef<mapboxgl.Marker | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // Initialize minimap
   useEffect(() => {
-    if (!mapContainer.current || map.current || !isVisible) return
+    if (!isVisible || !minimapContainerRef.current || minimapRef.current) return
 
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    if (!token) {
+      console.warn('Mapbox token not found - Minimap disabled')
+      return
+    }
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11',
-      center: [playerPosition.lng, playerPosition.lat],
-      zoom: 14, // Wider view for better navigation
-      interactive: false, // No interaction on minimap
+    mapboxgl.accessToken = token
+
+    const map = new mapboxgl.Map({
+      container: minimapContainerRef.current,
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [playerLng, playerLat],
+      zoom: 13.5,
+      pitch: 0,
+      bearing: 0,
+      interactive: false,
       attributionControl: false,
-      logoPosition: 'bottom-right'
     })
 
-    // Create player marker
-    const playerEl = document.createElement('div')
-    playerEl.className = 'minimap-player-marker'
-    playerEl.style.width = '12px'
-    playerEl.style.height = '12px'
-    playerEl.style.borderRadius = '50%'
-    playerEl.style.background = '#2196F3'
-    playerEl.style.border = '2px solid white'
-    playerEl.style.boxShadow = '0 0 8px rgba(33, 150, 243, 0.8)'
+    map.on('load', () => {
+      setIsLoaded(true)
+      minimapRef.current = map
 
-    playerMarker.current = new mapboxgl.Marker(playerEl)
-      .setLngLat([playerPosition.lng, playerPosition.lat])
-      .addTo(map.current)
+      // Create custom player marker with direction
+      const el = document.createElement('div')
+      el.style.width = '24px'
+      el.style.height = '24px'
+      el.innerHTML = `
+        <div style="
+          width: 24px;
+          height: 24px;
+          background: linear-gradient(135deg, #7ED957 0%, #5DA5DB 100%);
+          border: 2px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: rotate(${playerBearing}deg);
+        ">
+          <div style="
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 8px solid white;
+            margin-bottom: 2px;
+          "></div>
+        </div>
+      `
+
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([playerLng, playerLat])
+        .addTo(map)
+
+      markerRef.current = marker
+    })
 
     return () => {
-      landmarkMarkers.current.forEach(marker => marker.remove())
-      playerMarker.current?.remove()
-      map.current?.remove()
-      map.current = null
+      if (markerRef.current) markerRef.current.remove()
+      if (minimapRef.current) {
+        minimapRef.current.remove()
+        minimapRef.current = null
+      }
     }
   }, [isVisible])
 
-  // Update player position
   useEffect(() => {
-    if (!map.current || !playerMarker.current) return
+    if (minimapRef.current && isLoaded) {
+      minimapRef.current.setCenter([playerLng, playerLat])
 
-    map.current.setCenter([playerPosition.lng, playerPosition.lat])
-    playerMarker.current.setLngLat([playerPosition.lng, playerPosition.lat])
-  }, [playerPosition])
-
-  // Update landmark markers
-  useEffect(() => {
-    if (!map.current) return
-
-    // Remove old markers
-    landmarkMarkers.current.forEach(marker => marker.remove())
-    landmarkMarkers.current = []
-
-    // Add landmark markers
-    landmarks.forEach(landmark => {
-      const el = document.createElement('div')
-      el.style.width = '8px'
-      el.style.height = '8px'
-      el.style.borderRadius = '50%'
-      el.style.background = landmark.visited ? '#FFD700' : '#999'
-      el.style.border = '1px solid #000'
-      el.style.boxShadow = landmark.visited 
-        ? '0 0 6px rgba(255, 215, 0, 0.8)' 
-        : '0 0 2px rgba(0, 0, 0, 0.5)'
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat(landmark.coordinates)
-        .addTo(map.current!)
-
-      landmarkMarkers.current.push(marker)
-    })
-  }, [landmarks])
+      if (markerRef.current) {
+        markerRef.current.setLngLat([playerLng, playerLat])
+        const el = markerRef.current.getElement()
+        const innerDiv = el.querySelector('div')
+        if (innerDiv) {
+          innerDiv.style.transform = `rotate(${playerBearing}deg)`
+        }
+      }
+    }
+  }, [playerLat, playerLng, playerBearing, isLoaded])
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
+          initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-4 left-4 z-20"
-          style={{
-            width: '240px',
-            height: '240px'
-          }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          className="fixed bottom-6 left-6 z-30"
         >
-          <div
-            className="relative w-full h-full rounded-xl overflow-hidden"
-            style={{
-              border: '4px solid #4A7C24',
-              boxShadow: '0 8px 0 #2E5F1A, 0 12px 24px rgba(0,0,0,0.5)',
-              imageRendering: 'pixelated'
-            }}
-          >
-            {/* Map container */}
-            <div ref={mapContainer} className="w-full h-full" />
-
-            {/* Title overlay */}
+          <div className="relative">
+            {/* Minimap Label */}
+            <div className="absolute -top-8 left-0 z-10 bg-white/95 px-3 py-1 rounded-lg shadow-md border-2 border-blue-500">
+              <span className="text-xs font-bold text-blue-600">📍 YOUR LOCATION</span>
+            </div>
+            
             <div
-              className="absolute top-2 left-2 px-2 py-1 rounded"
+              className="rounded-2xl overflow-hidden shadow-lg"
               style={{
-                background: 'rgba(74, 124, 36, 0.9)',
-                border: '2px solid #4A7C24',
-                fontFamily: 'monospace',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                color: '#FFD700',
-                textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
+                width: '200px',
+                height: '200px',
+                border: '4px solid rgba(93, 165, 219, 0.95)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,255,255,0.8)'
               }}
             >
-              📍 MINIMAP
+              <div ref={minimapContainerRef} className="w-full h-full" />
             </div>
-
-            {/* Legend */}
-            <div
-              className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded text-xs"
-              style={{
-                background: 'rgba(0, 0, 0, 0.7)',
-                fontFamily: 'monospace',
-                color: '#FFF',
-                fontSize: '9px'
-              }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-blue-500 border border-white" />
-                <span>You</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-yellow-500 border border-black" />
-                <span>Visited</span>
-                <div className="w-2 h-2 rounded-full bg-gray-500 border border-black ml-2" />
-                <span>New</span>
-              </div>
-            </div>
-
-            {/* Pixelated corners */}
-            <div className="absolute top-0 left-0 w-2 h-2 bg-black/30" style={{ imageRendering: 'pixelated' }} />
-            <div className="absolute top-0 right-0 w-2 h-2 bg-black/30" style={{ imageRendering: 'pixelated' }} />
-            <div className="absolute bottom-0 left-0 w-2 h-2 bg-black/30" style={{ imageRendering: 'pixelated' }} />
-            <div className="absolute bottom-0 right-0 w-2 h-2 bg-black/30" style={{ imageRendering: 'pixelated' }} />
           </div>
         </motion.div>
       )}
     </AnimatePresence>
   )
 }
-
-

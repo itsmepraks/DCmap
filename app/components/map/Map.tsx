@@ -39,6 +39,7 @@ export default function Map({
   const [playerBearing, setPlayerBearing] = useState(0)
   const [isMoving, setIsMoving] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
+  const [isThirdPersonView, setIsThirdPersonView] = useState(false)
 
   useEffect(() => {
     // Only initialize once
@@ -86,6 +87,24 @@ export default function Map({
 
       // Add navigation controls
       mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
+      // Add click-to-teleport functionality (when NOT walking)
+      mapInstance.on('click', (e) => {
+        if (!isWalking) {
+          const { lng, lat } = e.lngLat
+          setPlayerPosition({ lng, lat })
+          
+          // Smooth fly-to animation
+          mapInstance.flyTo({
+            center: [lng, lat],
+            zoom: Math.max(mapInstance.getZoom(), 14),
+            duration: 1500,
+            essential: true
+          })
+          
+          console.log(`📍 Teleported to: ${lng.toFixed(4)}, ${lat.toFixed(4)}`)
+        }
+      })
 
       mapInstance.on('load', () => {
         console.log('✅ Map loaded successfully!')
@@ -182,47 +201,62 @@ export default function Map({
     }
   }, [])
 
-  // Handle 3D view toggle with smooth animation
+  // Handle 3D view toggle with DRAMATIC smooth animation
   useEffect(() => {
     if (!map) return
 
+    // Dramatic 3D transformation - tilt up and zoom for building view
     map.easeTo({
-      pitch: is3D ? 60 : 0,
-      duration: 1000,
-      easing: (t) => t * (2 - t) // Smooth ease-out
+      pitch: is3D ? 65 : 0,           // More dramatic tilt in 3D
+      zoom: is3D ? 16 : 11,            // Zoom in to see buildings better in 3D
+      duration: 1500,                  // Longer transition for dramatic effect
+      easing: (t) => t < 0.5 
+        ? 4 * t * t * t                // Ease-in cubic
+        : 1 - Math.pow(-2 * t + 2, 3) / 2  // Ease-out cubic
     })
 
-    console.log(`🎮 ${is3D ? 'Entering' : 'Exiting'} 3D mode`)
+    console.log(`🎮 ${is3D ? 'Entering DRAMATIC 3D mode' : 'Returning to 2D overview'}`)
   }, [map, is3D])
 
-  // Minecraft-style first-person walking controls
+  // True first-person walking controls - realistic human perspective
   useEffect(() => {
     if (!map || !isWalking) return
 
-    // Movement speed (meters per second)
-    const WALK_SPEED = 0.00008 // Adjusted for Minecraft-like feel
-    const RUN_SPEED = 0.00016 // 2x speed when running
-    const TURN_SPEED = 0.5
+    // Movement speed (meters per second) - Professional and smooth
+    const WALK_SPEED = 0.00015 // Smooth walking speed
+    const RUN_SPEED = 0.00030 // Smooth running speed (2x)
+    const MOUSE_SENSITIVITY = 0.35 // Refined look around sensitivity
+    const MOVEMENT_SMOOTHING = 0.15 // Interpolation for smooth movement
 
     // Keys currently pressed
     const keys: { [key: string]: boolean } = {}
     let isShiftPressed = false
     
-    // Mouse state for looking around
+    // Mouse state for smooth looking around
     let isDragging = false
     let lastMouseX = 0
     let lastMouseY = 0
+    let currentMouseVelocityX = 0
+    let currentMouseVelocityY = 0
 
-    // Enter true first-person street mode with natural perspective
+    // Camera view modes
+    let isBirdsEye = false
+    let isThirdPerson = false  // Third-person mode where you see your character
+
+    // Enter Street View-like perspective - natural human eye level
     const center = map.getCenter()
     map.easeTo({
-      pitch: 70, // Natural eye-level view (like real person)
-      zoom: 18.5, // Natural street level - not too close
+      pitch: 60, // Natural perspective like Street View
+      zoom: 18, // Perfect street level view
       bearing: 0,
-      duration: 1000
+      duration: 1500
     })
 
-    console.log('🚶 Walking mode activated! Use WASD to move, drag to look around')
+    // Keep zoom enabled for better exploration!
+    map.scrollZoom.enable()  // Allow zooming even while walking
+    map.dragPan.disable()     // Disable drag to avoid conflicts
+
+    console.log('🚶 TRUE First-Person Mode! Use WASD to move, Mouse to look around, Scroll to zoom')
 
     // Keyboard controls
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -235,6 +269,43 @@ export default function Map({
         isShiftPressed = true
         setIsRunning(true)
       }
+      // V key to toggle between street view and overhead view
+      if (key === 'v') {
+        e.preventDefault()
+        if (!isThirdPerson) {
+          isBirdsEye = !isBirdsEye
+          map.easeTo({
+            pitch: isBirdsEye ? 85 : 60, // Overhead vs Street View
+            zoom: isBirdsEye ? 16 : 18,
+            duration: 800
+          })
+          console.log(`📷 Switched to ${isBirdsEye ? 'Overhead' : 'Street View'} perspective`)
+        }
+      }
+      // T key to toggle third-person view (see your character)
+      if (key === 't') {
+        e.preventDefault()
+        isThirdPerson = !isThirdPerson
+        setIsThirdPersonView(isThirdPerson)
+        if (isThirdPerson) {
+          // Third-person: Camera behind and above character
+          isBirdsEye = false
+          map.easeTo({
+            pitch: 45,  // Look down at character from behind
+            zoom: 18,   // Far enough to see character
+            duration: 1000
+          })
+          console.log('🎮 Switched to THIRD-PERSON view - You can see your character!')
+        } else {
+          // Return to street view
+          map.easeTo({
+            pitch: 60,
+            zoom: 18,
+            duration: 1000
+          })
+          console.log('👀 Returned to Street View')
+        }
+      }
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -246,13 +317,14 @@ export default function Map({
       }
     }
 
-    // Mouse controls for looking around
+    // Smooth mouse look controls - like FPS games
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 0) { // Left click
+      if (e.button === 0) { // Left click to activate looking
         isDragging = true
         lastMouseX = e.clientX
         lastMouseY = e.clientY
-        map.getCanvas().style.cursor = 'grabbing'
+        map.getCanvas().style.cursor = 'crosshair'
+        e.preventDefault()
       }
     }
 
@@ -262,13 +334,19 @@ export default function Map({
       const deltaX = e.clientX - lastMouseX
       const deltaY = e.clientY - lastMouseY
 
-      // Rotate view (bearing)
-      const newBearing = map.getBearing() + deltaX * 0.3
+      // Smooth velocity-based rotation (like modern FPS games)
+      currentMouseVelocityX = deltaX * MOUSE_SENSITIVITY
+      currentMouseVelocityY = deltaY * MOUSE_SENSITIVITY
+
+      // Rotate view horizontally (bearing) - unlimited rotation
+      const newBearing = map.getBearing() + currentMouseVelocityX
       map.setBearing(newBearing)
 
-      // Adjust pitch (looking up/down) - natural head movement range
+      // Look up/down (pitch) - natural Street View range
       const currentPitch = map.getPitch()
-      const newPitch = Math.max(30, Math.min(85, currentPitch - deltaY * 0.2))
+      const minPitch = isBirdsEye ? 40 : 30   // Natural street view minimum
+      const maxPitch = isBirdsEye ? 85 : 80   // Can look up at buildings
+      const newPitch = Math.max(minPitch, Math.min(maxPitch, currentPitch - currentMouseVelocityY))
       map.setPitch(newPitch)
 
       lastMouseX = e.clientX
@@ -277,6 +355,8 @@ export default function Map({
 
     const handleMouseUp = () => {
       isDragging = false
+      currentMouseVelocityX = 0
+      currentMouseVelocityY = 0
       map.getCanvas().style.cursor = ''
     }
 
@@ -327,29 +407,40 @@ export default function Map({
       // Update moving state
       setIsMoving(moving)
 
-      // Apply movement with realistic head bobbing
+      // Apply SMOOTH movement with interpolation
       if (deltaLng !== 0 || deltaLat !== 0) {
         // Increment walk cycle for bobbing effect
-        walkCycle += isShiftPressed ? 0.15 : 0.08
+        walkCycle += isShiftPressed ? 0.20 : 0.12
         
         // Calculate subtle head bob (like real person walking)
         const bobIntensity = isShiftPressed ? 0.3 : 0.15
         const pitchBob = Math.sin(walkCycle) * bobIntensity
         const zoomBob = Math.sin(walkCycle * 2) * 0.05
         
-        // Apply natural camera bob
-        const basePitch = 70
-        map.setPitch(basePitch + pitchBob)
-        map.setZoom(18.5 + zoomBob)
+        // Apply smooth camera bob - preserves current view mode
+        const currentBasePitch = map.getPitch()
+        const targetPitch = Math.max(0, Math.min(60, currentBasePitch + pitchBob))
+        map.setPitch(targetPitch)
         
-        const newCenter = [center.lng + deltaLng, center.lat + deltaLat]
-        map.setCenter(newCenter as [number, number])
-        setPlayerPosition({ lng: newCenter[0], lat: newCenter[1] })
+        // Don't override user's zoom - only bob slightly
+        const currentZoom = map.getZoom()
+        const targetZoom = currentZoom + zoomBob
+        map.setZoom(targetZoom)
+        
+        // SMOOTH interpolation for position movement
+        const newLng = center.lng + (deltaLng * (1 + MOVEMENT_SMOOTHING))
+        const newLat = center.lat + (deltaLat * (1 + MOVEMENT_SMOOTHING))
+        
+        map.easeTo({
+          center: [newLng, newLat],
+          duration: 50, // Very short duration for smooth feel
+          easing: t => t  // Linear easing for responsive feel
+        })
+        
+        setPlayerPosition({ lng: newLng, lat: newLat })
       } else {
         // Reset to neutral position when stopped
         walkCycle = 0
-        map.setPitch(70)
-        map.setZoom(18.5)
       }
 
       // Update bearing
@@ -425,6 +516,7 @@ export default function Map({
       // Reset movement states
       setIsMoving(false)
       setIsRunning(false)
+      setIsThirdPersonView(false)
 
       // Re-enable default interactions
       map.scrollZoom.enable()
@@ -453,7 +545,18 @@ export default function Map({
           <TreesLayer visible={layersVisible.trees} season={currentSeason} />
           <MuseumsLayer visible={layersVisible.museums} />
           <LandmarksLayer map={map} visible={layersVisible.landmarks} visitedLandmarks={visitedLandmarks} />
+          {/* Show starting position when NOT walking */}
           {!isWalking && (
+            <PlayerAvatar 
+              map={map}
+              position={playerPosition}
+              bearing={playerBearing}
+              isMoving={false}
+              isRunning={false}
+            />
+          )}
+          {/* Show character in third-person mode when walking */}
+          {(isThirdPersonView && isWalking) && (
             <PlayerAvatar 
               map={map}
               position={playerPosition}

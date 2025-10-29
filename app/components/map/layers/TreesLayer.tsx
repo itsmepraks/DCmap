@@ -127,7 +127,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
           console.log('✅ Added trees-source')
         }
 
-        // Add cluster circle layer with seasonal color (will update based on season)
+        // Add cluster circle layer with ENHANCED seasonal visibility for 3D
         if (!map.getLayer('trees-clusters')) {
           map.addLayer({
             id: 'trees-clusters',
@@ -137,20 +137,42 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
             paint: {
               'circle-color': '#4CAF50',  // Default green, will change by season
               'circle-radius': [
-                'step',
-                ['get', 'point_count'],
-                15,   // Small clusters
-                10,
-                20,   // Medium clusters
-                25,
-                25    // Large clusters
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, [
+                  'step',
+                  ['get', 'point_count'],
+                  12,   // Small clusters when far
+                  10,
+                  18,   // Medium clusters when far
+                  25,
+                  22    // Large clusters when far
+                ],
+                18, [
+                  'step',
+                  ['get', 'point_count'],
+                  25,   // Small clusters when close (3D mode)
+                  10,
+                  35,   // Medium clusters when close
+                  25,
+                  45    // Large clusters when close - VERY VISIBLE
+                ]
               ],
-              'circle-opacity': 0.8,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#FFF'
+              'circle-opacity': 0.85,
+              'circle-stroke-width': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 2,
+                18, 4  // Thicker stroke when close
+              ],
+              'circle-stroke-color': '#FFF',
+              'circle-blur': 0.15,  // Slight blur for depth effect
+              'circle-pitch-alignment': 'map'  // Align with terrain in 3D
             }
           })
-          console.log('✅ Added trees-clusters layer')
+          console.log('✅ Added trees-clusters layer with ENHANCED 3D visibility')
         }
 
         // Add cluster count layer
@@ -172,7 +194,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
           console.log('✅ Added trees-cluster-count layer')
         }
 
-        // Add unclustered tree points layer
+        // Add unclustered tree points layer with enhanced 3D visibility
         if (!map.getLayer('trees-unclustered')) {
           map.addLayer({
             id: 'trees-unclustered',
@@ -181,11 +203,26 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
             filter: ['!', ['has', 'point_count']],
             layout: {
               'icon-image': `tree-${season}`,
-              'icon-size': 0.8,
-              'icon-allow-overlap': false
+              'icon-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 0.6,   // Smaller when zoomed out
+                14, 1.0,   // Normal at medium zoom
+                18, 1.8    // MUCH LARGER when zoomed in (3D/walk mode)
+              ],
+              'icon-allow-overlap': true,  // Allow trees to overlap for density
+              'icon-pitch-alignment': 'viewport',  // Face camera in 3D
+              'icon-rotation-alignment': 'viewport'
+            },
+            paint: {
+              'icon-opacity': 0.95,
+              'icon-halo-color': '#FFFFFF',
+              'icon-halo-width': 2,
+              'icon-halo-blur': 1
             }
           })
-          console.log(`✅ Added trees-unclustered layer with season: ${season}`)
+          console.log(`✅ Added trees-unclustered layer with ENHANCED 3D visibility`)
         }
 
         // Set initial visibility
@@ -320,10 +357,14 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
         }
         
         // Then remove layers and source
-        if (map.getLayer('trees-unclustered')) map.removeLayer('trees-unclustered')
-        if (map.getLayer('trees-cluster-count')) map.removeLayer('trees-cluster-count')
-        if (map.getLayer('trees-clusters')) map.removeLayer('trees-clusters')
-        if (map.getSource('trees-source')) map.removeSource('trees-source')
+        try {
+          if (map.getLayer && map.getLayer('trees-unclustered')) map.removeLayer('trees-unclustered')
+          if (map.getLayer && map.getLayer('trees-cluster-count')) map.removeLayer('trees-cluster-count')
+          if (map.getLayer && map.getLayer('trees-clusters')) map.removeLayer('trees-clusters')
+          if (map.getSource && map.getSource('trees-source')) map.removeSource('trees-source')
+        } catch (error) {
+          console.debug('Trees cleanup skipped:', error)
+        }
       }
     }
   }, [map])
@@ -334,14 +375,18 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
 
     const visibility = visible ? 'visible' : 'none'
     
-    if (map.getLayer('trees-clusters')) {
-      map.setLayoutProperty('trees-clusters', 'visibility', visibility)
-    }
-    if (map.getLayer('trees-cluster-count')) {
-      map.setLayoutProperty('trees-cluster-count', 'visibility', visibility)
-    }
-    if (map.getLayer('trees-unclustered')) {
-      map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
+    try {
+      if (map.getLayer && map.getLayer('trees-clusters')) {
+        map.setLayoutProperty('trees-clusters', 'visibility', visibility)
+      }
+      if (map.getLayer && map.getLayer('trees-cluster-count')) {
+        map.setLayoutProperty('trees-cluster-count', 'visibility', visibility)
+      }
+      if (map.getLayer && map.getLayer('trees-unclustered')) {
+        map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
+      }
+    } catch (error) {
+      console.debug('Trees visibility update skipped:', error)
     }
 
     console.log(`🌳 TreesLayer visibility: ${visibility}`)
@@ -376,27 +421,31 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
         winter: '#B0BEC5'   // GRAY
       }
 
-      // Update tree icons
-      if (map.getLayer('trees-unclustered')) {
-        const iconName = `tree-${season}`
-        console.log(`🍂 Changing season to: ${season}, using icon: ${iconName}`)
-        
-        if (map.hasImage(iconName)) {
-          map.setLayoutProperty('trees-unclustered', 'icon-image', iconName)
-          console.log(`✅ Tree icons changed to: ${season}`)
+      try {
+        // Update tree icons
+        if (map.getLayer && map.getLayer('trees-unclustered')) {
+          const iconName = `tree-${season}`
+          console.log(`🍂 Changing season to: ${season}, using icon: ${iconName}`)
+          
+          if (map.hasImage(iconName)) {
+            map.setLayoutProperty('trees-unclustered', 'icon-image', iconName)
+            console.log(`✅ Tree icons changed to: ${season}`)
+          } else {
+            console.error(`❌ Icon not found: ${iconName}`)
+          }
         } else {
-          console.error(`❌ Icon not found: ${iconName}`)
+          console.debug('trees-unclustered layer not yet available')
         }
-      } else {
-        console.warn('⚠️ trees-unclustered layer not found')
-      }
 
-      // Update cluster colors to match season
-      if (map.getLayer('trees-clusters')) {
-        map.setPaintProperty('trees-clusters', 'circle-color', seasonColors[season])
-        console.log(`✅ Cluster color changed to: ${seasonColors[season]} (${season})`)
-      } else {
-        console.warn('⚠️ trees-clusters layer not found')
+        // Update cluster colors to match season
+        if (map.getLayer && map.getLayer('trees-clusters')) {
+          map.setPaintProperty('trees-clusters', 'circle-color', seasonColors[season])
+          console.log(`✅ Cluster color changed to: ${seasonColors[season]} (${season})`)
+        } else {
+          console.debug('trees-clusters layer not yet available')
+        }
+      } catch (error) {
+        console.debug('Season update skipped:', error)
       }
     }
   }, [map, season])

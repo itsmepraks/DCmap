@@ -119,7 +119,7 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
           console.log('✅ Museums source added')
         }
 
-        // Add layer
+        // Add layer with enhanced 3D visibility
         if (!map.getLayer(LAYER_ID)) {
           map.addLayer({
             id: LAYER_ID,
@@ -127,12 +127,44 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
             source: SOURCE_ID,
             layout: {
               'icon-image': 'museum-icon',
-              'icon-size': 1,
+              'icon-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 0.8,   // Smaller when zoomed out
+                14, 1.5,   // Larger at medium zoom
+                18, 2.5    // HUGE when zoomed in close (3D/walk mode)
+              ],
               'icon-allow-overlap': true,
+              'icon-ignore-placement': true,  // Always visible, even in crowded areas
+              'icon-pitch-alignment': 'viewport',  // Always face camera in 3D
+              'text-field': ['get', 'NAME'],
+              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+              'text-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 0,      // No text when far
+                14, 12,     // Medium text
+                18, 16      // Large text when close
+              ],
+              'text-offset': [0, 2],
+              'text-anchor': 'top',
+              'text-optional': true,
               visibility: visible ? 'visible' : 'none',
             },
+            paint: {
+              'icon-opacity': 1,
+              'icon-halo-color': '#5DA5DB',
+              'icon-halo-width': 3,
+              'icon-halo-blur': 2,
+              'text-color': '#2C1810',
+              'text-halo-color': '#FFFFFF',
+              'text-halo-width': 3,
+              'text-halo-blur': 1
+            }
           })
-          console.log('✅ Museums layer added with visibility:', visible ? 'visible' : 'none')
+          console.log('✅ Museums layer added with ENHANCED 3D visibility')
         }
 
         // Add click handler for popups

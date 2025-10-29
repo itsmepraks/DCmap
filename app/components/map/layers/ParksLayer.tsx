@@ -80,8 +80,13 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
     // Cleanup on unmount
     return () => {
       if (map && isInitialized.current) {
-        if (map.getLayer('parks-seasonal')) {
-          map.removeLayer('parks-seasonal')
+        try {
+          if (map.getLayer && map.getLayer('parks-seasonal')) {
+            map.removeLayer('parks-seasonal')
+          }
+        } catch (error) {
+          // Map might be removed already
+          console.debug('Parks layer cleanup skipped:', error)
         }
       }
     }
@@ -93,8 +98,12 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
 
     const visibility = visible ? 'visible' : 'none'
     
-    if (map.getLayer('parks-seasonal')) {
-      map.setLayoutProperty('parks-seasonal', 'visibility', visibility)
+    try {
+      if (map.getLayer && map.getLayer('parks-seasonal')) {
+        map.setLayoutProperty('parks-seasonal', 'visibility', visibility)
+      }
+    } catch (error) {
+      console.debug('ParksLayer visibility update skipped:', error)
     }
 
     console.log(`🌳 ParksLayer visibility: ${visibility}`)
@@ -132,12 +141,16 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
       const colors = seasonColors[season]
 
       // Update park colors
-      if (map.getLayer('parks-seasonal')) {
-        map.setPaintProperty('parks-seasonal', 'fill-color', colors.fill)
-        map.setPaintProperty('parks-seasonal', 'fill-outline-color', colors.outline)
-        console.log(`✅ Park colors changed to: ${colors.fill} (${season})`)
-      } else {
-        console.warn('⚠️ parks-seasonal layer not found')
+      try {
+        if (map.getLayer && map.getLayer('parks-seasonal')) {
+          map.setPaintProperty('parks-seasonal', 'fill-color', colors.fill)
+          map.setPaintProperty('parks-seasonal', 'fill-outline-color', colors.outline)
+          console.log(`✅ Park colors changed to: ${colors.fill} (${season})`)
+        } else {
+          console.debug('parks-seasonal layer not yet available')
+        }
+      } catch (error) {
+        console.debug('Park color update skipped:', error)
       }
     }
   }, [map, season])

@@ -160,7 +160,6 @@ export default function Home() {
           isVisible={isWalkMode}
           visitedCount={gameProgress.visitedLandmarks.size}
           totalCount={10}
-          currentLocation={nearestLandmark?.name}
         />
         <CompassHUD
           isVisible={isWalkMode}
@@ -169,8 +168,9 @@ export default function Home() {
         />
         <Minimap
           isVisible={isWalkMode}
-          playerPosition={playerPosition}
-          landmarks={landmarksWithStatus}
+          playerLat={playerPosition.lat}
+          playerLng={playerPosition.lng}
+          playerBearing={currentBearing}
         />
         
         {/* Achievement Toast */}
