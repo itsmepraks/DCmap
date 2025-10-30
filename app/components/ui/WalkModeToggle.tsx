@@ -20,13 +20,13 @@ export default function WalkModeToggle({ isWalking, onToggle }: WalkModeTogglePr
       style={{
         width: '64px',
         height: '64px',
-        background: isWalking 
-          ? 'linear-gradient(145deg, #4A7C24 0%, #2E5F1A 100%)'
-          : 'linear-gradient(145deg, #7ED957 0%, #66BB6A 100%)',
+        background: isWalking
+          ? 'linear-gradient(145deg, #7ED957 0%, #5DA040 100%)'
+          : 'linear-gradient(145deg, #9FE870 0%, #7ED957 100%)',
         boxShadow: isWalking
-          ? 'inset -4px -4px 8px rgba(0,0,0,0.3), inset 4px 4px 8px rgba(255,255,255,0.1), 0 6px 0 #1E4F0A, 0 8px 12px rgba(0,0,0,0.4)'
-          : '0 8px 0 #4A7C24, 0 10px 20px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(0,0,0,0.2), inset 2px 2px 4px rgba(255,255,255,0.2)',
-        border: '3px solid #2E5F1A',
+          ? 'inset -4px -4px 8px rgba(0,0,0,0.3), inset 4px 4px 8px rgba(255,255,255,0.1), 0 6px 0 #5DA040, 0 8px 12px rgba(0,0,0,0.4)'
+          : '0 8px 0 #5DA040, 0 10px 20px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(0,0,0,0.2), inset 2px 2px 4px rgba(255,255,255,0.2)',
+        border: '3px solid #5DA040',
         borderRadius: '4px',
         transform: isWalking ? 'translateY(4px)' : 'translateY(0)',
         transition: 'all 0.1s ease',
@@ -78,20 +78,21 @@ export default function WalkModeToggle({ isWalking, onToggle }: WalkModeTogglePr
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         whileHover={{ opacity: 1, y: 0 }}
-        className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-2 rounded-lg whitespace-nowrap pointer-events-none"
+        className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-2 whitespace-nowrap pointer-events-none"
         style={{
-          background: 'linear-gradient(145deg, #4A7C24 0%, #2E5F1A 100%)',
-          border: '2px solid #1E4F0A',
-          boxShadow: '0 4px 0 #0E3F00, 0 6px 8px rgba(0,0,0,0.4)',
+          background: 'linear-gradient(145deg, #EFE6D5 0%, #F5EBD9 100%)',
+          border: '2px solid #D4501E',
+          borderRadius: '4px',
+          boxShadow: '0 4px 0 #B8431A, 0 6px 8px rgba(0,0,0,0.4)',
           imageRendering: 'pixelated'
         }}
       >
         <span 
           className="text-xs font-bold"
           style={{
-            color: '#FFF',
+            color: '#2C1810',
             fontFamily: 'monospace',
-            textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
+            textShadow: 'none'
           }}
         >
           {isWalking ? 'Exit Walk Mode (ESC)' : 'Walk Mode (WASD)'}
@@ -103,7 +104,7 @@ export default function WalkModeToggle({ isWalking, onToggle }: WalkModeTogglePr
             height: 0,
             borderLeft: '6px solid transparent',
             borderRight: '6px solid transparent',
-            borderTop: '6px solid #2E5F1A'
+            borderTop: '6px solid #D4501E'
           }}
         />
       </motion.div>

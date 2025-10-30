@@ -538,7 +538,7 @@ export default function Map({
 
   return (
     <>
-      <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full" />
+      <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full z-0" />
       {map && (
         <>
           <ParksLayer visible={layersVisible.trees} season={currentSeason} />

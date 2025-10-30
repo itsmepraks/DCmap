@@ -30,7 +30,7 @@ The minimap only appears when you're in **Walk Mode**. Here's how to use it:
 
 **Note:** The minimap needs your Mapbox token to be set up. If it's not showing, check your `.env.local` file has:
 ```
-NEXT_PUBLIC_MAPBOX_TOKEN=your_token_here
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_token_here
 ```
 
 ---
@@ -135,7 +135,7 @@ NEXT_PUBLIC_MAPBOX_TOKEN=your_token_here
 - Make sure you're in Walk Mode (green button pressed)
 - Look in **BOTTOM-LEFT corner** (not top-right)
 - Should see a label "📍 YOUR LOCATION" above it
-- Check that your Mapbox token is configured in `.env.local`
+- Check that your Mapbox token is configured in `.env.local` as `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
 
 **Trees not changing colors?**
 - Make sure "Greenery" layer is enabled

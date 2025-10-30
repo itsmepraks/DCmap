@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { minecraftTheme } from '@/app/lib/theme'
 
 interface SidebarToggleProps {
   isOpen: boolean
@@ -13,22 +14,38 @@ export default function SidebarToggle({ isOpen, onToggle }: SidebarToggleProps) 
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onToggle}
-      className="fixed top-6 left-6 z-30 w-11 h-11 rounded-full shadow-lg flex items-center justify-center transition-colors"
+      className="fixed top-6 left-6 z-50 w-14 h-14 shadow-lg flex items-center justify-center transition-all relative"
       style={{
-        background: isOpen ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(20px)',
-        border: `1px solid ${isOpen ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
+        background: isOpen 
+          ? `linear-gradient(145deg, ${minecraftTheme.colors.terracotta.base} 0%, ${minecraftTheme.colors.terracotta.dark} 100%)`
+          : `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
+        border: `${minecraftTheme.minecraft.borderWidth} solid ${minecraftTheme.colors.terracotta.base}`,
+        borderRadius: minecraftTheme.minecraft.borderRadius,
+        boxShadow: isOpen
+          ? minecraftTheme.minecraft.shadowPressed
+          : minecraftTheme.minecraft.shadowRaised,
+        imageRendering: minecraftTheme.minecraft.imageRendering,
+        transform: isOpen ? 'translateY(4px)' : 'translateY(0)'
       }}
     >
+      {/* Pixelated corners */}
+      <div className="absolute top-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+      <div className="absolute top-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+      <div className="absolute bottom-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+      <div className="absolute bottom-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+
       <svg
-        width="20"
-        height="20"
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
-        stroke={isOpen ? '#FFF' : '#1F2937'}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke={isOpen ? '#FFF' : minecraftTheme.colors.text.primary}
+        strokeWidth="2.5"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+        style={{
+          filter: isOpen ? 'drop-shadow(1px 1px 0 rgba(0,0,0,0.3))' : 'none'
+        }}
       >
         {isOpen ? (
           <path d="M18 6L6 18M6 6l12 12" />

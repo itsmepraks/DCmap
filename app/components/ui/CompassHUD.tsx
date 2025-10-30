@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { minecraftTheme } from '@/app/lib/theme'
 
 interface CompassHUDProps {
   isVisible: boolean
@@ -42,22 +43,36 @@ export default function CompassHUD({ isVisible, bearing, nearestLandmark }: Comp
         >
           {/* Compass */}
           <div
-            className="w-16 h-16 rounded-full shadow-lg mb-3 flex items-center justify-center relative"
+            className="w-20 h-20 shadow-lg mb-3 flex items-center justify-center relative"
             style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0, 0, 0, 0.1)'
+              background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
+              border: `${minecraftTheme.minecraft.borderWidth} solid ${minecraftTheme.colors.terracotta.base}`,
+              borderRadius: minecraftTheme.minecraft.borderRadius,
+              boxShadow: minecraftTheme.minecraft.shadowCard,
+              imageRendering: minecraftTheme.minecraft.imageRendering,
             }}
           >
+            {/* Pixelated corners */}
+            <div className="absolute top-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+            <div className="absolute top-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+            <div className="absolute bottom-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+            <div className="absolute bottom-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+
             <motion.div
               className="absolute inset-0 flex items-center justify-center"
               animate={{ rotate: compassRotation }}
               transition={{ type: 'spring', stiffness: 100, damping: 20 }}
             >
-              <div className="text-2xl">🧭</div>
+              <div className="text-3xl">🧭</div>
             </motion.div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-xs font-bold text-gray-900">
+              <div 
+                className="text-sm font-bold"
+                style={{ 
+                  color: minecraftTheme.colors.text.primary,
+                  fontFamily: 'monospace'
+                }}
+              >
                 {getCardinalDirection(bearing)}
               </div>
             </div>
@@ -68,21 +83,48 @@ export default function CompassHUD({ isVisible, bearing, nearestLandmark }: Comp
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="px-4 py-2.5 rounded-2xl shadow-lg"
+              className="px-4 py-3 shadow-lg relative"
               style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                minWidth: '180px'
+                background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.base} 100%)`,
+                border: `2px solid ${minecraftTheme.colors.accent.orange}`,
+                borderRadius: minecraftTheme.minecraft.borderRadius,
+                boxShadow: '0 4px 0 #D4501E, 0 6px 12px rgba(0,0,0,0.3)',
+                minWidth: '200px',
+                imageRendering: minecraftTheme.minecraft.imageRendering,
               }}
             >
-              <div className="text-[10px] font-medium text-gray-500 mb-0.5">
+              {/* Pixelated corners */}
+              <div className="absolute top-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute top-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute bottom-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute bottom-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+
+              <div 
+                className="text-[10px] font-bold mb-1"
+                style={{ 
+                  color: minecraftTheme.colors.text.light,
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.5px'
+                }}
+              >
                 🎯 NEAREST LANDMARK
               </div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div 
+                className="text-sm font-bold"
+                style={{ 
+                  color: minecraftTheme.colors.text.primary,
+                  fontFamily: 'monospace'
+                }}
+              >
                 {nearestLandmark.name}
               </div>
-              <div className="text-xs font-medium text-blue-600 mt-1">
+              <div 
+                className="text-xs font-bold mt-1"
+                style={{ 
+                  color: minecraftTheme.colors.terracotta.base,
+                  fontFamily: 'monospace'
+                }}
+              >
                 📍 {nearestLandmark.distance.toFixed(1)}km away
               </div>
             </motion.div>

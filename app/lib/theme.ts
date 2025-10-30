@@ -54,3 +54,38 @@ export const seasonColors = {
   }
 } as const
 
+export const minecraftTheme = {
+  colors: {
+    beige: {
+      light: '#F5EBD9',
+      base: '#EFE6D5',
+      dark: '#E0D4C0'
+    },
+    terracotta: {
+      light: '#F2A65A',
+      base: '#D4501E',
+      dark: '#B8431A'
+    },
+    accent: {
+      green: '#7ED957',
+      greenDark: '#5DA040',
+      blue: '#5DA5DB',
+      orange: '#F2A65A'
+    },
+    text: {
+      primary: '#2C1810',
+      secondary: '#6B5344',
+      light: '#8B7355'
+    }
+  },
+  minecraft: {
+    borderWidth: '3px',
+    borderRadius: '4px',
+    imageRendering: 'pixelated' as const,
+    pixelCornerSize: '1px',
+    shadowRaised: '0 8px 0 #B8431A, 0 10px 20px rgba(0,0,0,0.3)',
+    shadowPressed: 'inset -4px -4px 8px rgba(0,0,0,0.3), inset 4px 4px 8px rgba(255,255,255,0.1)',
+    shadowCard: '0 6px 0 #B8431A, 0 8px 16px rgba(0,0,0,0.3)'
+  }
+}
+

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { minecraftTheme } from '@/app/lib/theme'
 
 interface MinimapProps {
   isVisible: boolean
@@ -21,34 +22,54 @@ export default function Minimap({ isVisible, playerLat, playerLng, playerBearing
   useEffect(() => {
     if (!isVisible || !minimapContainerRef.current || minimapRef.current) return
 
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
     if (!token) {
-      console.warn('Mapbox token not found - Minimap disabled')
+      console.error('❌ Mapbox token not found - Minimap disabled')
+      console.error('Looking for: NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN')
       return
     }
 
+    console.log('✅ Initializing minimap with token:', token.substring(0, 20) + '...')
     mapboxgl.accessToken = token
 
-    const map = new mapboxgl.Map({
-      container: minimapContainerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [playerLng, playerLat],
-      zoom: 13.5,
-      pitch: 0,
-      bearing: 0,
-      interactive: false,
-      attributionControl: false,
-    })
+    console.log('🗺️ Minimap initializing at position:', playerLat, playerLng)
+    
+    try {
+      const map = new mapboxgl.Map({
+        container: minimapContainerRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [playerLng, playerLat],
+        zoom: 14,
+        pitch: 0,
+        bearing: 0,
+        interactive: false,
+        attributionControl: false,
+      })
 
-    map.on('load', () => {
-      setIsLoaded(true)
-      minimapRef.current = map
+      map.on('error', (e) => {
+        console.error('❌ Minimap error:', e.error || e)
+      })
+      
+      map.on('style.load', () => {
+        console.log('✅ Minimap style loaded')
+      })
 
-      // Create custom player marker with direction
-      const el = document.createElement('div')
-      el.style.width = '24px'
-      el.style.height = '24px'
-      el.innerHTML = `
+      map.on('load', () => {
+        console.log('✅ Minimap fully loaded and ready')
+        setIsLoaded(true)
+        minimapRef.current = map
+        
+        // Force a resize to ensure proper rendering
+        setTimeout(() => {
+          map.resize()
+          console.log('📐 Minimap resized')
+        }, 100)
+
+        // Create custom player marker with direction
+        const el = document.createElement('div')
+        el.style.width = '24px'
+        el.style.height = '24px'
+        el.innerHTML = `
         <div style="
           width: 24px;
           height: 24px;
@@ -76,8 +97,11 @@ export default function Minimap({ isVisible, playerLat, playerLng, playerBearing
         .setLngLat([playerLng, playerLat])
         .addTo(map)
 
-      markerRef.current = marker
-    })
+        markerRef.current = marker
+      })
+    } catch (error) {
+      console.error('❌ Failed to initialize minimap:', error)
+    }
 
     return () => {
       if (markerRef.current) markerRef.current.remove()
@@ -86,7 +110,7 @@ export default function Minimap({ isVisible, playerLat, playerLng, playerBearing
         minimapRef.current = null
       }
     }
-  }, [isVisible])
+  }, [isVisible, playerLat, playerLng])
 
   useEffect(() => {
     if (minimapRef.current && isLoaded) {
@@ -114,22 +138,65 @@ export default function Minimap({ isVisible, playerLat, playerLng, playerBearing
         >
           <div className="relative">
             {/* Minimap Label */}
-            <div className="absolute -top-8 left-0 z-10 bg-white/95 px-3 py-1 rounded-lg shadow-md border-2 border-blue-500">
-              <span className="text-xs font-bold text-blue-600">📍 YOUR LOCATION</span>
+            <div 
+              className="absolute -top-8 left-0 z-10 px-3 py-1 shadow-md relative"
+              style={{
+                background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
+                border: `2px solid ${minecraftTheme.colors.terracotta.base}`,
+                borderRadius: minecraftTheme.minecraft.borderRadius,
+                boxShadow: '0 4px 0 ' + minecraftTheme.colors.terracotta.dark + ', 0 6px 8px rgba(0,0,0,0.3)',
+                imageRendering: minecraftTheme.minecraft.imageRendering,
+              }}
+            >
+              {/* Pixelated corners */}
+              <div className="absolute top-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute top-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute bottom-0 left-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute bottom-0 right-0 w-1 h-1 bg-black/40" style={{ imageRendering: 'pixelated' }} />
+              
+              <span 
+                className="text-xs font-bold"
+                style={{ 
+                  color: minecraftTheme.colors.terracotta.base,
+                  fontFamily: 'monospace'
+                }}
+              >
+                📍 YOUR LOCATION
+              </span>
             </div>
 
             <div
-              className="rounded-2xl overflow-hidden shadow-lg"
+              className="shadow-lg relative"
               style={{
                 width: '200px',
                 height: '200px',
-                border: '4px solid rgba(93, 165, 219, 0.95)',
-                backdropFilter: 'blur(20px)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,255,255,0.8)'
+                border: `4px solid ${minecraftTheme.colors.terracotta.base}`,
+                borderRadius: minecraftTheme.minecraft.borderRadius,
+                overflow: 'hidden',
+                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 2px ${minecraftTheme.colors.beige.light}`,
+                imageRendering: minecraftTheme.minecraft.imageRendering,
               }}
             >
+              {/* Pixelated corners */}
+              <div className="absolute top-0 left-0 w-1 h-1 bg-black/40 z-10 pointer-events-none" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute top-0 right-0 w-1 h-1 bg-black/40 z-10 pointer-events-none" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute bottom-0 left-0 w-1 h-1 bg-black/40 z-10 pointer-events-none" style={{ imageRendering: 'pixelated' }} />
+              <div className="absolute bottom-0 right-0 w-1 h-1 bg-black/40 z-10 pointer-events-none" style={{ imageRendering: 'pixelated' }} />
+              
               <div ref={minimapContainerRef} className="w-full h-full" />
-              </div>
+              
+              {/* Loading indicator */}
+              {!isLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center z-20" style={{ background: minecraftTheme.colors.beige.dark }}>
+                  <div className="text-center">
+                    <div className="animate-spin text-2xl mb-2">🧭</div>
+                    <span style={{ color: minecraftTheme.colors.text.secondary, fontFamily: 'monospace', fontSize: '11px', fontWeight: 'bold' }}>
+                      LOADING MAP...
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       )}
