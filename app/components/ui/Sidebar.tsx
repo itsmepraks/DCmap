@@ -1,9 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import LayerToggle from './LayerToggle'
-import SeasonalControls from './controls/SeasonalControls'
-import { theme } from '@/app/lib/theme'
+import { useState } from 'react'
 import type { LayerVisibility, LayerId } from '@/app/types/map'
 
 interface SidebarProps {
@@ -19,22 +17,11 @@ interface SidebarProps {
   }
 }
 
-const layerConfigs = [
-  {
-    id: 'museums' as LayerId,
-    label: 'Museums',
-    description: 'Cultural institutions across D.C.',
-  },
-  {
-    id: 'trees' as LayerId,
-    label: 'Greenery',
-    description: 'Tree canopy and seasonal changes',
-  },
-  {
-    id: 'heatmap' as LayerId,
-    label: 'Heat Map',
-    description: 'Urban temperature visualization (Phase 2)',
-  },
+const seasons = [
+  { id: 'spring' as const, name: 'Spring', emoji: '🌸', color: '#FFB7D5' },
+  { id: 'summer' as const, name: 'Summer', emoji: '☀️', color: '#7ED957' },
+  { id: 'fall' as const, name: 'Fall', emoji: '🍂', color: '#FF8C42' },
+  { id: 'winter' as const, name: 'Winter', emoji: '❄️', color: '#8D6E63' }
 ]
 
 export default function Sidebar({
@@ -46,152 +33,171 @@ export default function Sidebar({
   onOpenStats,
   gameStats,
 }: SidebarProps) {
+  const [seasonPanelOpen, setSeasonPanelOpen] = useState(false)
+
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.aside
-          initial={{ x: -350, opacity: 0 }}
+          initial={{ x: -320, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: -350, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed top-0 left-0 h-full w-80 z-10 overflow-y-auto"
-          style={{
-            background: 'linear-gradient(135deg, #EFE6D5 0%, #F5EBD9 100%)',
-            boxShadow: theme.shadows.xl,
-            borderRight: `3px solid ${theme.colors.terracotta}`
-          }}
+          exit={{ x: -320, opacity: 0 }}
+          transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
+          className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-30 flex flex-col"
         >
-          <div className="p-5">
-            {/* Compact header */}
-            <div className="mb-5 pb-4 border-b-2" style={{ borderColor: theme.colors.terracotta }}>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#7ED957] via-[#5DA5DB] to-[#F2A65A] bg-clip-text text-transparent mb-1">
-                Anima DC
-              </h1>
-              <p className="text-xs font-medium" style={{ color: theme.colors.text.secondary }}>
-                Explore Washington DC
-              </p>
-            </div>
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-800">Anima DC</h1>
+            <p className="text-sm text-gray-500 mt-1">Explore Washington DC</p>
+          </div>
 
-            <div className="space-y-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: theme.colors.text.light }}>
-                Layers
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            {/* Map Layers Section */}
+            <div>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                Map Layers
               </h2>
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.08,
-                    },
-                  },
-                }}
-                className="space-y-3"
-              >
-                {layerConfigs.map((config) => (
-                  <LayerToggle
-                    key={config.id}
-                    id={config.id}
-                    label={config.label}
-                    description={config.description}
-                    enabled={layersVisible[config.id] ?? false}
-                    onToggle={() => onToggleLayer(config.id)}
-                  />
-                ))}
-              </motion.div>
-            </div>
-
-            {/* Seasonal Controls - Show when Trees layer is active */}
-            {layersVisible.trees && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="mt-4"
-              >
-                <SeasonalControls
-                  currentSeason={currentSeason}
-                  onSeasonChange={onSeasonChange}
-                />
-              </motion.div>
-            )}
-
-            {/* Compact Game Stats */}
-            {gameStats && onOpenStats && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-4"
-              >
-                <div
-                  className="p-3 rounded-lg"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(126, 217, 87, 0.15) 0%, rgba(93, 165, 219, 0.15) 100%)',
-                    border: '2px solid #7ED957',
-                    boxShadow: theme.shadows.sm
-                  }}
+              <div className="space-y-2">
+                {/* Museums Toggle */}
+                <button
+                  onClick={() => onToggleLayer('museums')}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3
-                      className="text-xs font-bold"
-                      style={{ color: theme.colors.text.primary }}
-                    >
-                      🎮 Progress
-                    </h3>
-                    <div
-                      className="text-sm font-bold"
-                      style={{ color: theme.colors.primary }}
-                    >
-                      {gameStats.visited}/{gameStats.total}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      layersVisible.museums ? 'bg-blue-500' : 'bg-gray-200'
+                    }`}>
+                      <span className="text-xl">🏛️</span>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-gray-800">Museums</div>
+                      <div className="text-xs text-gray-500">Cultural sites</div>
                     </div>
                   </div>
-                  
-                  {/* Compact progress bar */}
-                  <div
-                    className="h-2 rounded-full overflow-hidden mb-2"
-                    style={{
-                      background: 'rgba(0,0,0,0.1)'
-                    }}
+                  <div className={`w-11 h-6 rounded-full transition-colors ${
+                    layersVisible.museums ? 'bg-blue-500' : 'bg-gray-300'
+                  }`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform mt-0.5 ${
+                      layersVisible.museums ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
+                    }`} />
+                  </div>
+                </button>
+
+                {/* Greenery Toggle */}
+                <button
+                  onClick={() => onToggleLayer('trees')}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      layersVisible.trees ? 'bg-green-500' : 'bg-gray-200'
+                    }`}>
+                      <span className="text-xl">🌳</span>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-gray-800">Greenery</div>
+                      <div className="text-xs text-gray-500">Trees & parks</div>
+                    </div>
+                  </div>
+                  <div className={`w-11 h-6 rounded-full transition-colors ${
+                    layersVisible.trees ? 'bg-green-500' : 'bg-gray-300'
+                  }`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform mt-0.5 ${
+                      layersVisible.trees ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
+                    }`} />
+                  </div>
+                </button>
+
+                {/* Seasonal Controls - Collapsible */}
+                {layersVisible.trees && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="ml-13 mt-2 overflow-hidden"
                   >
+                    <button
+                      onClick={() => setSeasonPanelOpen(!seasonPanelOpen)}
+                      className="w-full flex items-center justify-between p-2 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      <span className="font-medium">Change Season</span>
+                      <span className={`transform transition-transform ${seasonPanelOpen ? 'rotate-180' : ''}`}>
+                        ▼
+                      </span>
+                    </button>
+                    
+                    {seasonPanelOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="grid grid-cols-2 gap-2 mt-2"
+                      >
+                        {seasons.map((season) => (
+                          <button
+                            key={season.id}
+                            onClick={() => onSeasonChange(season.id)}
+                            className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all ${
+                              currentSeason === season.id
+                                ? 'bg-gray-800 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            <span className="text-2xl">{season.emoji}</span>
+                            <span className="text-xs font-medium">{season.name}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
+            {/* Game Progress Section */}
+            {gameStats && onOpenStats && (
+              <div>
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Exploration Progress
+                </h2>
+                <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Landmarks Found</span>
+                    <span className="text-lg font-bold text-gray-800">
+                      {gameStats.visited}/{gameStats.total}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${(gameStats.visited / gameStats.total) * 100}%` }}
                       transition={{ duration: 0.5 }}
-                      style={{
-                        height: '100%',
-                        background: 'linear-gradient(90deg, #7ED957 0%, #FFD700 100%)'
-                      }}
+                      className="h-full bg-gradient-to-r from-green-400 to-blue-400"
                     />
                   </div>
 
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button
                     onClick={onOpenStats}
-                    className="w-full py-1.5 rounded-lg font-semibold text-xs"
-                    style={{
-                      background: 'linear-gradient(135deg, #7ED957 0%, #5DA5DB 100%)',
-                      color: '#FFF',
-                      border: '2px solid #4A7C24',
-                      boxShadow: theme.shadows.sm
-                    }}
+                    className="w-full py-2 px-4 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
                   >
-                    📊 View All
-                  </motion.button>
+                    View All Landmarks
+                  </button>
                 </div>
-              </motion.div>
+              </div>
             )}
+          </div>
 
-            <div className="mt-5 pt-4 border-t-2" style={{ borderColor: theme.colors.accent }}>
-              <p className="text-xs" style={{ color: theme.colors.text.light }}>
-                💡 Click map to jump anywhere • Zoom with mouse wheel
-              </p>
-            </div>
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-xs text-gray-500 text-center">
+              💡 Use WASD to walk • Drag to look around
+            </p>
           </div>
         </motion.aside>
       )}
     </AnimatePresence>
   )
 }
-

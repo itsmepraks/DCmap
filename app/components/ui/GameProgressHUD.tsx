@@ -23,7 +23,7 @@ export default function GameProgressHUD({
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -20, opacity: 0 }}
-          className="fixed top-28 right-6 z-30"
+          className="fixed top-6 right-6 z-20"
         >
           <div
             className="px-4 py-3 shadow-lg relative"

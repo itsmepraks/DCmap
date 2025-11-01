@@ -15,7 +15,7 @@ export default function WalkModeHUD({ isVisible }: WalkModeHUDProps) {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -20, opacity: 0 }}
-          className="fixed top-6 left-1/2 transform -translate-x-1/2 z-30"
+          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10"
         >
           <div
             className="px-6 py-3 shadow-lg relative"

@@ -39,7 +39,7 @@ export default function CompassHUD({ isVisible, bearing, nearestLandmark }: Comp
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 20, opacity: 0 }}
-          className="fixed top-6 right-6 z-30"
+          className="fixed top-32 right-6 z-20"
         >
           {/* Compass */}
           <div

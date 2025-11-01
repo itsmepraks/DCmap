@@ -246,10 +246,11 @@ export default function Map({
     // Enter Street View-like perspective - natural human eye level
     const center = map.getCenter()
     map.easeTo({
-      pitch: 60, // Natural perspective like Street View
-      zoom: 18, // Perfect street level view
+      pitch: 70, // Better forward-looking angle for immersion
+      zoom: 18.5, // Closer view for better detail
       bearing: 0,
-      duration: 1500
+      duration: 1200, // Faster transition
+      easing: (t) => t * (2 - t) // Smooth ease-out curve
     })
 
     // Keep zoom enabled for better exploration!
