@@ -1,0 +1,118 @@
+{
+  "type": "FeatureCollection",
+  "name": "dc_walkable_roads",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "constitution-ave-nw",
+        "class": "primary",
+        "name": "Constitution Ave NW",
+        "surface": "paved"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.050533, 38.889939],
+          [-77.044473, 38.892049],
+          [-77.036972, 38.892841],
+          [-77.03084, 38.893234]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "15th-street-nw",
+        "class": "secondary",
+        "name": "15th St NW",
+        "surface": "paved",
+        "bike": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.033881, 38.907514],
+          [-77.033537, 38.900847],
+          [-77.033184, 38.894342]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "national-mall-path",
+        "class": "path",
+        "name": "National Mall Footpath",
+        "surface": "gravel"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.041473, 38.889557],
+          [-77.035759, 38.889529],
+          [-77.029261, 38.889538]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "independence-ave-sw",
+        "class": "primary",
+        "name": "Independence Ave SW",
+        "surface": "paved"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.05087, 38.887508],
+          [-77.041947, 38.887733],
+          [-77.034038, 38.88779]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "jefferson-drive-sw",
+        "class": "pedestrian",
+        "name": "Jefferson Dr SW",
+        "surface": "paved"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.029962, 38.888955],
+          [-77.023634, 38.88896],
+          [-77.018143, 38.889289]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "rock-creek-trail",
+        "class": "path",
+        "name": "Rock Creek Trail",
+        "surface": "asphalt"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.052951, 38.904066],
+          [-77.049093, 38.907614],
+          [-77.044019, 38.910418]
+        ]
+      }
+    }
+  ]
+}
+
+

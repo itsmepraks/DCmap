@@ -6,16 +6,25 @@ import Sidebar from './components/ui/Sidebar'
 import SidebarToggle from './components/ui/SidebarToggle'
 import ThreeDToggle from './components/ui/ThreeDToggle'
 import WalkModeToggle from './components/ui/WalkModeToggle'
-import WalkModeHUD from './components/ui/WalkModeHUD'
-import Minimap from './components/ui/Minimap'
-import CompassHUD from './components/ui/CompassHUD'
-import GameProgressHUD from './components/ui/GameProgressHUD'
 import AchievementToast from './components/ui/AchievementToast'
 import StatsModal from './components/ui/StatsModal'
+import GameOverlay from './components/ui/GameOverlay'
+import QuestPanel from './components/ui/QuestPanel'
+import GameHUD from './components/ui/GameHUD'
+import OnboardingTutorial from './components/ui/OnboardingTutorial'
 import { MapProvider } from './lib/MapContext'
 import { loadGameProgress, visitLandmark, resetGameProgress, type GameProgress } from './lib/gameState'
+import { loadQuestProgress, saveQuestProgress, startQuest, checkQuestProgress, type Quest, type QuestProgress } from './lib/questSystem'
 
 export default function Home() {
+  return (
+    <MapProvider>
+      <HomeContent />
+    </MapProvider>
+  )
+}
+
+function HomeContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
@@ -26,15 +35,17 @@ export default function Home() {
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)
   const [isWalkMode, setIsWalkMode] = useState(false)
-  
+
   // Game state
   const [gameProgress, setGameProgress] = useState<GameProgress>(() => loadGameProgress())
   const [landmarks, setLandmarks] = useState<any[]>([])
-  const [playerPosition, setPlayerPosition] = useState({ lng: -77.0369, lat: 38.9072 })
-  const [currentBearing, setCurrentBearing] = useState(0)
-  const [nearestLandmark, setNearestLandmark] = useState<any>(null)
   const [achievement, setAchievement] = useState<any>(null)
   const [showStatsModal, setShowStatsModal] = useState(false)
+  
+  // Quest state
+  const [quests, setQuests] = useState<Quest[]>([])
+  const [questProgress, setQuestProgress] = useState<QuestProgress>(() => loadQuestProgress())
+  const [questCompletion, setQuestCompletion] = useState<any>(null)
 
   const handleToggleLayer = (layerId: keyof typeof layersVisible) => {
     setLayersVisible(prev => ({
@@ -73,12 +84,39 @@ export default function Home() {
       .catch(err => console.error('Failed to load landmarks:', err))
   }, [])
 
+  // Load quests data
+  useEffect(() => {
+    fetch('/data/quests.json')
+      .then(res => res.json())
+      .then(data => setQuests(data))
+      .catch(err => console.error('Failed to load quests:', err))
+  }, [])
+
   // Handle landmark discovery
   const handleLandmarkDiscovered = (landmarkId: string, landmarkData: any) => {
     if (gameProgress.visitedLandmarks.has(landmarkId)) return
 
     const newProgress = visitLandmark(landmarkId, gameProgress)
     setGameProgress(newProgress)
+
+    // Check quest progress
+    const questResult = checkQuestProgress(landmarkId, quests, questProgress)
+    setQuestProgress(questResult.progress)
+    
+    // Update quest objectives in state
+    if (questResult.updatedQuests.length > 0 || questResult.completedQuests.length > 0) {
+      setQuests(prevQuests => [...prevQuests]) // Trigger re-render
+    }
+
+    // Show quest completion if any
+    if (questResult.completedQuests.length > 0) {
+      const completedQuest = questResult.completedQuests[0]
+      setQuestCompletion({
+        title: completedQuest.title,
+        icon: completedQuest.icon,
+        rewards: completedQuest.rewards
+      })
+    }
 
     // Show achievement toast
     const landmark = landmarks.find(l => l.id === landmarkId)
@@ -93,29 +131,25 @@ export default function Home() {
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
   }
 
-  // Handle player position updates
-  const handlePlayerPositionChange = (position: any) => {
-    setPlayerPosition({ lng: position.lng, lat: position.lat })
-    setCurrentBearing(position.bearing)
-    setNearestLandmark(position.nearestLandmark)
+  // Handle starting a quest
+  const handleStartQuest = (questId: string) => {
+    const newProgress = startQuest(questId, questProgress)
+    setQuestProgress(newProgress)
   }
 
   // Handle game reset
   const handleResetProgress = () => {
     const newProgress = resetGameProgress()
     setGameProgress(newProgress)
+    // Also reset quests
+    const newQuestProgress = loadQuestProgress()
+    setQuestProgress(newQuestProgress)
+    // Reload quests to reset objectives
+    fetch('/data/quests.json')
+      .then(res => res.json())
+      .then(data => setQuests(data))
+      .catch(err => console.error('Failed to reload quests:', err))
   }
-
-  // ESC key to exit walk mode
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isWalkMode) {
-        setIsWalkMode(false)
-      }
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [isWalkMode])
 
   // Prepare landmarks with visited status
   const landmarksWithStatus = landmarks.map(l => ({
@@ -124,10 +158,9 @@ export default function Home() {
   }))
 
   return (
-    <MapProvider>
-      <main 
+    <main 
         className="relative w-full h-screen overflow-hidden" 
-        style={{ background: '#EFE6D5' }}
+        style={{ background: '#F5F0E8' }}
       >
         <Map 
           layersVisible={layersVisible} 
@@ -137,7 +170,6 @@ export default function Home() {
           landmarks={landmarks}
           visitedLandmarks={gameProgress.visitedLandmarks}
           onLandmarkDiscovered={handleLandmarkDiscovered}
-          onPlayerPositionChange={handlePlayerPositionChange}
         />
         
         {/* UI Controls */}
@@ -154,23 +186,19 @@ export default function Home() {
           onToggle={handleToggleWalk}
         />
         
-        {/* Game HUD Components - Show during walk mode */}
-        <WalkModeHUD isVisible={isWalkMode} />
-        <GameProgressHUD
-          isVisible={isWalkMode}
+        {/* Game HUD - Top Center */}
+        <GameHUD
           visitedCount={gameProgress.visitedLandmarks.size}
           totalCount={10}
+          points={questProgress.totalPoints}
+          activeQuestCount={questProgress.activeQuests.length}
         />
-        <CompassHUD
-          isVisible={isWalkMode}
-          bearing={currentBearing}
-          nearestLandmark={nearestLandmark}
-        />
-        <Minimap
-          isVisible={isWalkMode}
-          playerLat={playerPosition.lat}
-          playerLng={playerPosition.lng}
-          playerBearing={currentBearing}
+        
+        {/* Quest Panel */}
+        <QuestPanel
+          quests={quests}
+          activeQuestIds={questProgress.activeQuests}
+          onStartQuest={handleStartQuest}
         />
         
         {/* Achievement Toast */}
@@ -190,6 +218,12 @@ export default function Home() {
           visitedCount={gameProgress.visitedLandmarks.size}
           totalCount={10}
           onReset={handleResetProgress}
+          questStats={{
+            totalPoints: questProgress.totalPoints,
+            completedQuestsCount: questProgress.completedQuests.size,
+            totalQuestsCount: quests.length,
+            unlockedBadges: questProgress.unlockedBadges
+          }}
         />
         
         {/* Sidebar */}
@@ -205,8 +239,13 @@ export default function Home() {
             total: 10
           }}
         />
+        
+        {/* GTA-style Game Overlay - Visual effects */}
+        <GameOverlay />
+        
+        {/* Onboarding Tutorial */}
+        <OnboardingTutorial />
       </main>
-    </MapProvider>
   )
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import mapboxgl from 'mapbox-gl'
 
@@ -9,178 +9,219 @@ interface TreesLayerProps {
   season?: 'spring' | 'summer' | 'fall' | 'winter'
 }
 
+const TREE_POINT_SOURCE_ID = 'dmv-tree-points'
+const TREE_POINT_LAYER_ID = 'dmv-tree-points-layer'
+const TREE_CLUSTER_LAYER_ID = 'dmv-tree-clusters'
+const TREE_CLUSTER_COUNT_LAYER_ID = 'dmv-tree-cluster-count'
+
 /**
- * TreesLayer - Displays D.C.'s tree canopy with seasonal variations
- * 
- * Features:
- * - Clustering for performance (clusterMaxZoom: 14, clusterRadius: 50)
- * - Seasonal icon changes (spring/summer/fall/winter)
- * - Individual tree popups with species info
- * - Smooth transitions between seasons
+ * TreesLayer - Mixes DMV landcover shading with real tree/park data
+ *
+ * - Uses Mapbox landcover for broad canopy shading
+ * - Loads public/data/dmv_trees.geojson for real tree clusters
+ * - Seasonal palettes recolor both canopy + icons
  */
 export default function TreesLayer({ visible, season = 'summer' }: TreesLayerProps) {
   const { map } = useMap()
   const isInitialized = useRef(false)
-  // Store event handler refs for proper cleanup
-  const handlersRef = useRef<{
-    clusterClick?: (e: mapboxgl.MapMouseEvent) => void
-    unclusteredClick?: (e: mapboxgl.MapMouseEvent) => void
-    clusterMouseEnter?: () => void
-    clusterMouseLeave?: () => void
-    unclusteredMouseEnter?: () => void
-    unclusteredMouseLeave?: () => void
-  }>({})
 
-  // Initialize layer on mount
+  const treeFilter = useMemo(() => {
+    return ['in', ['get', 'class'], 'forest', 'wood', 'scrub', 'grass', 'crop']
+  }, [])
+
+  const seasonColors = useMemo(
+    () => ({
+      spring: { base: '#91D296', shadow: '#4F7A46', highlight: '#CAF2C4' },
+      summer: { base: '#4F8A4F', shadow: '#2F4F2F', highlight: '#7BC47B' },
+      fall: { base: '#E28D3D', shadow: '#8C4B10', highlight: '#FFC27D' },
+      winter: { base: '#CBD3DD', shadow: '#687078', highlight: '#E2E8F0' }
+    }),
+    []
+  )
+
+  const createSeasonIcons = () => {
+    if (!map) return
+    Object.entries(seasonColors).forEach(([seasonName, palette]) => {
+      const iconId = `tree-icon-${seasonName}`
+      if (map.hasImage(iconId)) return
+
+      const canvas = document.createElement('canvas')
+      canvas.width = 64
+      canvas.height = 64
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
+
+      // trunk
+      const trunkGradient = ctx.createLinearGradient(30, 40, 34, 60)
+      trunkGradient.addColorStop(0, '#8B5A2B')
+      trunkGradient.addColorStop(1, '#4A2F17')
+      ctx.fillStyle = trunkGradient
+      ctx.fillRect(29, 40, 6, 18)
+
+      // canopy layers
+      const drawCanopy = (radius: number, offsetX: number, offsetY: number, color: string, alpha = 1) => {
+        ctx.beginPath()
+        ctx.fillStyle = color
+        ctx.globalAlpha = alpha
+        ctx.arc(32 + offsetX, 32 + offsetY, radius, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1
+      }
+
+      drawCanopy(16, -8, 0, palette.shadow, 0.95)
+      drawCanopy(18, 0, -6, palette.base, 0.95)
+      drawCanopy(16, 8, 0, palette.shadow, 0.95)
+      drawCanopy(10, 0, -10, palette.highlight, 0.9)
+
+      // outline
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(32, 30, 20, 0, Math.PI * 2)
+      ctx.stroke()
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      map.addImage(iconId, {
+        width: canvas.width,
+        height: canvas.height,
+        data: imageData.data
+      })
+    })
+  }
+
   useEffect(() => {
     if (!map || isInitialized.current) return
 
     const initializeLayer = async () => {
+      if (!map) return
+      if (!map.isStyleLoaded()) {
+        map.once('idle', initializeLayer)
+        return
+      }
+
       try {
-        // Wait for map style to be loaded
-        if (!map.isStyleLoaded()) {
-          console.log('🌳 Waiting for map style to load...')
-          map.once('idle', () => initializeLayer())
-          return
+        console.log('🌲 Initializing DMV-wide tree canopy + dataset...')
+        createSeasonIcons()
+
+        const layers = map.getStyle().layers ?? []
+        const firstSymbolId = layers.find((layer) => layer.type === 'symbol')?.id
+        const addLayer = (layer: mapboxgl.AnyLayer) => {
+          if (!map.getLayer(layer.id)) {
+            map.addLayer(layer, firstSymbolId)
+          }
         }
 
-        console.log('🌳 Initializing TreesLayer...')
+        const colors = seasonColors[season]
 
-        // Create colored tree icons for each season
-        const seasonalTreeColors = {
-          spring: { leaf: '#FFB7CE', trunk: '#8B4513', name: 'Pink Blossoms' },  // PINK!
-          summer: { leaf: '#4CAF50', trunk: '#8B4513', name: 'Green Leaves' },   // GREEN!
-          fall: { leaf: '#FF6B35', trunk: '#8B4513', name: 'Orange Leaves' },    // ORANGE!
-          winter: { leaf: '#B0BEC5', trunk: '#5D4037', name: 'Bare Branches' }   // GRAY!
-        }
-
-        // Create canvas-based tree icons with obvious colors
-        Object.entries(seasonalTreeColors).forEach(([seasonName, colors]) => {
-          const canvas = document.createElement('canvas')
-          canvas.width = 50
-          canvas.height = 50
-          const ctx = canvas.getContext('2d')!
-
-          // Draw brown trunk
-          ctx.fillStyle = colors.trunk
-          ctx.fillRect(22, 32, 6, 12)
-
-          // Draw colored canopy (3 circles for tree shape)
-          ctx.fillStyle = colors.leaf
-          
-          ctx.beginPath()
-          ctx.arc(16, 22, 10, 0, Math.PI * 2)
-          ctx.fill()
-          
-          ctx.beginPath()
-          ctx.arc(25, 17, 11, 0, Math.PI * 2)
-          ctx.fill()
-          
-          ctx.beginPath()
-          ctx.arc(34, 22, 10, 0, Math.PI * 2)
-          ctx.fill()
-
-          // White outline for visibility
-          ctx.strokeStyle = '#FFF'
-          ctx.lineWidth = 2
-          ctx.beginPath()
-          ctx.arc(16, 22, 10, 0, Math.PI * 2)
-          ctx.arc(25, 17, 11, 0, Math.PI * 2)
-          ctx.arc(34, 22, 10, 0, Math.PI * 2)
-          ctx.stroke()
-
-          // Convert canvas to ImageData for Mapbox
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-          
-          // Add to map
-          if (!map.hasImage(`tree-${seasonName}`)) {
-            map.addImage(`tree-${seasonName}`, {
-              width: canvas.width,
-              height: canvas.height,
-              data: imageData.data
-            })
-            console.log(`✅ Created ${seasonName} tree icon (${colors.name})`)
+        addLayer({
+          id: 'dmv-tree-canopy-base',
+          type: 'fill',
+          source: 'composite',
+          'source-layer': 'landcover',
+          filter: treeFilter as any,
+          paint: {
+            'fill-color': colors.base,
+            'fill-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              8, 0.4,
+              12, 0.6,
+              16, 0.75
+            ]
           }
         })
 
-        // Load tree data
-        console.log('Loading tree data from /data/dc_trees.geojson')
-        const response = await fetch('/data/dc_trees.geojson')
-        
-        if (!response.ok) {
-          console.error('Failed to load tree data:', response.status)
-          return
-        }
-        
-        const data = await response.json()
-        console.log('Tree data loaded:', data.features?.length, 'trees')
+        addLayer({
+          id: 'dmv-tree-canopy-volume',
+          type: 'fill-extrusion',
+          source: 'composite',
+          'source-layer': 'landcover',
+          filter: treeFilter as any,
+          minzoom: 10,
+          paint: {
+            'fill-extrusion-color': colors.highlight,
+            'fill-extrusion-base': 0,
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              10, 1.5,
+              13, 5,
+              15, 10
+            ],
+            'fill-extrusion-opacity': 0.85,
+            'fill-extrusion-vertical-gradient': true,
+            'fill-extrusion-ambient-occlusion-intensity': 0.6
+          }
+        })
 
-        // Add source with clustering
-        if (!map.getSource('trees-source')) {
-          map.addSource('trees-source', {
+        addLayer({
+          id: 'dmv-tree-canopy-shadow',
+          type: 'line',
+          source: 'composite',
+          'source-layer': 'landcover',
+          filter: treeFilter as any,
+          paint: {
+            'line-color': colors.shadow,
+            'line-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              9, 0.25,
+              13, 0.7,
+              16, 1.2
+            ],
+            'line-opacity': 0.5
+          }
+        })
+
+        const treeResponse = await fetch('/data/dmv_trees.geojson')
+        if (!treeResponse.ok) {
+          throw new Error('Failed to load DMV tree data')
+        }
+        const treeData = await treeResponse.json()
+
+        if (!map.getSource(TREE_POINT_SOURCE_ID)) {
+          map.addSource(TREE_POINT_SOURCE_ID, {
             type: 'geojson',
-            data: data,
+            data: treeData,
             cluster: true,
-            clusterMaxZoom: 14, // Max zoom to cluster points on
-            clusterRadius: 50   // Radius of each cluster when clustering points
+            clusterMaxZoom: 14,
+            clusterRadius: 50
           })
-          console.log('✅ Added trees-source')
         }
 
-        // Add cluster circle layer with ENHANCED seasonal visibility for 3D
-        if (!map.getLayer('trees-clusters')) {
+        if (!map.getLayer(TREE_CLUSTER_LAYER_ID)) {
           map.addLayer({
-            id: 'trees-clusters',
+            id: TREE_CLUSTER_LAYER_ID,
             type: 'circle',
-            source: 'trees-source',
+            source: TREE_POINT_SOURCE_ID,
             filter: ['has', 'point_count'],
             paint: {
-              'circle-color': '#4CAF50',  // Default green, will change by season
+              'circle-color': colors.highlight,
               'circle-radius': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                10, [
-                  'step',
-                  ['get', 'point_count'],
-                  12,   // Small clusters when far
-                  10,
-                  18,   // Medium clusters when far
-                  25,
-                  22    // Large clusters when far
-                ],
-                18, [
                 'step',
                 ['get', 'point_count'],
-                  25,   // Small clusters when close (3D mode)
-                10,
-                  35,   // Medium clusters when close
-                25,
-                  45    // Large clusters when close - VERY VISIBLE
-                ]
+                12,
+                25, 18,
+                75, 26
               ],
               'circle-opacity': 0.85,
-              'circle-stroke-width': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                10, 2,
-                18, 4  // Thicker stroke when close
-              ],
-              'circle-stroke-color': '#FFF',
-              'circle-blur': 0.15,  // Slight blur for depth effect
-              'circle-pitch-alignment': 'map'  // Align with terrain in 3D
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff'
             }
           })
-          console.log('✅ Added trees-clusters layer with ENHANCED 3D visibility')
         }
 
-        // Add cluster count layer
-        if (!map.getLayer('trees-cluster-count')) {
+        if (!map.getLayer(TREE_CLUSTER_COUNT_LAYER_ID)) {
           map.addLayer({
-            id: 'trees-cluster-count',
+            id: TREE_CLUSTER_COUNT_LAYER_ID,
             type: 'symbol',
-            source: 'trees-source',
+            source: TREE_POINT_SOURCE_ID,
             filter: ['has', 'point_count'],
             layout: {
               'text-field': '{point_count_abbreviated}',
@@ -188,268 +229,90 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
               'text-size': 12
             },
             paint: {
-              'text-color': '#ffffff'
+              'text-color': '#1f2933',
+              'text-halo-color': '#ffffff',
+              'text-halo-width': 1.5
             }
           })
-          console.log('✅ Added trees-cluster-count layer')
         }
 
-        // Add unclustered tree points layer with enhanced 3D visibility
-        if (!map.getLayer('trees-unclustered')) {
+        if (!map.getLayer(TREE_POINT_LAYER_ID)) {
           map.addLayer({
-            id: 'trees-unclustered',
+            id: TREE_POINT_LAYER_ID,
             type: 'symbol',
-            source: 'trees-source',
+            source: TREE_POINT_SOURCE_ID,
             filter: ['!', ['has', 'point_count']],
             layout: {
-              'icon-image': `tree-${season}`,
+              'icon-image': `tree-icon-${season}`,
               'icon-size': [
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                10, 0.6,   // Smaller when zoomed out
-                14, 1.0,   // Normal at medium zoom
-                18, 1.8    // MUCH LARGER when zoomed in (3D/walk mode)
+                10, 0.7,
+                14, 1.1,
+                18, 1.8
               ],
-              'icon-allow-overlap': true,  // Allow trees to overlap for density
-              'icon-pitch-alignment': 'viewport',  // Face camera in 3D
+              'icon-allow-overlap': true,
+              'icon-pitch-alignment': 'viewport',
               'icon-rotation-alignment': 'viewport'
             },
             paint: {
               'icon-opacity': 0.95,
-              'icon-halo-color': '#FFFFFF',
+              'icon-halo-color': '#ffffff',
               'icon-halo-width': 2,
               'icon-halo-blur': 1
             }
           })
-          console.log(`✅ Added trees-unclustered layer with ENHANCED 3D visibility`)
         }
-
-        // Set initial visibility
-        const visibility = visible ? 'visible' : 'none'
-        map.setLayoutProperty('trees-clusters', 'visibility', visibility)
-        map.setLayoutProperty('trees-cluster-count', 'visibility', visibility)
-        map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
-
-        // Click handler for clusters - zoom in
-        handlersRef.current.clusterClick = (e: mapboxgl.MapMouseEvent) => {
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ['trees-clusters']
-          })
-          
-          if (features.length > 0) {
-            const clusterId = features[0].properties?.cluster_id
-            const source = map.getSource('trees-source') as mapboxgl.GeoJSONSource
-            
-            source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-              if (err) return
-              
-              const coordinates = (features[0].geometry as any).coordinates
-              map.easeTo({
-                center: coordinates,
-                zoom: zoom || 15
-              })
-            })
-          }
-        }
-        map.on('click', 'trees-clusters', handlersRef.current.clusterClick)
-
-        // Click handler for individual trees - show popup
-        handlersRef.current.unclusteredClick = (e: mapboxgl.MapMouseEvent) => {
-          if (!e.features || e.features.length === 0) return
-
-          const feature = e.features[0]
-          const coordinates = (feature.geometry as any).coordinates.slice()
-          const props = feature.properties
-
-          // Create popup content with bold styling
-          const popupContent = `
-            <div class="popup-wrapper" style="padding: 0; margin: -15px; border-radius: 12px; overflow: hidden;">
-              <div style="background: linear-gradient(135deg, #7ED957 0%, #66BB6A 100%); padding: 16px; border-bottom: 3px solid #4A7C24;">
-                <h3 style="margin: 0; color: white; font-size: 18px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                  🌳 ${props?.COMMON_NAME || 'Unknown Tree'}
-                </h3>
-              </div>
-              <div style="padding: 16px; background: white;">
-                <div style="margin-bottom: 12px;">
-                  <span style="color: #8D7B68; font-size: 12px; font-weight: 600; text-transform: uppercase;">Species</span>
-                  <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px; font-weight: 500;">${props?.SPECIES || 'N/A'}</p>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                  <div>
-                    <span style="color: #8D7B68; font-size: 12px; font-weight: 600;">DBH</span>
-                    <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px;">${props?.DBH || 'N/A'}"</p>
-                  </div>
-                  <div>
-                    <span style="color: #8D7B68; font-size: 12px; font-weight: 600;">Condition</span>
-                    <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px;">${props?.CONDITION || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `
-
-          // Ensure popup appears over the correct location on the map
-          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360
-          }
-
-          new mapboxgl.Popup({
-            closeButton: true,
-            closeOnClick: true,
-            maxWidth: '340px',
-            className: 'custom-popup'
-          })
-            .setLngLat(coordinates)
-            .setHTML(popupContent)
-            .addTo(map)
-        }
-        map.on('click', 'trees-unclustered', handlersRef.current.unclusteredClick)
-
-        // Change cursor on hover
-        handlersRef.current.clusterMouseEnter = () => {
-          map.getCanvas().style.cursor = 'pointer'
-        }
-        handlersRef.current.clusterMouseLeave = () => {
-          map.getCanvas().style.cursor = ''
-        }
-        handlersRef.current.unclusteredMouseEnter = () => {
-          map.getCanvas().style.cursor = 'pointer'
-        }
-        handlersRef.current.unclusteredMouseLeave = () => {
-          map.getCanvas().style.cursor = ''
-        }
-        map.on('mouseenter', 'trees-clusters', handlersRef.current.clusterMouseEnter)
-        map.on('mouseleave', 'trees-clusters', handlersRef.current.clusterMouseLeave)
-        map.on('mouseenter', 'trees-unclustered', handlersRef.current.unclusteredMouseEnter)
-        map.on('mouseleave', 'trees-unclustered', handlersRef.current.unclusteredMouseLeave)
 
         isInitialized.current = true
-        console.log('✅ TreesLayer initialized successfully')
+        console.log('✅ DMV tree layers ready')
       } catch (error) {
-        console.error('❌ Error initializing TreesLayer:', error)
+        console.error('❌ Failed to initialize TreesLayer:', error)
       }
     }
 
     initializeLayer()
+  }, [map, season, seasonColors, treeFilter])
 
-    // Cleanup on unmount
-    return () => {
-      if (map && isInitialized.current) {
-        // Remove event listeners first
-        if (handlersRef.current.clusterClick) {
-          map.off('click', 'trees-clusters', handlersRef.current.clusterClick)
-        }
-        if (handlersRef.current.unclusteredClick) {
-          map.off('click', 'trees-unclustered', handlersRef.current.unclusteredClick)
-        }
-        if (handlersRef.current.clusterMouseEnter) {
-          map.off('mouseenter', 'trees-clusters', handlersRef.current.clusterMouseEnter)
-        }
-        if (handlersRef.current.clusterMouseLeave) {
-          map.off('mouseleave', 'trees-clusters', handlersRef.current.clusterMouseLeave)
-        }
-        if (handlersRef.current.unclusteredMouseEnter) {
-          map.off('mouseenter', 'trees-unclustered', handlersRef.current.unclusteredMouseEnter)
-        }
-        if (handlersRef.current.unclusteredMouseLeave) {
-          map.off('mouseleave', 'trees-unclustered', handlersRef.current.unclusteredMouseLeave)
-        }
-        
-        // Then remove layers and source
-        try {
-          if (map.getLayer && map.getLayer('trees-unclustered')) map.removeLayer('trees-unclustered')
-          if (map.getLayer && map.getLayer('trees-cluster-count')) map.removeLayer('trees-cluster-count')
-          if (map.getLayer && map.getLayer('trees-clusters')) map.removeLayer('trees-clusters')
-          if (map.getSource && map.getSource('trees-source')) map.removeSource('trees-source')
-        } catch (error) {
-          console.debug('Trees cleanup skipped:', error)
-        }
-      }
-    }
-  }, [map])
-
-  // Handle visibility changes
   useEffect(() => {
     if (!map || !isInitialized.current) return
-
     const visibility = visible ? 'visible' : 'none'
-    
-    try {
-      if (map.getLayer && map.getLayer('trees-clusters')) {
-      map.setLayoutProperty('trees-clusters', 'visibility', visibility)
-    }
-      if (map.getLayer && map.getLayer('trees-cluster-count')) {
-      map.setLayoutProperty('trees-cluster-count', 'visibility', visibility)
-    }
-      if (map.getLayer && map.getLayer('trees-unclustered')) {
-      map.setLayoutProperty('trees-unclustered', 'visibility', visibility)
+    ;[
+      'dmv-tree-canopy-base',
+      'dmv-tree-canopy-volume',
+      'dmv-tree-canopy-shadow',
+      TREE_CLUSTER_LAYER_ID,
+      TREE_CLUSTER_COUNT_LAYER_ID,
+      TREE_POINT_LAYER_ID
+    ].forEach((layerId) => {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', visibility)
       }
-    } catch (error) {
-      console.debug('Trees visibility update skipped:', error)
-    }
-
-    console.log(`🌳 TreesLayer visibility: ${visibility}`)
+    })
   }, [map, visible])
 
-  // Handle season changes - update both icons AND cluster colors
   useEffect(() => {
-    if (!map || !isInitialized.current) {
-      console.log(`🍂 Season change skipped: map=${!!map}, initialized=${isInitialized.current}`)
-      return
+    if (!map || !isInitialized.current) return
+    createSeasonIcons()
+
+    const colors = seasonColors[season]
+    if (map.getLayer('dmv-tree-canopy-base')) {
+      map.setPaintProperty('dmv-tree-canopy-base', 'fill-color', colors.base)
     }
-
-    // Wait for map to be fully loaded
-    if (!map.isStyleLoaded()) {
-      console.log('🍂 Waiting for map style before season change...')
-      map.once('idle', () => {
-        updateSeasonalAppearance()
-      })
-      return
+    if (map.getLayer('dmv-tree-canopy-volume')) {
+      map.setPaintProperty('dmv-tree-canopy-volume', 'fill-extrusion-color', colors.highlight)
     }
-
-    updateSeasonalAppearance()
-
-    function updateSeasonalAppearance() {
-      if (!map) return
-
-      // Color mapping for seasons
-      const seasonColors = {
-        spring: '#FFB7CE',  // PINK
-        summer: '#4CAF50',  // GREEN
-        fall: '#FF6B35',    // ORANGE
-        winter: '#B0BEC5'   // GRAY
-      }
-
-      try {
-      // Update tree icons
-        if (map.getLayer && map.getLayer('trees-unclustered')) {
-        const iconName = `tree-${season}`
-        console.log(`🍂 Changing season to: ${season}, using icon: ${iconName}`)
-        
-          if (map.hasImage(iconName)) {
-            map.setLayoutProperty('trees-unclustered', 'icon-image', iconName)
-          console.log(`✅ Tree icons changed to: ${season}`)
-        } else {
-          console.error(`❌ Icon not found: ${iconName}`)
-        }
-      } else {
-          console.debug('trees-unclustered layer not yet available')
-      }
-
-      // Update cluster colors to match season
-        if (map.getLayer && map.getLayer('trees-clusters')) {
-          map.setPaintProperty('trees-clusters', 'circle-color', seasonColors[season])
-        console.log(`✅ Cluster color changed to: ${seasonColors[season]} (${season})`)
-      } else {
-          console.debug('trees-clusters layer not yet available')
-        }
-      } catch (error) {
-        console.debug('Season update skipped:', error)
-      }
+    if (map.getLayer('dmv-tree-canopy-shadow')) {
+      map.setPaintProperty('dmv-tree-canopy-shadow', 'line-color', colors.shadow)
     }
-  }, [map, season])
+    if (map.getLayer(TREE_CLUSTER_LAYER_ID)) {
+      map.setPaintProperty(TREE_CLUSTER_LAYER_ID, 'circle-color', colors.highlight)
+    }
+    if (map.getLayer(TREE_POINT_LAYER_ID)) {
+      map.setLayoutProperty(TREE_POINT_LAYER_ID, 'icon-image', `tree-icon-${season}`)
+    }
+  }, [map, season, seasonColors])
 
   return null
 }
-

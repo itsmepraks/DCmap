@@ -160,8 +160,12 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks }: Landm
           const properties = feature.properties
           if (!properties) return
 
+          // GeoJSON coordinates are [longitude, latitude]
           const coordinates = (feature.geometry as any).coordinates.slice()
+          const [lng, lat] = coordinates
           const isVisited = visitedLandmarks.has(properties.id)
+          
+          console.log(`📍 Adding landmark: ${properties.name} at [${lng}, ${lat}]`)
 
           // Create popup HTML
           const popupHTML = `

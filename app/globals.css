@@ -44,10 +44,16 @@ body {
    ======================================== */
 .mapboxgl-popup-content {
   padding: 0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 12px 48px rgba(92, 64, 55, 0.25) !important;
-  border: 3px solid #C1604A !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  border: 2px solid #e5e7eb !important;
   overflow: hidden !important;
+  background: white !important;
+}
+
+.museum-popup .mapboxgl-popup-content {
+  border: 2px solid #3b82f6 !important;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2) !important;
 }
 
 .mapboxgl-popup-close-button {
@@ -147,14 +153,66 @@ body {
 }
 
 /* ========================================
-   Map Canvas Enhancements
+   GTA-like Map Canvas Enhancements
    ======================================== */
 .mapboxgl-canvas-container {
   cursor: grab;
+  /* Smooth rendering for gaming experience */
+  image-rendering: -webkit-optimize-contrast;
+  transform: translateZ(0);
+  will-change: transform;
+  /* GTA-style visual effects */
+  filter: contrast(1.15) saturate(1.2) brightness(1.05);
+  position: relative;
+}
+
+.mapboxgl-canvas-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  /* GTA-style vignette effect */
+  background: radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0, 0, 0, 0.15) 100%);
+  z-index: 1000;
+  mix-blend-mode: multiply;
 }
 
 .mapboxgl-canvas-container:active {
   cursor: grabbing;
+}
+
+/* Enhanced map canvas for 60fps performance with GTA-style effects */
+.mapboxgl-canvas {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Enhanced game-like appearance */
+  filter: contrast(1.1) saturate(1.15);
+}
+
+/* GTA-style color grading overlay */
+.mapboxgl-map {
+  position: relative;
+}
+
+.mapboxgl-map::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  /* GTA-style color grading - warm, vibrant tones */
+  background: linear-gradient(135deg, 
+    rgba(255, 200, 100, 0.03) 0%,
+    rgba(100, 150, 255, 0.02) 50%,
+    rgba(255, 150, 100, 0.03) 100%
+  );
+  z-index: 999;
+  mix-blend-mode: overlay;
 }
 
 /* Improve marker click targets */

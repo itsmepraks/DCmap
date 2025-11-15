@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useMap } from '@/app/lib/MapContext'
-import mapboxgl from 'mapbox-gl'
+import mapboxgl, { type SymbolLayout, type SymbolPaint } from 'mapbox-gl'
 import type { MuseumProperties } from '@/app/types/map'
 
 interface MuseumsLayerProps {
@@ -121,48 +121,68 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
 
         // Add layer with enhanced 3D visibility
         if (!map.getLayer(LAYER_ID)) {
+          const styleHasGlyphs = Boolean(map.getStyle()?.glyphs)
+
+          const layout: SymbolLayout = {
+            'icon-image': 'museum-icon',
+            'icon-size': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              10,
+              0.8,
+              14,
+              1.5,
+              18,
+              2.5
+            ],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+            'icon-pitch-alignment': 'viewport',
+            visibility: 'none'
+          }
+
+          const paint: SymbolPaint = {
+            'icon-opacity': 1,
+            'icon-halo-color': '#5DA5DB',
+            'icon-halo-width': 3,
+            'icon-halo-blur': 2
+          }
+
+          if (styleHasGlyphs) {
+            layout['text-field'] = ['get', 'NAME']
+            layout['text-font'] = ['Open Sans Bold', 'Arial Unicode MS Bold']
+            layout['text-size'] = [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              10,
+              0,
+              14,
+              12,
+              18,
+              16
+            ]
+            layout['text-offset'] = [0, 2]
+            layout['text-anchor'] = 'top'
+            layout['text-optional'] = true
+
+            paint['text-color'] = '#2C1810'
+            paint['text-halo-color'] = '#FFFFFF'
+            paint['text-halo-width'] = 3
+            paint['text-halo-blur'] = 1
+          } else {
+            console.warn(
+              'Museums layer: style missing glyphs definition – rendering icons without text labels.'
+            )
+          }
+
           map.addLayer({
             id: LAYER_ID,
             type: 'symbol',
             source: SOURCE_ID,
-            layout: {
-              'icon-image': 'museum-icon',
-              'icon-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                10, 0.8,   // Smaller when zoomed out
-                14, 1.5,   // Larger at medium zoom
-                18, 2.5    // HUGE when zoomed in close (3D/walk mode)
-              ],
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': true,  // Always visible, even in crowded areas
-              'icon-pitch-alignment': 'viewport',  // Always face camera in 3D
-              'text-field': ['get', 'NAME'],
-              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-              'text-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                10, 0,      // No text when far
-                14, 12,     // Medium text
-                18, 16      // Large text when close
-              ],
-              'text-offset': [0, 2],
-              'text-anchor': 'top',
-              'text-optional': true,
-              visibility: visible ? 'visible' : 'none',
-            },
-            paint: {
-              'icon-opacity': 1,
-              'icon-halo-color': '#5DA5DB',
-              'icon-halo-width': 3,
-              'icon-halo-blur': 2,
-              'text-color': '#2C1810',
-              'text-halo-color': '#FFFFFF',
-              'text-halo-width': 3,
-              'text-halo-blur': 1
-            }
+            layout,
+            paint
           })
           console.log('✅ Museums layer added with ENHANCED 3D visibility')
         }

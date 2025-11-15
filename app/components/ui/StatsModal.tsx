@@ -11,6 +11,13 @@ interface Landmark {
   visited: boolean
 }
 
+interface QuestStats {
+  totalPoints: number
+  completedQuestsCount: number
+  totalQuestsCount: number
+  unlockedBadges: string[]
+}
+
 interface StatsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -18,6 +25,7 @@ interface StatsModalProps {
   visitedCount: number
   totalCount: number
   onReset: () => void
+  questStats?: QuestStats
 }
 
 export default function StatsModal({
@@ -26,9 +34,13 @@ export default function StatsModal({
   landmarks,
   visitedCount,
   totalCount,
-  onReset
+  onReset,
+  questStats
 }: StatsModalProps) {
   const percentage = Math.round((visitedCount / totalCount) * 100)
+  const questPercentage = questStats 
+    ? Math.round((questStats.completedQuestsCount / questStats.totalQuestsCount) * 100)
+    : 0
 
   return (
     <AnimatePresence>
@@ -271,6 +283,10 @@ export default function StatsModal({
     </AnimatePresence>
   )
 }
+
+
+
+
 
 
 

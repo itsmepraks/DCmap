@@ -1,0 +1,568 @@
+{
+  "metadata": {
+    "generatedAt": "2025-11-14T00:57:11.236Z",
+    "source": "public/data/dc_walkable_roads.geojson",
+    "totalNodes": 19
+  },
+  "nodes": [
+    {
+      "id": "node-0001",
+      "lng": -77.050533,
+      "lat": 38.889939,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0002",
+          "distance": 574.57,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0002",
+      "lng": -77.044473,
+      "lat": 38.892049,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0001",
+          "distance": 574.57,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        },
+        {
+          "id": "node-0003",
+          "distance": 655.13,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0003",
+      "lng": -77.036972,
+      "lat": 38.892841,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0002",
+          "distance": 655.13,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        },
+        {
+          "id": "node-0004",
+          "distance": 532.49,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0004",
+      "lng": -77.03084,
+      "lat": 38.893234,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0003",
+          "distance": 532.49,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0005",
+      "lng": -77.033881,
+      "lat": 38.907514,
+      "classes": [
+        "secondary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0006",
+          "distance": 741.93,
+          "width": 8,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "secondary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0006",
+      "lng": -77.033537,
+      "lat": 38.900847,
+      "classes": [
+        "secondary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0005",
+          "distance": 741.93,
+          "width": 8,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "secondary",
+          "surface": "paved"
+        },
+        {
+          "id": "node-0007",
+          "distance": 723.97,
+          "width": 8,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "secondary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0007",
+      "lng": -77.033184,
+      "lat": 38.894342,
+      "classes": [
+        "secondary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0006",
+          "distance": 723.97,
+          "width": 8,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "secondary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0008",
+      "lng": -77.041473,
+      "lat": 38.889557,
+      "classes": [
+        "path"
+      ],
+      "surfaces": [
+        "gravel"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0009",
+          "distance": 494.55,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "path",
+          "surface": "gravel"
+        }
+      ]
+    },
+    {
+      "id": "node-0009",
+      "lng": -77.035759,
+      "lat": 38.889529,
+      "classes": [
+        "path"
+      ],
+      "surfaces": [
+        "gravel"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0008",
+          "distance": 494.55,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "path",
+          "surface": "gravel"
+        },
+        {
+          "id": "node-0010",
+          "distance": 562.4,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "path",
+          "surface": "gravel"
+        }
+      ]
+    },
+    {
+      "id": "node-0010",
+      "lng": -77.029261,
+      "lat": 38.889538,
+      "classes": [
+        "path"
+      ],
+      "surfaces": [
+        "gravel"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0009",
+          "distance": 562.4,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "path",
+          "surface": "gravel"
+        }
+      ]
+    },
+    {
+      "id": "node-0011",
+      "lng": -77.05087,
+      "lat": 38.887508,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0012",
+          "distance": 772.71,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0012",
+      "lng": -77.041947,
+      "lat": 38.887733,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0011",
+          "distance": 772.71,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        },
+        {
+          "id": "node-0013",
+          "distance": 684.57,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0013",
+      "lng": -77.034038,
+      "lat": 38.88779,
+      "classes": [
+        "primary"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0012",
+          "distance": 684.57,
+          "width": 9,
+          "speed": {
+            "human": 1.7,
+            "scooter": 8
+          },
+          "scooterAllowed": true,
+          "class": "primary",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0014",
+      "lng": -77.029962,
+      "lat": 38.888955,
+      "classes": [
+        "pedestrian"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0015",
+          "distance": 547.69,
+          "width": 5,
+          "speed": {
+            "human": 1.4,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "pedestrian",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0015",
+      "lng": -77.023634,
+      "lat": 38.88896,
+      "classes": [
+        "pedestrian"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0014",
+          "distance": 547.69,
+          "width": 5,
+          "speed": {
+            "human": 1.4,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "pedestrian",
+          "surface": "paved"
+        },
+        {
+          "id": "node-0016",
+          "distance": 476.65,
+          "width": 5,
+          "speed": {
+            "human": 1.4,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "pedestrian",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0016",
+      "lng": -77.018143,
+      "lat": 38.889289,
+      "classes": [
+        "pedestrian"
+      ],
+      "surfaces": [
+        "paved"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0015",
+          "distance": 476.65,
+          "width": 5,
+          "speed": {
+            "human": 1.4,
+            "scooter": 4
+          },
+          "scooterAllowed": false,
+          "class": "pedestrian",
+          "surface": "paved"
+        }
+      ]
+    },
+    {
+      "id": "node-0017",
+      "lng": -77.052951,
+      "lat": 38.904066,
+      "classes": [
+        "path"
+      ],
+      "surfaces": [
+        "asphalt"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0018",
+          "distance": 516.81,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": true,
+          "class": "path",
+          "surface": "asphalt"
+        }
+      ]
+    },
+    {
+      "id": "node-0018",
+      "lng": -77.049093,
+      "lat": 38.907614,
+      "classes": [
+        "path"
+      ],
+      "surfaces": [
+        "asphalt"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0017",
+          "distance": 516.81,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": true,
+          "class": "path",
+          "surface": "asphalt"
+        },
+        {
+          "id": "node-0019",
+          "distance": 538.48,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": true,
+          "class": "path",
+          "surface": "asphalt"
+        }
+      ]
+    },
+    {
+      "id": "node-0019",
+      "lng": -77.044019,
+      "lat": 38.910418,
+      "classes": [
+        "path"
+      ],
+      "surfaces": [
+        "asphalt"
+      ],
+      "neighbors": [
+        {
+          "id": "node-0018",
+          "distance": 538.48,
+          "width": 3,
+          "speed": {
+            "human": 1.1,
+            "scooter": 4
+          },
+          "scooterAllowed": true,
+          "class": "path",
+          "surface": "asphalt"
+        }
+      ]
+    }
+  ]
+}

@@ -43,12 +43,15 @@ export default function Sidebar({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -320, opacity: 0 }}
           transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
-          className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-30 flex flex-col"
+          className="fixed top-0 left-0 h-full w-80 bg-white/95 backdrop-blur-lg shadow-2xl z-30 flex flex-col border-r border-gray-200"
         >
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-800">Anima DC</h1>
-            <p className="text-sm text-gray-500 mt-1">Explore Washington DC</p>
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
+              Anima DC
+            </h1>
+            <p className="text-sm text-gray-200 mt-1 font-semibold">GTA-like 3D World</p>
+            <p className="text-xs text-gray-400 mt-1">DC • Maryland • Virginia • Realistic 3D</p>
           </div>
 
           {/* Scrollable Content */}
@@ -63,23 +66,34 @@ export default function Sidebar({
                 {/* Museums Toggle */}
                 <button
                   onClick={() => onToggleLayer('museums')}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group relative"
+                  title="View Smithsonian museums and cultural institutions"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      layersVisible.museums ? 'bg-blue-500' : 'bg-gray-200'
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+                      layersVisible.museums 
+                        ? 'bg-blue-500 shadow-lg shadow-blue-500/50' 
+                        : 'bg-gray-200'
                     }`}>
                       <span className="text-xl">🏛️</span>
                     </div>
-                    <div className="text-left">
-                      <div className="font-medium text-gray-800">Museums</div>
-                      <div className="text-xs text-gray-500">Cultural sites</div>
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-gray-900 flex items-center gap-2">
+                        Museums
+                        <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600">8</span>
+                      </div>
+                      <div className="text-xs text-gray-500">Smithsonian & more</div>
+                      <div className="text-xs text-gray-500">
+                        {layersVisible.museums ? '28 DMV locations visible' : 'Toggle to show'}
+                      </div>
                     </div>
                   </div>
-                  <div className={`w-11 h-6 rounded-full transition-colors ${
-                    layersVisible.museums ? 'bg-blue-500' : 'bg-gray-300'
+                  <div className={`w-11 h-6 rounded-full transition-all duration-200 ${
+                    layersVisible.museums 
+                      ? 'bg-blue-500 shadow-md shadow-blue-500/30' 
+                      : 'bg-gray-300'
                   }`}>
-                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform mt-0.5 ${
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 mt-0.5 ${
                       layersVisible.museums ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
                     }`} />
                   </div>
@@ -89,6 +103,7 @@ export default function Sidebar({
                 <button
                   onClick={() => onToggleLayer('trees')}
                   className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="View trees, parks, and seasonal foliage across DC"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -96,9 +111,12 @@ export default function Sidebar({
                     }`}>
                       <span className="text-xl">🌳</span>
                     </div>
-                    <div className="text-left">
-                      <div className="font-medium text-gray-800">Greenery</div>
-                      <div className="text-xs text-gray-500">Trees & parks</div>
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-gray-900 flex items-center gap-2">
+                        Greenery
+                        <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600">50+</span>
+                      </div>
+                      <div className="text-xs text-gray-500">Trees & seasonal parks</div>
                     </div>
                   </div>
                   <div className={`w-11 h-6 rounded-full transition-colors ${
@@ -107,12 +125,12 @@ export default function Sidebar({
                     <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform mt-0.5 ${
                       layersVisible.trees ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
                     }`} />
-                  </div>
+            </div>
                 </button>
 
                 {/* Seasonal Controls - Collapsible */}
-                {layersVisible.trees && (
-                  <motion.div
+            {layersVisible.trees && (
+              <motion.div 
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -131,7 +149,7 @@ export default function Sidebar({
                     {seasonPanelOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                         className="grid grid-cols-2 gap-2 mt-2"
                       >
                         {seasons.map((season) => (
@@ -150,8 +168,8 @@ export default function Sidebar({
                         ))}
                       </motion.div>
                     )}
-                  </motion.div>
-                )}
+              </motion.div>
+            )}
               </div>
             </div>
 
@@ -191,8 +209,14 @@ export default function Sidebar({
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <p className="text-xs text-gray-500 text-center">
+          <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+              <p className="text-xs font-medium text-gray-700 mb-1">📍 Accurate Locations</p>
+              <p className="text-xs text-gray-600">
+                All museums are positioned at their exact real-world GPS coordinates for navigation accuracy.
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 text-center mt-3">
               💡 Use WASD to walk • Drag to look around
             </p>
           </div>

@@ -1,0 +1,131 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0405, 38.8895] },
+      "properties": { "NAME": "Tidal Basin Cherry Grove", "SPECIES": "Yoshino Cherry", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0124, 38.8899] },
+      "properties": { "NAME": "National Mall Elm Line", "SPECIES": "American Elm", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0521, 38.9412] },
+      "properties": { "NAME": "Rock Creek Park Canopy", "SPECIES": "Mixed Oak", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0364, 38.9186] },
+      "properties": { "NAME": "Meridian Hill Terrace", "SPECIES": "Linden", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.9642, 38.9120] },
+      "properties": { "NAME": "U.S. National Arboretum", "SPECIES": "Azalea Collection", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0325, 38.8742] },
+      "properties": { "NAME": "East Potomac Park", "SPECIES": "Willow Oak", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0608, 38.9133] },
+      "properties": { "NAME": "Dumbarton Oaks Garden", "SPECIES": "Beech", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0686, 38.8811] },
+      "properties": { "NAME": "Arlington Memorial Groves", "SPECIES": "White Oak", "CITY": "Arlington, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0599, 38.8933] },
+      "properties": { "NAME": "Theodore Roosevelt Island", "SPECIES": "Sycamore", "CITY": "Arlington, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.2489, 38.9995] },
+      "properties": { "NAME": "Great Falls Park (VA)", "SPECIES": "Hemlock", "CITY": "McLean, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.1020, 38.7391] },
+      "properties": { "NAME": "Huntley Meadows Wetland", "SPECIES": "Bald Cypress", "CITY": "Alexandria, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.2638, 38.9379] },
+      "properties": { "NAME": "Wolf Trap Forest", "SPECIES": "Tulip Poplar", "CITY": "Vienna, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.3063, 38.9582] },
+      "properties": { "NAME": "Lake Fairfax Pines", "SPECIES": "White Pine", "CITY": "Reston, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0580, 38.8554] },
+      "properties": { "NAME": "Mount Vernon Trail Trees", "SPECIES": "River Birch", "CITY": "Arlington, VA" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0533, 39.0579] },
+      "properties": { "NAME": "Brookside Gardens", "SPECIES": "Magnolia", "CITY": "Wheaton, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.6525, 39.3215] },
+      "properties": { "NAME": "Druid Hill Park Grove", "SPECIES": "Ginkgo", "CITY": "Baltimore, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.9453, 38.9154] },
+      "properties": { "NAME": "Kenilworth Aquatic Gardens", "SPECIES": "Lotus & Water Gardens", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.1404, 38.9695] },
+      "properties": { "NAME": "Glen Echo Sycamores", "SPECIES": "Sycamore", "CITY": "Glen Echo, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.8052, 39.0554] },
+      "properties": { "NAME": "Patuxent Research Refuge", "SPECIES": "Mixed Hardwood", "CITY": "Laurel, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.2479, 39.1476] },
+      "properties": { "NAME": "Seneca Creek State Park", "SPECIES": "Maple", "CITY": "Gaithersburg, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0017, 38.8890] },
+      "properties": { "NAME": "Capitol Reflecting Trees", "SPECIES": "Elm", "CITY": "Washington, DC" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.2453, 38.9875] },
+      "properties": { "NAME": "Great Falls Overlook (MD)", "SPECIES": "Virginia Pine", "CITY": "Potomac, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.3051, 39.0091] },
+      "properties": { "NAME": "Carderock Cliffs", "SPECIES": "Oak-Hickory", "CITY": "Bethesda, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.4846, 38.9769] },
+      "properties": { "NAME": "Quiet Waters Park", "SPECIES": "Red Maple", "CITY": "Annapolis, MD" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.9360, 38.7850] },
+      "properties": { "NAME": "National Harbor Oaks", "SPECIES": "Live Oak", "CITY": "National Harbor, MD" }
+    }
+  ]
+}
+

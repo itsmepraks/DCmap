@@ -125,6 +125,16 @@ For a truly custom look:
 3. Click "Share" and copy the Style URL (e.g., `mapbox://styles/username/style-id`)
 4. Update `NEXT_PUBLIC_MAPBOX_STYLE` in your `.env.local` file
 
+### Rebuilding the Walk Graph (Experimental)
+
+The Escape Road-inspired locomotion uses a lightweight navigation graph stored in `public/data/walk_graph.json`. After editing `public/data/dc_walkable_roads.geojson`, regenerate the graph with:
+
+```bash
+npm run build:walk-graph
+```
+
+The script infers widths, recommended speeds (human + scooter), and scooter access per edge so the controller can keep avatars glued to the correct road surfaces.
+
 ### Run Development Server
 
 ```bash

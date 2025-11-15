@@ -1,0 +1,207 @@
+{
+  "version": 8,
+  "name": "DC Isometric Cartoon",
+  "metadata": {
+    "mapbox:autocomposite": true,
+    "mapbox:type": "template"
+  },
+  "center": [-77.0369, 38.9072],
+  "zoom": 14,
+  "bearing": 0,
+  "pitch": 45,
+  "sources": {
+    "composite": {
+      "url": "mapbox://mapbox.mapbox-streets-v8,mapbox.mapbox-terrain-v2",
+      "type": "vector"
+    }
+  },
+  "sprite": "mapbox://sprites/mapbox/light-v11",
+  "glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#F5F0E8"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "composite",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#A8D5E2",
+        "fill-opacity": 0.9
+      }
+    },
+    {
+      "id": "water-outline",
+      "type": "line",
+      "source": "composite",
+      "source-layer": "water",
+      "paint": {
+        "line-color": "#7FB3D3",
+        "line-width": 1.5
+      }
+    },
+    {
+      "id": "landcover-grass",
+      "type": "fill",
+      "source": "composite",
+      "source-layer": "landcover",
+      "filter": ["==", ["get", "class"], "grass"],
+      "paint": {
+        "fill-color": "#B8E6B8",
+        "fill-opacity": 0.95
+      }
+    },
+    {
+      "id": "parks",
+      "type": "fill",
+      "source": "composite",
+      "source-layer": "landuse",
+      "filter": [
+        "in",
+        ["get", "class"],
+        ["literal", ["park", "grass", "garden", "recreation_ground"]]
+      ],
+      "paint": {
+        "fill-color": "#A8E5A8",
+        "fill-opacity": 1
+      }
+    },
+    {
+      "id": "parks-outline",
+      "type": "line",
+      "source": "composite",
+      "source-layer": "landuse",
+      "filter": [
+        "in",
+        ["get", "class"],
+        ["literal", ["park", "grass", "garden", "recreation_ground"]]
+      ],
+      "paint": {
+        "line-color": "#7BC47B",
+        "line-width": 2
+      }
+    },
+    {
+      "id": "road-streets",
+      "type": "line",
+      "source": "composite",
+      "source-layer": "road",
+      "filter": [
+        "in",
+        ["get", "class"],
+        ["literal", ["street", "primary", "secondary", "tertiary"]]
+      ],
+      "paint": {
+        "line-color": "#E0E0E0",
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          10, 2,
+          14, 8,
+          18, 16
+        ]
+      }
+    },
+    {
+      "id": "road-highway",
+      "type": "line",
+      "source": "composite",
+      "source-layer": "road",
+      "filter": [
+        "in",
+        ["get", "class"],
+        ["literal", ["motorway", "trunk", "primary_link"]]
+      ],
+      "paint": {
+        "line-color": "#D0D0D0",
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          10, 3,
+          14, 12,
+          18, 24
+        ]
+      }
+    },
+    {
+      "id": "building-fill",
+      "type": "fill",
+      "source": "composite",
+      "source-layer": "building",
+      "minzoom": 13,
+      "paint": {
+        "fill-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "height"],
+          0, "#FFB6C1",
+          10, "#FFA8D5",
+          30, "#C8A2E8",
+          50, "#A8C8E8",
+          100, "#B8B8FF"
+        ],
+        "fill-opacity": 1
+      }
+    },
+    {
+      "id": "building-extrusion",
+      "type": "fill-extrusion",
+      "source": "composite",
+      "source-layer": "building",
+      "minzoom": 13,
+      "paint": {
+        "fill-extrusion-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "height"],
+          0, "#FFB6C1",
+          10, "#FFA8D5",
+          30, "#C8A2E8",
+          50, "#A8C8E8",
+          100, "#B8B8FF"
+        ],
+        "fill-extrusion-height": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          13, 0,
+          13.05, ["*", ["get", "height"], 1.2]
+        ],
+        "fill-extrusion-base": 0,
+        "fill-extrusion-opacity": 0.95,
+        "fill-extrusion-ambient-occlusion-intensity": 0.3,
+        "fill-extrusion-ambient-occlusion-radius": 2
+      }
+    },
+    {
+      "id": "road-label",
+      "type": "symbol",
+      "source": "composite",
+      "source-layer": "road",
+      "filter": ["has", "name"],
+      "layout": {
+        "text-field": ["get", "name"],
+        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+        "text-size": 10,
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "viewport",
+        "symbol-placement": "line",
+        "symbol-spacing": 250
+      },
+      "paint": {
+        "text-color": "#FFFFFF",
+        "text-halo-color": "#666666",
+        "text-halo-width": 2,
+        "text-halo-blur": 1
+      }
+    }
+  ]
+}
+

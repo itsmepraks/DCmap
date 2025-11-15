@@ -117,8 +117,8 @@ export default function WalkModeHUD({ isVisible }: WalkModeHUDProps) {
                     fontWeight: 'bold',
                     boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                   }}
-                >V</kbd>
-                <span style={{ color: minecraftTheme.colors.text.secondary }}>View</span>
+                >Mouse</kbd>
+                <span style={{ color: minecraftTheme.colors.text.secondary }}>Look</span>
               </div>
               <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
               <div className="flex items-center gap-2">
@@ -133,8 +133,8 @@ export default function WalkModeHUD({ isVisible }: WalkModeHUDProps) {
                     fontWeight: 'bold',
                     boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                   }}
-                >T</kbd>
-                <span style={{ color: minecraftTheme.colors.text.secondary }}>3rd Person</span>
+                >ESC</kbd>
+                <span style={{ color: minecraftTheme.colors.text.secondary }}>Exit</span>
               </div>
             </div>
           </div>

@@ -9,12 +9,13 @@ interface ParksLayerProps {
 }
 
 /**
- * ParksLayer - Displays DC's parks and green spaces with seasonal color changes
+ * ParksLayer - Displays DMV (DC-Maryland-Virginia) parks and green spaces with seasonal color changes
  * 
  * Features:
- * - Uses Mapbox's built-in land use data
+ * - Uses Mapbox's built-in land use data covering the entire DMV area
  * - Changes color based on season (pink spring, green summer, orange fall, gray winter)
- * - Applies to parks, gardens, and other green spaces
+ * - Applies to parks, gardens, and other green spaces across DC, MD, and VA
+ * - Automatically covers all visible map area (no geographic filtering)
  */
 export default function ParksLayer({ visible, season = 'summer' }: ParksLayerProps) {
   const { map } = useMap()
@@ -53,9 +54,9 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
               'recreation_ground'
             ],
             paint: {
-              'fill-color': '#4CAF50', // Default summer green
-              'fill-opacity': 0.4,
-              'fill-outline-color': '#2E7D32'
+              'fill-color': '#A8E5A8', // Pastel green for cartoon style
+              'fill-opacity': 1,
+              'fill-outline-color': '#7BC47B'
             }
           }) // Add without specifying beforeId
 
@@ -132,10 +133,10 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
 
       // Color mapping for seasons - matches tree colors
       const seasonColors = {
-        spring: { fill: '#FFB7CE', outline: '#E88FAE' },  // PINK
-        summer: { fill: '#4CAF50', outline: '#2E7D32' },  // GREEN
-        fall: { fill: '#FF6B35', outline: '#D4501E' },    // ORANGE
-        winter: { fill: '#B0BEC5', outline: '#78909C' }   // GRAY
+        spring: { fill: '#FFC1E3', outline: '#FFA8D5' },  // Pastel PINK
+        summer: { fill: '#A8E5A8', outline: '#7BC47B' },  // Pastel GREEN
+        fall: { fill: '#FFB87A', outline: '#FF9955' },    // Pastel ORANGE
+        winter: { fill: '#D0D8E0', outline: '#B8C8D0' }   // Pastel GRAY
       }
 
       const colors = seasonColors[season]

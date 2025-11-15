@@ -1,0 +1,261 @@
+[
+  {
+    "id": "monuments-tour",
+    "title": "Monuments Tour",
+    "description": "Visit the iconic monuments that define Washington DC. Stand where history was made!",
+    "icon": "🏛️",
+    "difficulty": "easy",
+    "category": "Monuments",
+    "rewards": {
+      "points": 100,
+      "badge": "Monument Master"
+    },
+    "objectives": [
+      {
+        "type": "visit",
+        "target": "lincoln-memorial",
+        "description": "Visit the Lincoln Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "washington-monument",
+        "description": "Visit the Washington Monument",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "jefferson-memorial",
+        "description": "Visit the Jefferson Memorial",
+        "completed": false
+      }
+    ],
+    "isUnlocked": true,
+    "isCompleted": false
+  },
+  {
+    "id": "museum-explorer",
+    "title": "Museum Explorer",
+    "description": "Discover the treasures hidden in DC's world-famous museums. Knowledge awaits!",
+    "icon": "🏛️",
+    "difficulty": "easy",
+    "category": "Museums",
+    "rewards": {
+      "points": 150,
+      "badge": "Museum Curator"
+    },
+    "objectives": [
+      {
+        "type": "discover",
+        "target": "smithsonian-natural-history",
+        "description": "Discover the Natural History Museum",
+        "completed": false
+      },
+      {
+        "type": "discover",
+        "target": "smithsonian-air-space",
+        "description": "Discover the Air & Space Museum",
+        "completed": false
+      },
+      {
+        "type": "discover",
+        "target": "smithsonian-american-history",
+        "description": "Discover the American History Museum",
+        "completed": false
+      }
+    ],
+    "isUnlocked": true,
+    "isCompleted": false
+  },
+  {
+    "id": "capitol-hill-trail",
+    "title": "Capitol Hill Historical Trail",
+    "description": "Follow the footsteps of America's leaders through the heart of government.",
+    "icon": "🏛️",
+    "difficulty": "medium",
+    "category": "History",
+    "rewards": {
+      "points": 200,
+      "badge": "Capitol Expert"
+    },
+    "objectives": [
+      {
+        "type": "visit",
+        "target": "us-capitol",
+        "description": "Visit the U.S. Capitol Building",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "supreme-court",
+        "description": "Visit the Supreme Court",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "library-of-congress",
+        "description": "Visit the Library of Congress",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "white-house",
+        "description": "Visit the White House",
+        "completed": false
+      }
+    ],
+    "isUnlocked": true,
+    "isCompleted": false
+  },
+  {
+    "id": "green-dc",
+    "title": "Green DC Explorer",
+    "description": "Explore the natural beauty of Washington DC through its parks and cherry blossoms.",
+    "icon": "🌸",
+    "difficulty": "medium",
+    "category": "Nature",
+    "rewards": {
+      "points": 175,
+      "badge": "Nature Scout"
+    },
+    "objectives": [
+      {
+        "type": "visit",
+        "target": "tidal-basin",
+        "description": "Visit the Tidal Basin during cherry blossom season",
+        "completed": false
+      },
+      {
+        "type": "discover",
+        "target": "national-mall",
+        "description": "Explore the National Mall",
+        "completed": false
+      },
+      {
+        "type": "discover",
+        "target": "rock-creek-park",
+        "description": "Discover Rock Creek Park",
+        "completed": false
+      }
+    ],
+    "isUnlocked": false,
+    "isCompleted": false
+  },
+  {
+    "id": "memorial-mile",
+    "title": "Memorial Mile",
+    "description": "Honor those who served by visiting the war memorials across DC.",
+    "icon": "🎖️",
+    "difficulty": "medium",
+    "category": "Memorials",
+    "rewards": {
+      "points": 225,
+      "badge": "Guardian of Memory"
+    },
+    "objectives": [
+      {
+        "type": "visit",
+        "target": "wwii-memorial",
+        "description": "Visit the World War II Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "vietnam-memorial",
+        "description": "Visit the Vietnam Veterans Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "korean-memorial",
+        "description": "Visit the Korean War Veterans Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "arlington-cemetery",
+        "description": "Visit Arlington National Cemetery",
+        "completed": false
+      }
+    ],
+    "isUnlocked": false,
+    "isCompleted": false
+  },
+  {
+    "id": "dc-grand-tour",
+    "title": "DC Grand Tour",
+    "description": "The ultimate DC challenge! Visit all 10 major landmarks. Are you ready?",
+    "icon": "🏆",
+    "difficulty": "hard",
+    "category": "Challenge",
+    "rewards": {
+      "points": 500,
+      "badge": "DC Master Explorer"
+    },
+    "objectives": [
+      {
+        "type": "visit",
+        "target": "lincoln-memorial",
+        "description": "Visit Lincoln Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "washington-monument",
+        "description": "Visit Washington Monument",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "us-capitol",
+        "description": "Visit U.S. Capitol",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "white-house",
+        "description": "Visit White House",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "jefferson-memorial",
+        "description": "Visit Jefferson Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "wwii-memorial",
+        "description": "Visit WWII Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "vietnam-memorial",
+        "description": "Visit Vietnam Memorial",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "supreme-court",
+        "description": "Visit Supreme Court",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "library-of-congress",
+        "description": "Visit Library of Congress",
+        "completed": false
+      },
+      {
+        "type": "visit",
+        "target": "smithsonian-castle",
+        "description": "Visit Smithsonian Castle",
+        "completed": false
+      }
+    ],
+    "isUnlocked": false,
+    "isCompleted": false
+  }
+]
+
