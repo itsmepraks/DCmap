@@ -20,10 +20,12 @@ export default function ConsolidatedHUD({
   totalCount,
   nearestLandmark
 }: ConsolidatedHUDProps) {
+  // Always call hooks before any early returns
+  const { state: playerState } = usePlayerState()
+  
   if (!isVisible) return null
 
   const progress = (visitedCount / totalCount) * 100
-  const { state: playerState } = usePlayerState()
   const bearing = playerState.heading
   const metersPerDegree = 111139
   const speedKmh = playerState.speed * metersPerDegree * 3.6

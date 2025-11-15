@@ -167,36 +167,199 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks }: Landm
           
           console.log(`📍 Adding landmark: ${properties.name} at [${lng}, ${lat}]`)
 
-          // Create popup HTML
+          // Create rich popup HTML with Minecraft theme
           const popupHTML = `
-            <div class="popup-wrapper" style="padding: 0; margin: -15px; border-radius: 12px; overflow: hidden;">
-              <div style="background: linear-gradient(135deg, ${isVisited ? '#FFD700' : '#999'} 0%, ${isVisited ? '#FFA500' : '#777'} 100%); padding: 16px; border-bottom: 3px solid ${isVisited ? '#B8860B' : '#555'};">
-                <h3 style="margin: 0; color: white; font-size: 18px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                  ${properties.icon} ${properties.name}
-                </h3>
+            <div class="popup-wrapper" style="
+              padding: 0; 
+              margin: -15px; 
+              border-radius: 8px; 
+              overflow: hidden;
+              font-family: monospace;
+              box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+              border: 3px solid ${isVisited ? '#D4501E' : '#8B7355'};
+              background: linear-gradient(145deg, #EFE6D5 0%, #F5EBD9 100%);
+            ">
+              <!-- Header -->
+              <div style="
+                background: linear-gradient(135deg, ${isVisited ? '#D4501E' : '#8B7355'} 0%, ${isVisited ? '#B8431A' : '#6B5A47'} 100%); 
+                padding: 16px; 
+                border-bottom: 4px solid ${isVisited ? '#B8431A' : '#6B5A47'};
+                position: relative;
+              ">
+                <div style="position: absolute; top: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+                <div style="position: absolute; top: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+                <div style="position: absolute; bottom: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+                <div style="position: absolute; bottom: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+                
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    ${properties.icon}
+                  </div>
+                  <div style="flex: 1;">
+                    <h3 style="
+                      margin: 0 0 4px 0; 
+                      color: white; 
+                      font-size: 16px; 
+                      font-weight: bold; 
+                      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+                      font-family: monospace;
+                    ">
+                      ${properties.name}
+                    </h3>
+                    <div style="
+                      display: inline-block;
+                      padding: 2px 8px;
+                      background: rgba(255,255,255,0.2);
+                      border-radius: 4px;
+                      font-size: 10px;
+                      color: rgba(255,255,255,0.9);
+                      font-weight: bold;
+                      text-transform: uppercase;
+                    ">
+                      ${properties.category || 'Monument'}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div style="padding: 16px; background: white;">
+              
+              <!-- Content -->
+              <div style="padding: 16px; background: linear-gradient(145deg, #F5EBD9 0%, #EFE6D5 100%);">
                 ${isVisited ? `
+                  <!-- Description -->
                   <div style="margin-bottom: 12px;">
-                    <p style="margin: 0 0 8px 0; color: #2C1810; font-size: 14px; line-height: 1.5;">${properties.description}</p>
+                    <div style="
+                      font-size: 10px; 
+                      font-weight: bold; 
+                      color: #8B7355; 
+                      text-transform: uppercase; 
+                      margin-bottom: 6px;
+                      font-family: monospace;
+                    ">
+                      📖 About
+                    </div>
+                    <p style="
+                      margin: 0; 
+                      color: #2C1810; 
+                      font-size: 13px; 
+                      line-height: 1.6;
+                      font-family: monospace;
+                    ">
+                      ${properties.description}
+                    </p>
                   </div>
-                  <div style="padding: 12px; background: rgba(255, 215, 0, 0.1); border-left: 3px solid #FFD700; border-radius: 4px;">
-                    <p style="margin: 0; color: #5D4037; font-size: 13px; font-weight: 500;">💡 ${properties.funFact}</p>
+                  
+                  <!-- Fun Fact -->
+                  <div style="
+                    padding: 12px; 
+                    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 165, 0, 0.1) 100%); 
+                    border-left: 4px solid #FFD700; 
+                    border-radius: 4px;
+                    margin-bottom: 12px;
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+                  ">
+                    <div style="
+                      font-size: 10px; 
+                      font-weight: bold; 
+                      color: #B8860B; 
+                      text-transform: uppercase; 
+                      margin-bottom: 4px;
+                      font-family: monospace;
+                    ">
+                      💡 Did You Know?
+                    </div>
+                    <p style="
+                      margin: 0; 
+                      color: #5D4037; 
+                      font-size: 12px; 
+                      font-weight: 500;
+                      line-height: 1.5;
+                      font-family: monospace;
+                    ">
+                      ${properties.funFact}
+                    </p>
                   </div>
-                  <div style="margin-top: 12px; text-align: center;">
-                    <span style="display: inline-block; padding: 6px 12px; background: #FFD700; color: #2C1810; border-radius: 8px; font-weight: bold; font-size: 12px;">
+                  
+                  <!-- Status Badge -->
+                  <div style="
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: space-between;
+                    padding: 10px;
+                    background: linear-gradient(135deg, #7ED957 0%, #5DA040 100%);
+                    border-radius: 6px;
+                    border: 2px solid #5DA040;
+                    box-shadow: 0 4px 0 #5DA040, 0 6px 12px rgba(0,0,0,0.2);
+                  ">
+                    <span style="
+                      color: white; 
+                      font-weight: bold; 
+                      font-size: 12px;
+                      text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+                      font-family: monospace;
+                    ">
                       ✓ DISCOVERED
+                    </span>
+                    <span style="
+                      color: #FFD700; 
+                      font-weight: bold; 
+                      font-size: 12px;
+                      text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+                      font-family: monospace;
+                    ">
+                      +10 XP
                     </span>
                   </div>
                 ` : `
-                  <div style="text-align: center; padding: 20px;">
-                    <div style="font-size: 40px; margin-bottom: 12px;">🔒</div>
-                    <p style="margin: 0; color: #999; font-size: 14px; font-weight: 500;">
-                      Walk within 50m to discover this landmark!
+                  <!-- Locked State -->
+                  <div style="text-align: center; padding: 20px 10px;">
+                    <div style="
+                      font-size: 48px; 
+                      margin-bottom: 12px;
+                      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+                    ">
+                      🔒
+                    </div>
+                    <div style="
+                      font-size: 14px; 
+                      font-weight: bold; 
+                      color: #8B7355; 
+                      margin-bottom: 8px;
+                      font-family: monospace;
+                      text-transform: uppercase;
+                    ">
+                      Locked Location
+                    </div>
+                    <p style="
+                      margin: 0 0 12px 0; 
+                      color: #5D4037; 
+                      font-size: 12px; 
+                      line-height: 1.5;
+                      font-family: monospace;
+                    ">
+                      Click on this landmark or get within 50 meters to discover its secrets!
                     </p>
+                    <div style="
+                      display: inline-block;
+                      padding: 8px 16px;
+                      background: linear-gradient(135deg, rgba(139, 115, 85, 0.2) 0%, rgba(107, 90, 71, 0.2) 100%);
+                      border: 2px solid #8B7355;
+                      border-radius: 6px;
+                      font-size: 11px;
+                      color: #5D4037;
+                      font-weight: bold;
+                      font-family: monospace;
+                    ">
+                      📍 ${properties.category || 'Historic Site'}
+                    </div>
                   </div>
                 `}
               </div>
+              
+              <!-- Pixelated corners -->
+              <div style="position: absolute; top: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+              <div style="position: absolute; top: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+              <div style="position: absolute; bottom: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+              <div style="position: absolute; bottom: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
             </div>
           `
 
@@ -238,7 +401,7 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks }: Landm
     // We'll update the icon in a more dynamic way
     // For now, we rely on the popup showing visited status
     console.log('📍 Landmarks visited status updated:', visitedLandmarks.size)
-  }, [map, visitedLandmarks])
+  }, [map, isInitialized, visitedLandmarks])
 
   // Toggle visibility
   useEffect(() => {

@@ -86,7 +86,8 @@ export function useChaseCamera({ map, isActive, avatarType }: UseChaseCameraOpti
         lerp(previous.y, chasePosition.y, stiffness),
         lerp(previous.z, chasePosition.z, stiffness)
       )
-      camera.lookAtPoint(lookAtPoint)
+      // Convert MercatorCoordinate to LngLat for lookAtPoint
+      camera.lookAtPoint(lookAtPoint.toLngLat())
       map.setFreeCameraOptions(camera)
       cameraPositionRef.current = camera.position
 

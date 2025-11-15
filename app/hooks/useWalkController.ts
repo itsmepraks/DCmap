@@ -212,7 +212,8 @@ export function useWalkController({
         const distance = Math.hypot(targetPoint.x - projPoint.x, targetPoint.y - projPoint.y)
         if (distance < closestDistance) {
           closestDistance = distance
-          const lngLat = map.unproject(projPoint)
+          // Convert to PointLike format (array)
+          const lngLat = map.unproject([projPoint.x, projPoint.y])
           snappedLngLat = [lngLat.lng, lngLat.lat]
         }
       }

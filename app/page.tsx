@@ -12,9 +12,12 @@ import GameOverlay from './components/ui/GameOverlay'
 import QuestPanel from './components/ui/QuestPanel'
 import GameHUD from './components/ui/GameHUD'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
-import { MapProvider } from './lib/MapContext'
+import DiscoveryAnimation from './components/ui/DiscoveryAnimation'
+import ProximityHint from './components/ui/ProximityHint'
+import { MapProvider, useMap } from './lib/MapContext'
 import { loadGameProgress, visitLandmark, resetGameProgress, type GameProgress } from './lib/gameState'
 import { loadQuestProgress, saveQuestProgress, startQuest, checkQuestProgress, type Quest, type QuestProgress } from './lib/questSystem'
+import { getNearbyLandmarks, type NearbyLandmark } from './lib/proximityCalculator'
 
 export default function Home() {
   return (
@@ -46,6 +49,14 @@ function HomeContent() {
   const [quests, setQuests] = useState<Quest[]>([])
   const [questProgress, setQuestProgress] = useState<QuestProgress>(() => loadQuestProgress())
   const [questCompletion, setQuestCompletion] = useState<any>(null)
+  
+  // Discovery animation state
+  const [showDiscovery, setShowDiscovery] = useState(false)
+  const [discoveryData, setDiscoveryData] = useState<any>(null)
+  
+  // Proximity hints
+  const [nearbyLandmarks, setNearbyLandmarks] = useState<NearbyLandmark[]>([])
+  const { map } = useMap()
 
   const handleToggleLayer = (layerId: keyof typeof layersVisible) => {
     setLayersVisible(prev => ({
@@ -92,6 +103,33 @@ function HomeContent() {
       .catch(err => console.error('Failed to load quests:', err))
   }, [])
 
+  // Update proximity hints based on map center
+  useEffect(() => {
+    if (!map || !landmarks.length) return
+
+    const updateProximity = () => {
+      const center = map.getCenter()
+      const currentPos: [number, number] = [center.lng, center.lat]
+      
+      const nearby = getNearbyLandmarks(
+        currentPos,
+        landmarks,
+        1000, // 1km radius
+        gameProgress.visitedLandmarks
+      )
+      
+      setNearbyLandmarks(nearby)
+    }
+
+    // Update on map move
+    map.on('move', updateProximity)
+    updateProximity() // Initial update
+
+    return () => {
+      map.off('move', updateProximity)
+    }
+  }, [map, landmarks, gameProgress.visitedLandmarks])
+
   // Handle landmark discovery
   const handleLandmarkDiscovered = (landmarkId: string, landmarkData: any) => {
     if (gameProgress.visitedLandmarks.has(landmarkId)) return
@@ -118,14 +156,24 @@ function HomeContent() {
       })
     }
 
-    // Show achievement toast
+    // Show discovery animation (full screen celebration)
     const landmark = landmarks.find(l => l.id === landmarkId)
     if (landmark) {
-      setAchievement({
+      setDiscoveryData({
         name: landmark.name,
-        icon: landmark.icon,
-        funFact: landmark.funFact
+        icon: landmark.icon
       })
+      setShowDiscovery(true)
+      
+      // Hide discovery animation after 3 seconds and show toast
+      setTimeout(() => {
+        setShowDiscovery(false)
+        setAchievement({
+          name: landmark.name,
+          icon: landmark.icon,
+          funFact: landmark.funFact
+        })
+      }, 3000)
     }
 
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
@@ -135,6 +183,19 @@ function HomeContent() {
   const handleStartQuest = (questId: string) => {
     const newProgress = startQuest(questId, questProgress)
     setQuestProgress(newProgress)
+  }
+
+  // Handle navigating to a landmark from proximity hint
+  const handleNavigateToLandmark = (landmarkId: string) => {
+    const landmark = landmarks.find(l => l.id === landmarkId)
+    if (landmark && map) {
+      map.flyTo({
+        center: landmark.coordinates,
+        zoom: 17,
+        duration: 2000,
+        essential: true
+      })
+    }
   }
 
   // Handle game reset
@@ -199,6 +260,20 @@ function HomeContent() {
           quests={quests}
           activeQuestIds={questProgress.activeQuests}
           onStartQuest={handleStartQuest}
+        />
+        
+        {/* Proximity Hints - Show nearby landmarks */}
+        <ProximityHint
+          nearbyLandmarks={nearbyLandmarks}
+          onNavigate={handleNavigateToLandmark}
+        />
+        
+        {/* Discovery Animation - Full screen celebration */}
+        <DiscoveryAnimation
+          isVisible={showDiscovery}
+          landmarkName={discoveryData?.name || ''}
+          landmarkIcon={discoveryData?.icon || ''}
+          points={10}
         />
         
         {/* Achievement Toast */}

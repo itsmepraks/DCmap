@@ -55,7 +55,8 @@ export const snapLngLatToRoad = (mapInstance: mapboxgl.Map | null, lngLat: [numb
       const distance = Math.hypot(targetPoint.x - closestPoint.x, targetPoint.y - closestPoint.y)
       if (distance < minDistance) {
         minDistance = distance
-        closest = mapInstance.unproject(closestPoint)
+        // Convert to PointLike format (array)
+        closest = mapInstance.unproject([closestPoint.x, closestPoint.y])
       }
     }
 
@@ -79,7 +80,9 @@ export const snapLngLatToRoad = (mapInstance: mapboxgl.Map | null, lngLat: [numb
     if (!closest) {
       return null
     }
-    return [closest.lng, closest.lat] as [number, number]
+    // Type assertion after null check
+    const finalClosest = closest as mapboxgl.LngLat
+    return [finalClosest.lng, finalClosest.lat] as [number, number]
   } catch (error) {
     console.warn('Road snapping skipped:', error)
     return null
