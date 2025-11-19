@@ -1,0 +1,58 @@
+[
+  {
+    "id": "hidden-1",
+    "name": "The Exorcist Steps",
+    "coordinates": [-77.070876, 38.905689],
+    "description": "Famous steep steps in Georgetown featured in the 1973 horror film 'The Exorcist'. These 75 stone steps connect M Street to Prospect Street.",
+    "funFact": "The steps are 75 steps high and became a popular spot for movie fans and fitness enthusiasts!",
+    "category": "Hidden Gem",
+    "icon": "👻",
+    "hint": "Hidden in Georgetown near the university...",
+    "reward": 50
+  },
+  {
+    "id": "hidden-2",
+    "name": "The Temperance Fountain",
+    "coordinates": [-77.024654, 38.895403],
+    "description": "A historic fountain donated in 1882 to provide water for horses, dogs, and humans. A unique three-tiered design promoting temperance.",
+    "funFact": "It was designed to discourage alcohol consumption by providing free drinking water!",
+    "category": "Hidden Gem",
+    "icon": "⛲",
+    "hint": "Look for a special fountain near the National Mall...",
+    "reward": 50
+  },
+  {
+    "id": "hidden-3",
+    "name": "Einstein Memorial",
+    "coordinates": [-77.047098, 38.892123],
+    "description": "A 12-foot bronze statue of Albert Einstein sitting on a granite bench, located near the Vietnam Veterans Memorial.",
+    "funFact": "The statue weighs 4 tons and features Einstein holding papers with mathematical equations!",
+    "category": "Hidden Gem",
+    "icon": "🧠",
+    "hint": "Seek genius near the Constitution Gardens...",
+    "reward": 50
+  },
+  {
+    "id": "hidden-4",
+    "name": "The Zero Milestone",
+    "coordinates": [-77.038651, 38.894886],
+    "description": "A small monument that serves as the symbolic center of all highways in America. Located south of the White House.",
+    "funFact": "Erected in 1923, it was intended to be the starting point for measuring distances to other US cities!",
+    "category": "Hidden Gem",
+    "icon": "🎯",
+    "hint": "Find the center of all roads south of the White House...",
+    "reward": 50
+  },
+  {
+    "id": "hidden-5",
+    "name": "The Darth Vader Grotesque",
+    "coordinates": [-77.070931, 38.930643],
+    "description": "A carved grotesque on the National Cathedral's northwest tower depicting Darth Vader's head, added after a design competition for children in the 1980s.",
+    "funFact": "It's on the northwest tower and requires binoculars to see from ground level!",
+    "category": "Hidden Gem",
+    "icon": "🏰",
+    "hint": "Look up high at the National Cathedral...",
+    "reward": 50
+  }
+]
+

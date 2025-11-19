@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { minecraftTheme } from '@/app/lib/theme'
+import { formatDistance } from '@/app/lib/proximityDetector'
 
 interface CompassHUDProps {
   isVisible: boolean
@@ -125,7 +126,7 @@ export default function CompassHUD({ isVisible, bearing, nearestLandmark }: Comp
                   fontFamily: 'monospace'
                 }}
               >
-                📍 {nearestLandmark.distance.toFixed(1)}km away
+                📍 {formatDistance(nearestLandmark.distance)} away
               </div>
             </motion.div>
           )}

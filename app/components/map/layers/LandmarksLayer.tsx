@@ -3,13 +3,16 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 
+import { calculateDistance } from '@/app/lib/proximityCalculator'
+
 interface LandmarksLayerProps {
   map: mapboxgl.Map | null
   visible: boolean
   visitedLandmarks: Set<string>
+  onLandmarkDiscovered?: (landmarkId: string, landmarkData: any) => void
 }
 
-export default function LandmarksLayer({ map, visible, visitedLandmarks }: LandmarksLayerProps) {
+export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandmarkDiscovered }: LandmarksLayerProps) {
   const isInitialized = useRef(false)
 
   useEffect(() => {
@@ -164,6 +167,23 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks }: Landm
           const coordinates = (feature.geometry as any).coordinates.slice()
           const [lng, lat] = coordinates
           const isVisited = visitedLandmarks.has(properties.id)
+          
+          // Check if user is close enough to discover (50m radius)
+          // This allows "Click to Discover" if the user is nearby but the auto-discovery didn't trigger
+          if (!isVisited && onLandmarkDiscovered) {
+            const center = map.getCenter()
+            const distance = calculateDistance(
+              [center.lng, center.lat],
+              [lng, lat]
+            )
+            
+            if (distance <= 50) {
+              console.log(`🎯 Click discovery triggered for ${properties.name} (Distance: ${Math.round(distance)}m)`)
+              onLandmarkDiscovered(properties.id, properties)
+              // If discovered, we'll treat it as visited for the popup immediately
+              // Note: State update will follow shortly
+            }
+          }
           
           console.log(`📍 Adding landmark: ${properties.name} at [${lng}, ${lat}]`)
 

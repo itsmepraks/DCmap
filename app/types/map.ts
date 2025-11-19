@@ -10,6 +10,7 @@ export interface LayerVisibility {
   trees: boolean
   heatmap: boolean
   landmarks: boolean
+  hiddenGems: boolean
 }
 
 export type LayerId = keyof LayerVisibility

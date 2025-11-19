@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { AvatarType } from '@/app/types/avatar'
 
@@ -23,8 +23,10 @@ export default function Realistic3DAvatars({
 }: Realistic3DAvatarsProps) {
   const markerRef = useRef<mapboxgl.Marker | null>(null)
   const avatarElementRef = useRef<HTMLDivElement | null>(null)
+  const dotRef = useRef<HTMLDivElement | null>(null)
+  const arrowRef = useRef<HTMLDivElement | null>(null)
 
-  // Create simple position marker
+  // Create simple position marker with static structure
   useEffect(() => {
     if (!map) return
 
@@ -34,6 +36,42 @@ export default function Realistic3DAvatars({
     avatarContainer.style.position = 'relative'
     avatarContainer.style.cursor = 'pointer'
     avatarContainer.style.zIndex = '10000'
+    
+    // Create Dot
+    const dot = document.createElement('div')
+    Object.assign(dot.style, {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      width: '16px',
+      height: '16px',
+      border: '3px solid #ffffff',
+      borderRadius: '50%',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      transition: 'box-shadow 0.3s ease, background 0.3s ease',
+      transform: 'translate(-50%, -50%)', // Initial transform
+      willChange: 'transform, background' // Optimize for animations
+    })
+    avatarContainer.appendChild(dot)
+    dotRef.current = dot
+
+    // Create Arrow
+    const arrow = document.createElement('div')
+    Object.assign(arrow.style, {
+      position: 'absolute',
+      top: '-8px',
+      left: '50%',
+      width: '0',
+      height: '0',
+      borderLeft: '6px solid transparent',
+      borderRight: '6px solid transparent',
+      borderBottom: '12px solid #ffffff',
+      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
+      transform: 'translateX(-50%)', // Initial transform
+      willChange: 'transform' // Optimize for animations
+    })
+    avatarContainer.appendChild(arrow)
+    arrowRef.current = arrow
     
     avatarElementRef.current = avatarContainer
 
@@ -59,58 +97,24 @@ export default function Realistic3DAvatars({
     }
   }, [position])
 
-  // Simple position marker - lightweight and performant
+  // Update visuals (rotation and color) without rebuilding DOM
   useEffect(() => {
-    if (!avatarElementRef.current) return
+    if (!dotRef.current || !arrowRef.current) return
 
-    const container = avatarElementRef.current
-    
-    // Simple pulsing dot to show position
-    container.style.width = '20px'
-    container.style.height = '20px'
-    
     const pulseColor = isMoving 
       ? (isRunning ? 'rgba(255, 100, 100, 0.9)' : 'rgba(100, 200, 255, 0.9)')
       : 'rgba(255, 200, 0, 0.8)'
     
-    const avatarHTML = `
-      <div style="
-        width: 20px;
-        height: 20px;
-        position: relative;
-      ">
-        <!-- Simple position dot -->
-        <div style="
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) rotate(${bearing}deg);
-          width: 16px;
-          height: 16px;
-          background: ${pulseColor};
-          border: 3px solid #ffffff;
-          border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 ${isMoving ? '4px' : '0px'} rgba(255,255,255,0.3);
-          transition: box-shadow 0.3s ease;
-        "></div>
-        
-        <!-- Direction arrow -->
-        <div style="
-          position: absolute;
-          top: -8px;
-          left: 50%;
-          transform: translateX(-50%) rotate(${bearing}deg);
-          width: 0;
-          height: 0;
-          border-left: 6px solid transparent;
-          border-right: 6px solid transparent;
-          border-bottom: 12px solid #ffffff;
-          filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
-        "></div>
-      </div>
-    `
-    
-    container.innerHTML = avatarHTML
+    const shadow = `0 2px 8px rgba(0,0,0,0.4)${isMoving ? ', 0 0 0 4px rgba(255,255,255,0.3)' : ''}`
+
+    // Update Dot
+    dotRef.current.style.background = pulseColor
+    dotRef.current.style.boxShadow = shadow
+    dotRef.current.style.transform = `translate(-50%, -50%) rotate(${bearing}deg)`
+
+    // Update Arrow
+    arrowRef.current.style.transform = `translateX(-50%) rotate(${bearing}deg)`
+
   }, [bearing, isMoving, isRunning])
 
   return null

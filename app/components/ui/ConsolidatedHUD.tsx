@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
 import { usePlayerState } from '@/app/lib/playerState'
+import { formatDistance } from '@/app/lib/proximityDetector'
 
 interface ConsolidatedHUDProps {
   isVisible: boolean
@@ -152,7 +153,7 @@ export default function ConsolidatedHUD({
                 {nearestLandmark.name}
               </div>
               <div className="text-xs font-bold mt-1" style={{ color: minecraftTheme.colors.terracotta.base, fontFamily: 'monospace' }}>
-                📍 {nearestLandmark.distance.toFixed(1)}km away
+                📍 {formatDistance(nearestLandmark.distance)} away
               </div>
             </motion.div>
           )}

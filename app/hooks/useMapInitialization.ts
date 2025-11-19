@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { useMap } from '@/app/lib/MapContext'
+import { applyWorldBorder, DC_CENTER, ZOOM_LEVELS } from '@/app/lib/worldBorder'
 
 interface UseMapInitializationOptions {
   styleUrl?: string
@@ -22,9 +23,7 @@ export function useMapInitialization(
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
     console.log('🗺️ Initializing map...')
-    console.log('Token exists:', !!token)
-    console.log('Token length:', token?.length)
-    console.log('Token preview:', token?.substring(0, 20) + '...')
+
 
     if (!token || token.includes('placeholder')) {
       console.error(
@@ -41,19 +40,18 @@ export function useMapInitialization(
 
     try {
       console.log('🎮 Creating GTA-like realistic 3D world map')
+      // Disable telemetry to prevent blocked requests
       mapInstance = new mapboxgl.Map({
         container: containerRef.current,
         style: options.styleUrl || process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12',
-        center: [-77.0369, 38.9072],
-        zoom: 12,
+        center: DC_CENTER,
+        zoom: ZOOM_LEVELS.default,
         pitch: 50,
         bearing: 0,
         antialias: true,
         maxPitch: 85,
-        maxBounds: [
-          [-77.5, 38.6],
-          [-76.5, 39.2]
-        ],
+        minZoom: ZOOM_LEVELS.min,
+        maxZoom: ZOOM_LEVELS.max,
         preserveDrawingBuffer: false,
         refreshExpiredTiles: true,
         fadeDuration: 200,
@@ -61,8 +59,14 @@ export function useMapInitialization(
         renderWorldCopies: false,
         pitchWithRotate: true,
         touchZoomRotate: true,
-        touchPitch: true
+        touchPitch: true,
+        trackResize: true,
+        attributionControl: true // Required by Mapbox terms
       })
+
+      
+      // Apply world border after creation
+      applyWorldBorder(mapInstance)
 
       mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
@@ -157,15 +161,7 @@ export function useMapInitialization(
                     'fill-extrusion-ambient-occlusion-intensity': 1.0,
                     'fill-extrusion-ambient-occlusion-radius': 15,
                     'fill-extrusion-vertical-gradient': true,
-                    'fill-extrusion-vertical-scale': 1.0,
-                    'fill-extrusion-pattern': [
-                      'case',
-                      ['>', ['get', 'height'], 50],
-                      'building-windows-tall',
-                      ['>', ['get', 'height'], 20],
-                      'building-windows-medium',
-                      'building-windows-small'
-                    ]
+                    'fill-extrusion-vertical-scale': 1.0
                   }
                 },
                 firstSymbolId

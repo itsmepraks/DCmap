@@ -31,7 +31,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
 
   const seasonColors = useMemo(
     () => ({
-      spring: { base: '#91D296', shadow: '#4F7A46', highlight: '#CAF2C4' },
+      spring: { base: '#FFB7C5', shadow: '#E08DA0', highlight: '#FFDEEB' }, // Cherry blossom pinks
       summer: { base: '#4F8A4F', shadow: '#2F4F2F', highlight: '#7BC47B' },
       fall: { base: '#E28D3D', shadow: '#8C4B10', highlight: '#FFC27D' },
       winter: { base: '#CBD3DD', shadow: '#687078', highlight: '#E2E8F0' }
@@ -97,8 +97,11 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
 
     const initializeLayer = async () => {
       if (!map) return
+      
+      // If style isn't loaded, wait for it
       if (!map.isStyleLoaded()) {
-        map.once('idle', initializeLayer)
+        console.log('🌲 Style not loaded yet, waiting for style.load...')
+        map.once('style.load', initializeLayer)
         return
       }
 
@@ -121,7 +124,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
           type: 'fill',
           source: 'composite',
           'source-layer': 'landcover',
-          filter: treeFilter as any,
+          filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
           paint: {
             'fill-color': colors.base,
             'fill-opacity': [
@@ -140,7 +143,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
           type: 'fill-extrusion',
           source: 'composite',
           'source-layer': 'landcover',
-          filter: treeFilter as any,
+          filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
           minzoom: 10,
           paint: {
             'fill-extrusion-color': colors.highlight,
@@ -164,7 +167,7 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
           type: 'line',
           source: 'composite',
           'source-layer': 'landcover',
-          filter: treeFilter as any,
+          filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
           paint: {
             'line-color': colors.shadow,
             'line-width': [

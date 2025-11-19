@@ -1751,7 +1751,7 @@ bobY = abs(sin(frame * π/2)) * 4px
 3. **3D Walking Character - Always Visible (COMPLETED)** ✅
    - Character now shows **whenever in walk mode** (not just third-person)
    - Realistic animated human figure with:
-     * Skin-tone head with eyes
+     * Skin-tone head with facial features (eyes)
      * Green shirt/torso
      * Animated arms and legs
      * Shadow underneath
@@ -2110,4 +2110,15 @@ Walk mode now provides a truly immersive first-person experience of Washington D
 - Professional portfolio-quality appearance
 - Delightful user experience with smooth animations
 - Every interaction feels polished and intentional
+
+---
+
+### Audit & Cleanup - November 2025 ✅
+
+**Actions Taken:**
+- **Restored Walk Mode**: Re-connected `useWalkController` and `Realistic3DAvatars` in `Map.tsx`.
+- **Fixed Missing Context**: Added `PlayerProvider` to `app/page.tsx`.
+- **Code Cleanup**: Deleted unused `useChaseCamera.ts` and legacy `PlayerAvatar.tsx`.
+- **Documentation**: Moved feature log markdown files to `docs/archive/` for better project organization.
+- **Robustness Check**: Verified type safety and linter status (clean).
 

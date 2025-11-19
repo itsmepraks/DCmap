@@ -85,6 +85,9 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
           markerElement.style.pointerEvents = 'auto'
           markerElement.style.cursor = 'pointer'
           markerElement.style.transformOrigin = 'center bottom' // Building base at center bottom
+          // Optimize rendering performance
+          markerElement.style.willChange = 'transform'
+          markerElement.style.backfaceVisibility = 'hidden'
           // Ensure marker is properly bound to map coordinates
           markerElement.style.zIndex = '1000'
           markerElement.innerHTML = `
@@ -290,29 +293,8 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
 
     initializeMarkers()
 
-    // Ensure markers stay at exact positions when map moves/zooms
-    // Mapbox markers automatically maintain their coordinates, but we verify on move
-    const handleMapMove = () => {
-      markersRef.current.forEach((marker, index) => {
-        if (marker) {
-          // Markers automatically maintain their coordinates - this is just for verification
-          const currentPos = marker.getLngLat()
-          // Log only if there's a significant drift (shouldn't happen with Mapbox markers)
-          // This helps debug if markers are moving incorrectly
-        }
-      })
-    }
-
-    if (map && visible) {
-      map.on('moveend', handleMapMove)
-      map.on('zoomend', handleMapMove)
-    }
-
     return () => {
-      if (map) {
-        map.off('moveend', handleMapMove)
-        map.off('zoomend', handleMapMove)
-      }
+      // Cleanup handled in the main effect cleanup
     }
   }, [map, visible])
 

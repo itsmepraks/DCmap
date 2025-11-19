@@ -30,7 +30,7 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
         // Wait for map style to be loaded
         if (!map.isStyleLoaded()) {
           console.log('🌳 Waiting for map style to load (ParksLayer)...')
-          map.once('idle', () => initializeLayer())
+          map.once('style.load', () => initializeLayer())
           return
         }
 
@@ -120,7 +120,7 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
     // Wait for map to be fully loaded
     if (!map.isStyleLoaded()) {
       console.log('🍂 Waiting for map style before park season change...')
-      map.once('idle', () => {
+      map.once('style.load', () => {
         updateParkSeasonalColors()
       })
       return

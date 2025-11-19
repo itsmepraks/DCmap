@@ -128,6 +128,35 @@ export default function Sidebar({
             </div>
                 </button>
 
+                {/* Hidden Gems Toggle */}
+                <button
+                  onClick={() => onToggleLayer('hiddenGems')}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Discover secret Easter egg locations"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      layersVisible.hiddenGems ? 'bg-purple-500 shadow-lg shadow-purple-500/50' : 'bg-gray-200'
+                    }`}>
+                      <span className="text-xl">🔮</span>
+                    </div>
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-gray-900 flex items-center gap-2">
+                        Hidden Gems
+                        <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-purple-200 text-purple-700">Secret</span>
+                      </div>
+                      <div className="text-xs text-gray-500">Easter egg locations</div>
+                    </div>
+                  </div>
+                  <div className={`w-11 h-6 rounded-full transition-colors ${
+                    layersVisible.hiddenGems ? 'bg-purple-500' : 'bg-gray-300'
+                  }`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform mt-0.5 ${
+                      layersVisible.hiddenGems ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
+                    }`} />
+                  </div>
+                </button>
+
                 {/* Seasonal Controls - Collapsible */}
             {layersVisible.trees && (
               <motion.div 

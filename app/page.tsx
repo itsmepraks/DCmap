@@ -10,20 +10,32 @@ import AchievementToast from './components/ui/AchievementToast'
 import StatsModal from './components/ui/StatsModal'
 import GameOverlay from './components/ui/GameOverlay'
 import QuestPanel from './components/ui/QuestPanel'
+import QuestTracker from './components/ui/QuestTracker'
 import GameHUD from './components/ui/GameHUD'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
 import DiscoveryAnimation from './components/ui/DiscoveryAnimation'
 import ProximityHint from './components/ui/ProximityHint'
+import WorldBorderWarning from './components/ui/WorldBorderWarning'
+import MapLoadingSkeleton from './components/ui/MapLoadingSkeleton'
+import DailyChallengesPanel from './components/ui/DailyChallengesPanel'
+import ParticleEffect from './components/map/ParticleEffect'
+import DiscoveryRadius from './components/map/DiscoveryRadius'
+import BreadcrumbTrail from './components/map/BreadcrumbTrail'
 import { MapProvider, useMap } from './lib/MapContext'
+import { PlayerProvider } from './lib/playerState'
+import { isNearBorder, getBorderDirection } from './lib/worldBorder'
 import { loadGameProgress, visitLandmark, resetGameProgress, type GameProgress } from './lib/gameState'
 import { loadQuestProgress, saveQuestProgress, startQuest, checkQuestProgress, type Quest, type QuestProgress } from './lib/questSystem'
 import { getNearbyLandmarks, type NearbyLandmark } from './lib/proximityCalculator'
+import { loadDailyChallenges, updateChallengeProgress, loadStreak, updateStreak, type DailyChallenge } from './lib/dailyChallenges'
 
 export default function Home() {
   return (
-    <MapProvider>
-      <HomeContent />
-    </MapProvider>
+    <PlayerProvider>
+      <MapProvider>
+        <HomeContent />
+      </MapProvider>
+    </PlayerProvider>
   )
 }
 
@@ -34,6 +46,7 @@ function HomeContent() {
     trees: false,
     heatmap: false,
     landmarks: true, // Landmarks visible by default for game mode
+    hiddenGems: false
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)
@@ -57,6 +70,20 @@ function HomeContent() {
   // Proximity hints
   const [nearbyLandmarks, setNearbyLandmarks] = useState<NearbyLandmark[]>([])
   const { map } = useMap()
+  
+  // World border warning
+  const [showBorderWarning, setShowBorderWarning] = useState(false)
+  const [borderDirection, setBorderDirection] = useState('')
+  
+  // Map loading state
+  const [isMapLoaded, setIsMapLoaded] = useState(false)
+  
+  // Daily challenges and streak
+  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([])
+  const [currentStreak, setCurrentStreak] = useState({ current: 0, longest: 0, lastVisit: '' })
+  
+  // Particle effect state
+  const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
 
   const handleToggleLayer = (layerId: keyof typeof layersVisible) => {
     setLayersVisible(prev => ({
@@ -103,6 +130,40 @@ function HomeContent() {
       .catch(err => console.error('Failed to load quests:', err))
   }, [])
 
+  // Update streak and load challenges on mount
+  useEffect(() => {
+    // Load daily challenges
+    setDailyChallenges(loadDailyChallenges())
+    
+    // Update and load streak
+    const streak = updateStreak()
+    setCurrentStreak(streak)
+  }, [])
+
+  // Track map load state
+  useEffect(() => {
+    if (!map) return
+    
+    if (map.loaded()) {
+      setIsMapLoaded(true)
+    } else {
+      map.once('load', () => {
+        setIsMapLoaded(true)
+      })
+    }
+
+    // Fallback: Force loading state to true after 5 seconds if map exists
+    // This handles cases where the load event might have been missed or map is stuck
+    const timeout = setTimeout(() => {
+      if (map && !isMapLoaded) {
+        console.warn('⚠️ Map loading timeout - forcing ready state')
+        setIsMapLoaded(true)
+      }
+    }, 5000)
+
+    return () => clearTimeout(timeout)
+  }, [map])
+
   // Update proximity hints based on map center
   useEffect(() => {
     if (!map || !landmarks.length) return
@@ -119,6 +180,14 @@ function HomeContent() {
       )
       
       setNearbyLandmarks(nearby)
+      
+      // Check for world border warning
+      const nearBorder = isNearBorder(center.lng, center.lat)
+      setShowBorderWarning(nearBorder)
+      if (nearBorder) {
+        const direction = getBorderDirection(center.lng, center.lat)
+        if (direction) setBorderDirection(direction)
+      }
     }
 
     // Update on map move
@@ -156,9 +225,19 @@ function HomeContent() {
       })
     }
 
+    // Update daily challenges
+    const challengeResult = updateChallengeProgress(dailyChallenges, 'visit')
+    setDailyChallenges(challengeResult.challenges)
+    
     // Show discovery animation (full screen celebration)
     const landmark = landmarks.find(l => l.id === landmarkId)
     if (landmark) {
+      // Trigger particle effect
+      setParticleEffect({
+        coordinates: landmark.coordinates,
+        icon: landmark.icon
+      })
+      
       setDiscoveryData({
         name: landmark.name,
         icon: landmark.icon
@@ -173,6 +252,8 @@ function HomeContent() {
           icon: landmark.icon,
           funFact: landmark.funFact
         })
+        // Clear particle effect
+        setParticleEffect(null)
       }, 3000)
     }
 
@@ -218,11 +299,16 @@ function HomeContent() {
     visited: gameProgress.visitedLandmarks.has(l.id)
   }))
 
+  const activeQuestObjects = quests.filter(q => questProgress.activeQuests.includes(q.id))
+
   return (
     <main 
         className="relative w-full h-screen overflow-hidden" 
         style={{ background: '#F5F0E8' }}
       >
+        {/* Loading skeleton */}
+        {!isMapLoaded && <MapLoadingSkeleton />}
+        
         <Map 
           layersVisible={layersVisible} 
           currentSeason={currentSeason} 
@@ -231,6 +317,36 @@ function HomeContent() {
           landmarks={landmarks}
           visitedLandmarks={gameProgress.visitedLandmarks}
           onLandmarkDiscovered={handleLandmarkDiscovered}
+        />
+        
+        {/* Discovery Radius Visualization */}
+        <DiscoveryRadius
+          map={map}
+          landmarks={landmarks.map(l => ({
+            id: l.id,
+            coordinates: l.coordinates,
+            visited: gameProgress.visitedLandmarks.has(l.id)
+          }))}
+        />
+
+        {/* Particle Effects */}
+        {particleEffect && (
+          <ParticleEffect
+            coordinates={particleEffect.coordinates}
+            icon={particleEffect.icon}
+            isActive={true}
+            map={map}
+          />
+        )}
+
+        {/* Breadcrumb Trail */}
+        <BreadcrumbTrail
+          map={map}
+          visitedLandmarks={gameProgress.visitedLandmarksWithTime.map(v => ({
+            id: v.id,
+            coordinates: landmarks.find(l => l.id === v.id)?.coordinates || [0, 0],
+            visitedAt: v.visitedAt
+          }))}
         />
         
         {/* UI Controls */}
@@ -255,11 +371,26 @@ function HomeContent() {
           activeQuestCount={questProgress.activeQuests.length}
         />
         
+        {/* Daily Challenges Panel */}
+        <DailyChallengesPanel
+          challenges={dailyChallenges}
+          streak={currentStreak.current}
+        />
+        
         {/* Quest Panel */}
         <QuestPanel
           quests={quests}
           activeQuestIds={questProgress.activeQuests}
           onStartQuest={handleStartQuest}
+        />
+        
+        {/* Quest Tracker */}
+        <QuestTracker activeQuests={activeQuestObjects} />
+        
+        {/* World Border Warning */}
+        <WorldBorderWarning
+          isVisible={showBorderWarning}
+          direction={borderDirection}
         />
         
         {/* Proximity Hints - Show nearby landmarks */}

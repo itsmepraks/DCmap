@@ -49,27 +49,239 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360
       }
 
-      // Create popup HTML with bold styling
+      // Create rich museum popup with Minecraft theme
       const popupHTML = `
-        <div class="popup-wrapper" style="padding: 0; margin: -15px; border-radius: 12px; overflow: hidden;">
-          <div style="background: linear-gradient(135deg, #5DA5DB 0%, #3A7CA5 100%); padding: 16px; border-bottom: 3px solid #3A7CA5;">
-            <h3 style="margin: 0; color: white; font-size: 18px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-              🏛️ ${properties.NAME}
-            </h3>
+        <div class="popup-wrapper" style="
+          padding: 0; 
+          margin: -15px; 
+          border-radius: 8px; 
+          overflow: hidden;
+          font-family: monospace;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+          border: 3px solid #5DA5DB;
+          background: linear-gradient(145deg, #EFE6D5 0%, #F5EBD9 100%);
+          min-width: 320px;
+        ">
+          <!-- Pixelated corners -->
+          <div style="position: absolute; top: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+          <div style="position: absolute; top: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+          <div style="position: absolute; bottom: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+          <div style="position: absolute; bottom: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
+          
+          <!-- Header -->
+          <div style="
+            background: linear-gradient(135deg, #5DA5DB 0%, #3A7CA5 100%); 
+            padding: 16px; 
+            border-bottom: 4px solid #3A7CA5;
+            position: relative;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                🏛️
+              </div>
+              <div style="flex: 1;">
+                <h3 style="
+                  margin: 0 0 4px 0; 
+                  color: white; 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+                  font-family: monospace;
+                  line-height: 1.3;
+                ">
+                  ${properties.NAME}
+                </h3>
+                <div style="
+                  display: inline-block;
+                  padding: 2px 8px;
+                  background: rgba(255,255,255,0.2);
+                  border-radius: 4px;
+                  font-size: 10px;
+                  color: rgba(255,255,255,0.9);
+                  font-weight: bold;
+                  text-transform: uppercase;
+                ">
+                  Museum
+                </div>
+              </div>
+            </div>
           </div>
-          <div style="padding: 16px; background: white;">
+          
+          <!-- Content -->
+          <div style="padding: 16px; background: linear-gradient(145deg, #F5EBD9 0%, #EFE6D5 100%);">
             ${properties.ADDRESS ? `
+              <!-- Address Section -->
               <div style="margin-bottom: 12px;">
-                <span style="color: #8D7B68; font-size: 12px; font-weight: 600; text-transform: uppercase;">Address</span>
-                <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px; font-weight: 500;">${properties.ADDRESS}</p>
+                <div style="
+                  font-size: 10px; 
+                  font-weight: bold; 
+                  color: #8B7355; 
+                  text-transform: uppercase; 
+                  margin-bottom: 6px;
+                  font-family: monospace;
+                ">
+                  📍 Location
+                </div>
+                <p style="
+                  margin: 0; 
+                  color: #2C1810; 
+                  font-size: 13px; 
+                  line-height: 1.6;
+                  font-family: monospace;
+                  font-weight: 500;
+                ">
+                  ${properties.ADDRESS}
+                </p>
               </div>
             ` : ''}
+            
             ${properties.DESCRIPTION ? `
-              <div>
-                <span style="color: #8D7B68; font-size: 12px; font-weight: 600; text-transform: uppercase;">About</span>
-                <p style="margin: 4px 0 0 0; color: #2C1810; font-size: 14px; line-height: 1.5;">${properties.DESCRIPTION}</p>
+              <!-- Description Section -->
+              <div style="
+                padding: 12px; 
+                background: linear-gradient(135deg, rgba(93, 165, 219, 0.15) 0%, rgba(58, 124, 165, 0.1) 100%); 
+                border-left: 4px solid #5DA5DB; 
+                border-radius: 4px;
+                margin-bottom: 12px;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+              ">
+                <div style="
+                  font-size: 10px; 
+                  font-weight: bold; 
+                  color: #3A7CA5; 
+                  text-transform: uppercase; 
+                  margin-bottom: 4px;
+                  font-family: monospace;
+                ">
+                  📖 About This Museum
+                </div>
+                <p style="
+                  margin: 0; 
+                  color: #2C1810; 
+                  font-size: 12px; 
+                  line-height: 1.6;
+                  font-family: monospace;
+                ">
+                  ${properties.DESCRIPTION}
+                </p>
               </div>
             ` : ''}
+            
+            <!-- Info Grid -->
+            <div style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+              margin-bottom: 12px;
+            ">
+              <!-- Admission Info -->
+              <div style="
+                padding: 8px;
+                background: linear-gradient(135deg, rgba(126, 217, 87, 0.2) 0%, rgba(93, 160, 64, 0.1) 100%);
+                border: 2px solid #7ED957;
+                border-radius: 4px;
+                text-align: center;
+              ">
+                <div style="font-size: 18px; margin-bottom: 4px;">🎫</div>
+                <div style="
+                  font-size: 9px;
+                  font-weight: bold;
+                  color: #5DA040;
+                  font-family: monospace;
+                ">
+                  FREE ENTRY
+                </div>
+              </div>
+              
+              <!-- Hours Info -->
+              <div style="
+                padding: 8px;
+                background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.1) 100%);
+                border: 2px solid #FFD700;
+                border-radius: 4px;
+                text-align: center;
+              ">
+                <div style="font-size: 18px; margin-bottom: 4px;">🕐</div>
+                <div style="
+                  font-size: 9px;
+                  font-weight: bold;
+                  color: #B8860B;
+                  font-family: monospace;
+                ">
+                  10AM-5PM
+                </div>
+              </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+            ">
+              <a 
+                href="https://www.google.com/maps/dir/?api=1&destination=${coordinates[1]},${coordinates[0]}" 
+                target="_blank"
+                style="
+                  padding: 8px;
+                  background: linear-gradient(135deg, #7ED957 0%, #5DA040 100%);
+                  border: 2px solid #5DA040;
+                  border-radius: 4px;
+                  box-shadow: 0 3px 0 #5DA040, 0 4px 8px rgba(0,0,0,0.2);
+                  color: #FFF;
+                  font-family: monospace;
+                  font-weight: bold;
+                  font-size: 11px;
+                  cursor: pointer;
+                  text-decoration: none;
+                  text-align: center;
+                  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+                  display: block;
+                ">
+                🧭 Directions
+              </a>
+              
+              <a 
+                href="https://www.google.com/search?q=${encodeURIComponent(properties.NAME + ' DC')}" 
+                target="_blank"
+                style="
+                  padding: 8px;
+                  background: linear-gradient(135deg, #5DA5DB 0%, #3A7CA5 100%);
+                  border: 2px solid #3A7CA5;
+                  border-radius: 4px;
+                  box-shadow: 0 3px 0 #3A7CA5, 0 4px 8px rgba(0,0,0,0.2);
+                  color: #FFF;
+                  font-family: monospace;
+                  font-weight: bold;
+                  font-size: 11px;
+                  cursor: pointer;
+                  text-decoration: none;
+                  text-align: center;
+                  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+                  display: block;
+                ">
+                🔍 Learn More
+              </a>
+            </div>
+            
+            <!-- Visit Tip -->
+            <div style="
+              margin-top: 12px;
+              padding: 8px;
+              background: linear-gradient(135deg, rgba(212, 80, 30, 0.1) 0%, rgba(184, 67, 26, 0.05) 100%);
+              border-left: 3px solid #D4501E;
+              border-radius: 4px;
+            ">
+              <p style="
+                margin: 0;
+                font-size: 10px;
+                color: #2C1810;
+                font-family: monospace;
+                line-height: 1.5;
+              ">
+                💡 <strong>Tip:</strong> Most Smithsonian museums are free and open daily!
+              </p>
+            </div>
           </div>
         </div>
       `

@@ -135,25 +135,30 @@ export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: Que
               </div>
             )}
 
-            {/* Completed quests */}
+            {/* Completed quests - Collapsible section */}
             {completedQuests.length > 0 && (
-              <div>
-                <h3 
-                  className="text-sm font-bold mb-2"
-                  style={{
-                    color: minecraftTheme.colors.text.secondary,
-                    fontFamily: 'monospace',
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  Completed ({completedQuests.length})
-                </h3>
-                {completedQuests.map(quest => (
-                  <QuestCard
-                    key={quest.id}
-                    quest={quest}
-                  />
-                ))}
+              <div className="mt-4 pt-4 border-t-2" style={{ borderColor: minecraftTheme.colors.terracotta.light }}>
+                <details className="group">
+                  <summary 
+                    className="text-sm font-bold mb-2 cursor-pointer list-none flex items-center gap-2"
+                    style={{
+                      color: minecraftTheme.colors.text.secondary,
+                      fontFamily: 'monospace',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    <span className="transform transition-transform group-open:rotate-90">▶</span>
+                    Completed ({completedQuests.length})
+                  </summary>
+                  <div className="mt-2">
+                    {completedQuests.map(quest => (
+                      <QuestCard
+                        key={quest.id}
+                        quest={quest}
+                      />
+                    ))}
+                  </div>
+                </details>
               </div>
             )}
 

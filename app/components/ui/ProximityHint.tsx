@@ -13,10 +13,11 @@ interface NearbyLandmark {
 
 interface ProximityHintProps {
   nearbyLandmarks: NearbyLandmark[]
+  visitedLandmarks?: Set<string>
   onNavigate?: (landmarkId: string) => void
 }
 
-export default function ProximityHint({ nearbyLandmarks, onNavigate }: ProximityHintProps) {
+export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new Set(), onNavigate }: ProximityHintProps) {
   const getDirectionArrow = (direction: string) => {
     const directions: { [key: string]: string } = {
       'N': '↑',
@@ -38,8 +39,10 @@ export default function ProximityHint({ nearbyLandmarks, onNavigate }: Proximity
     return '#D4501E' // Far - red
   }
 
-  // Only show the 3 nearest landmarks
-  const displayLandmarks = nearbyLandmarks.slice(0, 3)
+  // Only show the 3 nearest unvisited landmarks
+  const displayLandmarks = nearbyLandmarks
+    .filter(l => !visitedLandmarks.has(l.id))
+    .slice(0, 3)
 
   return (
     <AnimatePresence>
