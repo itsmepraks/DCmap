@@ -25,6 +25,25 @@ export interface WalkControllerState {
   isThirdPersonView: boolean
 }
 
+// Helper to calculate camera position behind player
+function getFollowCameraPosition(
+  center: [number, number], 
+  bearing: number, 
+  distanceMeters: number = 20 // Distance behind player
+): [number, number] {
+  const [lng, lat] = center
+  const rad = (bearing + 180) * (Math.PI / 180) // Backwards
+  
+  // Approximate degrees per meter
+  const mPerDegLat = 111132
+  const mPerDegLng = 111132 * Math.cos(lat * (Math.PI / 180))
+  
+  const deltaLat = (Math.cos(rad) * distanceMeters) / mPerDegLat
+  const deltaLng = (Math.sin(rad) * distanceMeters) / mPerDegLng
+  
+  return [lng + deltaLng, lat + deltaLat]
+}
+
 export function useWalkController({
   map,
   isActive,
@@ -39,7 +58,7 @@ export function useWalkController({
   const [controllerState, setControllerState] = useState<WalkControllerState>({
     isMoving: false,
     isRunning: false,
-    isThirdPersonView: false
+    isThirdPersonView: true // Default to true for Follow Cam
   })
   const landmarkCallbackRef = useRef(onLandmarkDiscovered)
   const positionCallbackRef = useRef(onPlayerPositionChange)
@@ -48,7 +67,7 @@ export function useWalkController({
   const localStateRef = useRef({
     isMoving: false,
     isRunning: false,
-    isThirdPersonView: false
+    isThirdPersonView: true
   })
 
   useEffect(() => {
@@ -84,17 +103,15 @@ export function useWalkController({
     let lastTimestamp: number | null = null
     let lastProximityCheck = Date.now()
 
-    // Road-level street view camera - like Google Street View
-    const STREET_VIEW_PITCH = 80  // Almost horizontal - see buildings from road level
-    const STREET_VIEW_ZOOM = 19   // Close zoom for immersive street view
+    // Grounded Third Person Camera
+    const GROUNDED_PITCH = 65  // Looking down at ~65 degrees (not too flat, not top-down)
+    const FOLLOW_DISTANCE = 25 // Meters behind player
+    const FOLLOW_ZOOM = 18     // Zoom level
 
     const updateControllerState = (partial: Partial<WalkControllerState>) => {
-      // Update local ref immediately
       Object.assign(localStateRef.current, partial)
-      // Batch React state updates to prevent excessive re-renders
       setControllerState((prev) => {
         const next = { ...prev, ...partial }
-        // Only trigger re-render if state actually changed
         if (prev.isMoving === next.isMoving && 
             prev.isRunning === next.isRunning && 
             prev.isThirdPersonView === next.isThirdPersonView) {
@@ -104,11 +121,16 @@ export function useWalkController({
       })
     }
 
-    // Initialize street-level camera
+    // Initialize grounded follow camera
+    const center = map.getCenter()
+    const initialBearing = map.getBearing()
+    const cameraPos = getFollowCameraPosition([center.lng, center.lat], initialBearing, FOLLOW_DISTANCE)
+    
     map.easeTo({
-      pitch: STREET_VIEW_PITCH,
-      zoom: STREET_VIEW_ZOOM,
-      bearing: 0,
+      center: cameraPos,
+      pitch: GROUNDED_PITCH,
+      zoom: FOLLOW_ZOOM,
+      bearing: initialBearing,
       duration: 1200,
       easing: (t) => t * (2 - t)
     })
@@ -123,7 +145,8 @@ export function useWalkController({
       touchZoomRotate: map.touchZoomRotate.isEnabled()
     }
 
-    map.scrollZoom.enable()
+    // Disable standard controls to take over with WASD + Mouse Look
+    map.scrollZoom.enable() // Allow zoom adjustment
     map.boxZoom.disable()
     map.dragRotate.disable()
     map.dragPan.disable()
@@ -152,11 +175,10 @@ export function useWalkController({
       }
     }
 
+    // Mouse Look Logic
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button === 0) {
         map.getCanvas().style.cursor = 'crosshair'
-        map.dragRotate.disable()
-        map.dragPan.disable()
       }
     }
 
@@ -168,14 +190,23 @@ export function useWalkController({
       if (e.buttons !== 1) return
       const deltaX = e.movementX
       const deltaY = e.movementY
-      // Allow rotating camera left/right
-      map.setBearing(map.getBearing() + deltaX * 0.35)
-      // Allow limited pitch adjustment for street view
+      
+      // Rotate bearing
+      const currentBearing = map.getBearing()
+      const newBearing = currentBearing + deltaX * 0.35
+      map.setBearing(newBearing)
+      
+      // Pitch adjustment (clamped)
       const currentPitch = map.getPitch()
-      const minPitch = 70  // Keep it mostly horizontal (street level)
-      const maxPitch = 85  // Maximum pitch for road view
+      const minPitch = 45  // Don't look too high (top-down)
+      const maxPitch = 80  // Don't look too low (flat)
       const newPitch = Math.max(minPitch, Math.min(maxPitch, currentPitch - deltaY * 0.35))
       map.setPitch(newPitch)
+      
+      // Since we rotated the camera, we need to re-calculate camera position relative to player
+      // to maintain the "follow" offset immediately
+      // However, we don't have the exact player position here easily without recalculating it or storing it
+      // For now, the animation loop handles the smooth follow catch-up
     }
 
     const snapToGraph = (candidate: [number, number]) => {
@@ -183,7 +214,7 @@ export function useWalkController({
       if (graphSegments.length === 0) {
         return snapLngLatToRoad(map, candidate)
       }
-
+      // ... (existing snap logic) ...
       const targetPoint = map.project(candidate)
       let closestDistance = Number.POSITIVE_INFINITY
       let snappedLngLat: [number, number] | null = null
@@ -191,59 +222,68 @@ export function useWalkController({
       for (const segment of graphSegments) {
         const startPoint = map.project([segment.start.lng, segment.start.lat])
         const endPoint = map.project([segment.end.lng, segment.end.lat])
-
         const abx = endPoint.x - startPoint.x
         const aby = endPoint.y - startPoint.y
         const abSq = abx * abx + aby * aby
-        if (abSq === 0) {
-          continue
-        }
+        if (abSq === 0) continue
 
         const apx = targetPoint.x - startPoint.x
         const apy = targetPoint.y - startPoint.y
         let t = (apx * abx + apy * aby) / abSq
         t = Math.max(0, Math.min(1, t))
 
-        const projPoint = {
-          x: startPoint.x + abx * t,
-          y: startPoint.y + aby * t
-        }
-
+        const projPoint = { x: startPoint.x + abx * t, y: startPoint.y + aby * t }
         const distance = Math.hypot(targetPoint.x - projPoint.x, targetPoint.y - projPoint.y)
         if (distance < closestDistance) {
           closestDistance = distance
-          // Convert to PointLike format (array)
           const lngLat = map.unproject([projPoint.x, projPoint.y])
           snappedLngLat = [lngLat.lng, lngLat.lat]
         }
       }
-
       return snappedLngLat
     }
 
+    // Initial alignment
     const alignToRoad = () => {
       const startCenter = map.getCenter()
       const snappedStart = snapToGraph([startCenter.lng, startCenter.lat])
       if (snappedStart) {
-        map.jumpTo({ center: snappedStart })
+        // Instead of jumping center to player, jump camera to offset
+        const bearing = map.getBearing()
+        const cameraPos = getFollowCameraPosition(snappedStart, bearing, FOLLOW_DISTANCE)
+        
+        map.jumpTo({ center: cameraPos })
         updatePose({
           position: { lng: snappedStart[0], lat: snappedStart[1] },
-          heading: map.getBearing(),
+          heading: bearing,
           velocity: { lng: 0, lat: 0 }
         })
+        // Also track internal player pos for the loop to use
+        // We'll store it in a mutable way for the animation loop if needed, 
+        // or just rely on map center offset? 
+        // Actually, since we move the camera, 'map.getCenter()' is no longer the player position.
+        // We MUST track player position separately now.
       }
     }
-    alignToRoad()
+    
+    // We need to track player position locally because map.getCenter() is now the CAMERA position
+    // Initialize from map center, then diverge
+    let playerPosition: [number, number] = [map.getCenter().lng, map.getCenter().lat]
+    
+    // Try to snap initial position
+    const initialSnap = snapToGraph(playerPosition)
+    if (initialSnap) {
+        playerPosition = initialSnap
+    }
 
     let animationFrameId = 0
 
     const animate = (timestamp: number) => {
       if (!map) return
-      if (lastTimestamp === null) {
-        lastTimestamp = timestamp
-      }
+      if (lastTimestamp === null) lastTimestamp = timestamp
       const dtScale = getDeltaTimeScale(lastTimestamp, timestamp)
       lastTimestamp = timestamp
+
       const bearing = map.getBearing()
       const currentSpeed = isShiftPressed ? avatarSpeed.run : avatarSpeed.walk
       const { deltaLng, deltaLat, moving } = computeMovementDelta({
@@ -259,35 +299,53 @@ export function useWalkController({
       updateControllerState({ isMoving: moving })
 
       if (moving) {
-        // Move the player position on the map
-        const center = map.getCenter()
-        const tentativeLng = center.lng + deltaLng
-        const tentativeLat = center.lat + deltaLat
+        const tentativeLng = playerPosition[0] + deltaLng
+        const tentativeLat = playerPosition[1] + deltaLat
         const snapped = snapToGraph([tentativeLng, tentativeLat])
 
         if (snapped) {
-          // Direct camera update for smooth, lag-free movement
-          // Using setCenter instead of easeTo to avoid overlapping animations
-          map.setCenter(snapped)
+          playerPosition = snapped
           
+          // Update global state
           updatePose({
             position: { lng: snapped[0], lat: snapped[1] },
             velocity: { lng: deltaLng, lat: deltaLat },
             heading: bearing
           })
         } else {
-          updateControllerState({ isMoving: false })
+            // If unsnapped (e.g. too far from road), maybe slide or stop
+            // For now, just stop to prevent walking into void
+            updateControllerState({ isMoving: false })
         }
       } else {
         updatePose({ heading: bearing })
       }
 
+      // CAMERA FOLLOW LOGIC
+      // Calculate where the camera SHOULD be
+      const targetCameraPos = getFollowCameraPosition(playerPosition, bearing, FOLLOW_DISTANCE)
+      
+      // Smoothly interpolate current camera pos to target
+      // Or just set it if we want rigid follow
+      // For smoothness, we can use map.easeTo with 0 duration (instant) but calculated interpolation
+      // actually map.setCenter is best for per-frame updates
+      
+      // Linear interpolation (Lerp) for smooth camera lag
+      const currentCamera = map.getCenter()
+      const lerpFactor = 0.1 // Adjust for "weight" of camera
+      
+      const nextCameraLng = currentCamera.lng + (targetCameraPos[0] - currentCamera.lng) * lerpFactor
+      const nextCameraLat = currentCamera.lat + (targetCameraPos[1] - currentCamera.lat) * lerpFactor
+      
+      map.setCenter([nextCameraLng, nextCameraLat])
+
+      // Check Landmarks
       const now = Date.now()
       if (now - lastProximityCheck > 500) {
         lastProximityCheck = now
-        const center = map.getCenter()
-        const playerPos = { lng: center.lng, lat: center.lat }
-        const nearby = checkNearbyLandmarks(playerPos, landmarks, visitedLandmarks, 50)
+        const playerPosObj = { lng: playerPosition[0], lat: playerPosition[1] }
+        const nearby = checkNearbyLandmarks(playerPosObj, landmarks, visitedLandmarks, 50)
+        
         nearby.forEach((discovery) => {
           const landmarkData = landmarks.find((l) => l.id === discovery.id)
           if (landmarkData) {
@@ -295,12 +353,12 @@ export function useWalkController({
           }
         })
 
-        const nearest = findNearestLandmark(playerPos, landmarks)
+        const nearest = findNearestLandmark(playerPosObj, landmarks)
         if (nearest && positionCallbackRef.current) {
-          const landmarkBearing = getBearing(playerPos, nearest.coordinates)
+          const landmarkBearing = getBearing(playerPosObj, nearest.coordinates)
           positionCallbackRef.current({
-            lng: playerPos.lng,
-            lat: playerPos.lat,
+            lng: playerPosition[0],
+            lat: playerPosition[1],
             bearing: bearing,
             nearestLandmark: {
               name: nearest.name,
@@ -330,6 +388,7 @@ export function useWalkController({
       canvas.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('mousemove', handleMouseMove)
+      // Restore controls
       interactionState.scrollZoom ? map.scrollZoom.enable() : map.scrollZoom.disable()
       interactionState.boxZoom ? map.boxZoom.enable() : map.boxZoom.disable()
       interactionState.dragRotate ? map.dragRotate.enable() : map.dragRotate.disable()
@@ -337,11 +396,13 @@ export function useWalkController({
       interactionState.keyboard ? map.keyboard.enable() : map.keyboard.disable()
       interactionState.doubleClickZoom ? map.doubleClickZoom.enable() : map.doubleClickZoom.disable()
       interactionState.touchZoomRotate ? map.touchZoomRotate.enable() : map.touchZoomRotate.disable()
-      setControllerState({
+      
+      // Update ref instead of state to avoid re-render loop
+      localStateRef.current = {
         isMoving: false,
         isRunning: false,
         isThirdPersonView: false
-      })
+      }
     }
   }, [
     map,
@@ -349,11 +410,9 @@ export function useWalkController({
     avatarType,
     graphSegments,
     landmarks,
-    visitedLandmarks,
     updatePose
   ])
 
   return controllerState
 }
-
 

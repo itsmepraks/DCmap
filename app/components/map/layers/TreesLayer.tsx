@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import mapboxgl from 'mapbox-gl'
+import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface TreesLayerProps {
   visible: boolean
   season?: 'spring' | 'summer' | 'fall' | 'winter'
+  onSelect?: (entity: SelectedEntity | null) => void
 }
 
 const TREE_POINT_SOURCE_ID = 'dmv-tree-points'
@@ -21,9 +23,12 @@ const TREE_CLUSTER_COUNT_LAYER_ID = 'dmv-tree-cluster-count'
  * - Loads public/data/dmv_trees.geojson for real tree clusters
  * - Seasonal palettes recolor both canopy + icons
  */
-export default function TreesLayer({ visible, season = 'summer' }: TreesLayerProps) {
+export default function TreesLayer({ visible, season = 'summer', onSelect }: TreesLayerProps) {
   const { map } = useMap()
   const isInitialized = useRef(false)
+  
+  // Track selected tree/cluster
+  const selectedIdRef = useRef<string | number | null>(null)
 
   const treeFilter = useMemo(() => {
     return ['in', ['get', 'class'], 'forest', 'wood', 'scrub', 'grass', 'crop']
@@ -194,7 +199,8 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
             data: treeData,
             cluster: true,
             clusterMaxZoom: 14,
-            clusterRadius: 50
+            clusterRadius: 50,
+            generateId: true // Needed for feature-state
           })
         }
 
@@ -261,12 +267,109 @@ export default function TreesLayer({ visible, season = 'summer' }: TreesLayerPro
             },
             paint: {
               'icon-opacity': 0.95,
-              'icon-halo-color': '#ffffff',
-              'icon-halo-width': 2,
+              'icon-halo-color': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                '#FFD700', // Gold glow
+                '#ffffff'
+              ],
+              'icon-halo-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                4,
+                2
+              ],
               'icon-halo-blur': 1
             }
           })
         }
+
+        // Add interaction handlers
+        const handleTreeClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
+          if (!e.features || e.features.length === 0) return
+          
+          const feature = e.features[0]
+          const properties = feature.properties
+          if (!properties) return
+
+          e.originalEvent.stopPropagation()
+
+          // Handle visual selection state
+          if (selectedIdRef.current !== null) {
+            map.setFeatureState(
+              { source: TREE_POINT_SOURCE_ID, id: selectedIdRef.current },
+              { selected: false }
+            )
+          }
+
+          if (feature.id !== undefined) {
+            selectedIdRef.current = feature.id
+            map.setFeatureState(
+              { source: TREE_POINT_SOURCE_ID, id: feature.id },
+              { selected: true }
+            )
+          }
+
+          const coordinates = (feature.geometry as any).coordinates.slice()
+
+          if (onSelect) {
+            onSelect({
+              id: String(feature.id || Math.random()),
+              type: 'tree',
+              name: properties.COMMON_NAME || 'Unknown Tree',
+              description: `A ${properties.CONDITION || 'healthy'} ${properties.SPECIES || 'tree'} in Washington DC.`,
+              coordinates: coordinates,
+              metadata: {
+                species: properties.SPECIES,
+                diameter: properties.DBH ? `${properties.DBH} inches` : 'Unknown',
+                condition: properties.CONDITION
+              }
+            })
+          }
+        }
+
+        // Cluster click -> zoom
+        const handleClusterClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
+          if (!e.features || e.features.length === 0) return
+          const feature = e.features[0]
+          const clusterId = feature.properties?.cluster_id
+          
+          const source = map.getSource(TREE_POINT_SOURCE_ID) as mapboxgl.GeoJSONSource
+          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+            if (err || zoom == null) return
+            
+            map.easeTo({
+              center: (feature.geometry as any).coordinates,
+              zoom: zoom,
+              duration: 1000
+            })
+          })
+        }
+
+        // Interaction events
+        map.on('click', TREE_POINT_LAYER_ID, handleTreeClick)
+        map.on('click', TREE_CLUSTER_LAYER_ID, handleClusterClick)
+        
+        map.on('mouseenter', TREE_POINT_LAYER_ID, () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', TREE_POINT_LAYER_ID, () => { map.getCanvas().style.cursor = '' })
+        
+        map.on('mouseenter', TREE_CLUSTER_LAYER_ID, () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', TREE_CLUSTER_LAYER_ID, () => { map.getCanvas().style.cursor = '' })
+
+        // Handle deselection on map click
+        map.on('click', (e) => {
+          const features = map.queryRenderedFeatures(e.point, {
+            layers: [TREE_POINT_LAYER_ID, TREE_CLUSTER_LAYER_ID]
+          })
+          
+          if (features.length === 0 && selectedIdRef.current !== null) {
+            map.setFeatureState(
+              { source: TREE_POINT_SOURCE_ID, id: selectedIdRef.current },
+              { selected: false }
+            )
+            selectedIdRef.current = null
+          }
+        })
 
         isInitialized.current = true
         console.log('✅ DMV tree layers ready')

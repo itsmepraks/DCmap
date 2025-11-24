@@ -1,21 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { useMap } from '@/app/lib/MapContext'
 import type { LayerVisibility } from '@/app/types/map'
-import MuseumsLayer from './layers/MuseumsLayer'
-import RoadDetailsLayer from './layers/RoadDetailsLayer'
-import Museum3DMarkers from './layers/Museum3DMarkers'
-import TreesLayer from './layers/TreesLayer'
-import LandmarksLayer from './layers/LandmarksLayer'
-import ParksLayer from './layers/ParksLayer'
-import HiddenLandmarksLayer from './layers/HiddenLandmarksLayer'
-import HeatmapLayer from './layers/HeatmapLayer'
 import { useMapInitialization } from '@/app/hooks/useMapInitialization'
-import { useWalkController } from '@/app/hooks/useWalkController'
-import Realistic3DAvatars from './Realistic3DAvatars'
-import { usePlayerState } from '@/app/lib/playerState'
+import { MapLayers } from './MapLayers'
+import { PlayerController } from './PlayerController'
+import EntityInfoPanel, { type SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MapProps {
   layersVisible: LayerVisibility
@@ -42,16 +34,7 @@ export default function Map({
   const { map } = useMap()
   useMapInitialization(mapContainer)
   
-  const { state: playerState } = usePlayerState()
-  const { isMoving, isRunning } = useWalkController({
-    map,
-    isActive: isWalking,
-    avatarType: playerState.avatarType,
-    landmarks,
-    visitedLandmarks,
-    onLandmarkDiscovered,
-    onPlayerPositionChange
-  })
+  const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
 
   // Handle 3D view toggle with GTA-like cinematic animation
   useEffect(() => {
@@ -68,46 +51,76 @@ export default function Map({
     })
 
     console.log(`🎮 ${is3D ? 'Entering GTA-like 3D world mode' : 'Returning to overview mode'}`)
-  }, [map, is3D])
+  }, [map, is3D, isWalking])
+
+  // Close panel on map click if not clicking a feature
+  useEffect(() => {
+    if (!map) return
+
+    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+      // If clicking on nothing interactive, close panel
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer']
+      })
+      if (features.length === 0) {
+        setSelectedEntity(null)
+      }
+    }
+    map.on('click', handleMapClick)
+    return () => {
+      map.off('click', handleMapClick)
+    }
+  }, [map])
+
+  const handleNavigate = (coordinates: [number, number]) => {
+    if (!map) return
+    map.flyTo({
+      center: coordinates,
+      zoom: 17,
+      pitch: 60,
+      bearing: 0,
+      duration: 2000,
+      essential: true
+    })
+  }
 
   return (
     <>
       <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full z-0" />
+      <style jsx global>{`
+        /* Hide default Mapbox controls */
+        .mapboxgl-ctrl-top-right {
+          display: none !important;
+        }
+        .mapboxgl-ctrl-bottom-right {
+          display: none !important;
+        }
+      `}</style>
       {map && (
         <>
-          <ParksLayer visible={layersVisible.trees} season={currentSeason} />
-          <TreesLayer visible={layersVisible.trees} season={currentSeason} />
-          <HeatmapLayer visible={layersVisible.heatmap} />
-          <RoadDetailsLayer visible={true} />
-          <MuseumsLayer visible={layersVisible.museums} />
-          <Museum3DMarkers visible={layersVisible.museums} />
-          <LandmarksLayer 
-            map={map} 
-            visible={layersVisible.landmarks} 
-            visitedLandmarks={visitedLandmarks} 
+          <MapLayers
+            map={map}
+            layersVisible={layersVisible}
+            currentSeason={currentSeason}
+            visitedLandmarks={visitedLandmarks}
             onLandmarkDiscovered={onLandmarkDiscovered}
+            onSelectEntity={setSelectedEntity}
           />
-          <HiddenLandmarksLayer 
-            map={map} 
-            isVisible={layersVisible.hiddenGems} 
-            visitedLandmarks={Array.from(visitedLandmarks)}
-            onDiscovered={(landmarkId) => {
-              onLandmarkDiscovered(landmarkId, { id: landmarkId, name: 'Hidden Gem', coordinates: [0, 0] } as any)
-            }}
+          <PlayerController
+            map={map}
+            isWalking={isWalking}
+            landmarks={landmarks}
+            visitedLandmarks={visitedLandmarks}
+            onLandmarkDiscovered={onLandmarkDiscovered}
+            onPlayerPositionChange={onPlayerPositionChange}
           />
-          {isWalking && (
-            <Realistic3DAvatars
-              map={map}
-              position={playerState.position}
-              bearing={playerState.heading}
-              isMoving={isMoving}
-              isRunning={isRunning}
-              avatarType={playerState.avatarType}
-            />
-          )}
+          <EntityInfoPanel 
+            entity={selectedEntity}
+            onClose={() => setSelectedEntity(null)}
+            onNavigate={handleNavigate}
+          />
         </>
       )}
     </>
   )
 }
-

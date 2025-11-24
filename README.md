@@ -1,312 +1,214 @@
-# Project Anima DC
+# DCmap - Interactive Washington D.C. Explorer
 
-An interactive, animated digital portrait of Washington, D.C. that visualizes the city's dynamic data layers through a sleek, modern user interface.
+An interactive, game-like map application for exploring Washington, D.C. with beautiful visualizations, quest mechanics, and immersive walk mode.
 
-![Project Status](https://img.shields.io/badge/status-phase%201%20complete-success)
-![Next.js](https://img.shields.io/badge/Next.js-15.0-black)
+![Next.js](https://img.shields.io/badge/Next.js-15.5-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Mapbox](https://img.shields.io/badge/Mapbox-3.7-green)
 
-## 🎯 Overview
-
-This portfolio project showcases advanced frontend development skills using:
-- **Next.js 15** with App Router and TypeScript
-- **Mapbox GL JS** for interactive map visualization
-- **Framer Motion** for smooth UI animations
-- **Tailwind CSS** for styling
-
 ## ✨ Features
 
-### Phase 1 (MVP) - ✅ Complete
-- ✅ Full-screen interactive map centered on Washington, D.C.
-- ✅ **Bold, vibrant UI matching illustrated map style**
-- ✅ **Animated sidebar with spring physics animations**
-- ✅ Museums data layer with custom blue gradient popups
-- ✅ **Rich hover effects and smooth transitions throughout**
-- ✅ Custom illustrated map style with warm beige/terracotta/green palette
-- ✅ **Modern design system with cohesive color language**
+### 🗺️ Interactive Map
+- Full-screen Mapbox GL JS map centered on Washington, D.C.
+- Custom beige/terracotta themed style
+- Multiple data layers (museums, trees, landmarks, hidden gems)
+- Activity heatmap visualization
+- Seasonal tree variations (Spring, Summer, Fall, Winter)
 
-### Phase 2 - Partially Complete  
-- ✅ **Animated greenery layer with seasonal variations** (F4)
-  - Interactive tree canopy visualization with green gradient popups
-  - 4 seasonal icon sets with color-coded season picker
-  - Emojis for visual appeal (🌸☀️🍂❄️)
-  - Smart clustering for performance (50+ trees)
-  - Click clusters to zoom, click trees for beautiful popups
-  - **Bold seasonal controls with glow effects**
-- 🔄 Dynamic urban heat map with monthly data (F5 - Coming Soon)
+### 🎮 Game Mechanics
+- **Quest System** - Complete challenges to earn points and badges
+- **Daily Challenges** - New tasks every day with streak tracking
+- **Landmarks Discovery** - Find and visit iconic D.C. locations
+- **Achievement System** - Unlock rewards as you explore
+- **Progress Tracking** - Save your exploration stats
 
-### UI/UX Design - ✅ Complete Redesign
-- ✅ **Bold, vibrant color palette** from illustrated map
-- ✅ **Spring physics animations** on all interactions
-- ✅ **Gradient headers** with emojis in popups
-- ✅ **Color-coded layer toggles** with active indicators
-- ✅ **Season-specific buttons** with hover glow
-- ✅ **Custom scrollbars** matching terracotta theme
-- ✅ **Hover effects** on all interactive elements
-- ✅ **Warm beige background** matching map aesthetic
+### 🚶 Walk Mode
+- First-person exploration with WASD controls
+- Mouse look controls for 360° view
+- Smooth camera animations
+- Third-person follow camera option
+- Street-level landmark discovery
 
-### Live Location Tracking - ✅ New Feature
-- ✅ **Real-time GPS tracking** with blue pulsing dot
-- ✅ **Auto-center** on first location detection
-- ✅ **Accuracy circle** showing GPS precision
-- ✅ **Continuous tracking** as you move
-- ✅ **Styled button** matching UI theme (bottom-right)
-- ✅ **Direction arrow** when heading available
-- ✅ **Privacy-first** with user permission control
+### 🎨 Modern UI/UX
+- Glass-morphism design with backdrop blur
+- Polished HUD with stats tracking
+- Floating control panel for settings
+- Animated components with Framer Motion
+- Responsive and accessible design
 
-### Apple Maps-Style 3D View - ✅ New Feature
-- ✅ **3D Buildings** - Terracotta extruded buildings with real heights
-- ✅ **3D Terrain** - Elevation data with 1.5x exaggeration
-- ✅ **Atmospheric Sky** - Realistic horizon gradient
-- ✅ **Advanced Lighting** - Ambient occlusion for depth
-- ✅ **Manual Tilt** - Right-click + drag to tilt (up to 85°)
-- ✅ **Rotation** - Ctrl + drag to rotate view
-- ✅ **Smooth Controls** - Cinematic camera movements
-- ✅ **Performance** - Optimized 60fps rendering
-- ✅ **3D Toggle Button** - Chunky Minecraft-style button to enable/disable 3D
-
-### Minecraft-Style Walk Mode - ✅ New Feature
-- ✅ **First-Person Walking** - WASD controls to walk around D.C.
-- ✅ **Mouse Look** - Click and drag to look around
-- ✅ **Street-Level View** - Explore at ground level like Minecraft
-- ✅ **Smooth Movement** - 60fps animation loop for fluid motion
-- ✅ **On-Screen HUD** - Minecraft-style controls display
-- ✅ **Walk Button** - Chunky green Minecraft block button
-- ✅ **Pulsing Indicator** - Shows when walk mode is active
-- ✅ **ESC to Exit** - Quick exit back to overhead view
-- ✅ **Strafe Controls** - A/D keys for sideways movement
-- ✅ **Works with 3D** - Walk between buildings and trees
+### 🌍 3D Visualization
+- 3D building extrusions with real heights
+- Terrain elevation data
+- Atmospheric sky gradient
+- Advanced lighting effects
+- Manual tilt and rotation controls
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ and npm
+- Node.js 18+ and pnpm (or npm)
 - A Mapbox account (free tier works)
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone and install**
    ```bash
    git clone <your-repo-url>
    cd DCmap
+   pnpm install
    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
+2. **Set up environment variables**
    
-   Copy the example env file:
+   Copy `env.example` to `.env.local`:
    ```bash
    cp env.example .env.local
    ```
    
-   Then edit `.env.local` and add your Mapbox access token:
+   Add your Mapbox token:
    ```
-   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_actual_mapbox_token_here
-   NEXT_PUBLIC_MAPBOX_STYLE=mapbox://styles/mapbox/light-v11
+   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
    ```
 
-### Getting Your Mapbox Access Token
+3. **Run development server**
+   ```bash
+   pnpm run dev
+   ```
 
-1. Go to [Mapbox](https://account.mapbox.com/) and sign up for a free account
-2. Navigate to [Access Tokens](https://account.mapbox.com/access-tokens/)
+4. **Open in browser**
+   
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Getting a Mapbox Token
+
+1. Sign up at [Mapbox](https://account.mapbox.com/)
+2. Go to [Access Tokens](https://account.mapbox.com/access-tokens/)
 3. Copy your default public token (starts with `pk.`)
-4. Paste it into your `.env.local` file
+4. Paste into `.env.local`
 
-### (Optional) Creating a Custom Map Style
+## 🎮 How to Use
 
-For a truly custom look:
-1. Visit [Mapbox Studio](https://studio.mapbox.com/)
-2. Create a new style or customize an existing one
-3. Click "Share" and copy the Style URL (e.g., `mapbox://styles/username/style-id`)
-4. Update `NEXT_PUBLIC_MAPBOX_STYLE` in your `.env.local` file
+### Map Controls
+- **Pan:** Click and drag
+- **Zoom:** Scroll wheel or pinch
+- **Rotate:** Ctrl + drag (or two-finger rotate on mobile)
+- **Tilt:** Right-click + drag
 
-### Rebuilding the Walk Graph (Experimental)
+### UI Controls
+- **📊 Stats Bar (Top-Left):** View your progress
+  - Click to open detailed stats modal
+- **🗺️ Layers Button (Bottom-Right):** Toggle map layers and seasons
+  - Press ESC or click outside to close
+- **🧊 3D View Button:** Enable 3D buildings and terrain
+- **🚶 Walk Button:** Enter first-person walk mode
 
-The Escape Road-inspired locomotion uses a lightweight navigation graph stored in `public/data/walk_graph.json`. After editing `public/data/dc_walkable_roads.geojson`, regenerate the graph with:
+### Walk Mode Controls
+- **WASD:** Move forward/left/back/right
+- **Mouse:** Click and drag to look around
+- **Shift:** Run
+- **ESC:** Exit walk mode
 
-```bash
-npm run build:walk-graph
-```
+### Quest System
+- View available quests in the Quest Panel (left side)
+- Click "Start Quest" to begin tracking
+- Visit landmarks to complete quest objectives
+- Earn points and unlock badges
 
-The script infers widths, recommended speeds (human + scooter), and scooter access per edge so the controller can keep avatars glued to the correct road surfaces.
-
-### Run Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 📊 Data Sources
-
-### Current Data (Phase 1)
-
-#### Museums (`/public/data/museums.geojson`)
-- **Status**: Mock data included
-- **Real Data Source**: [Open Data DC - Museums](https://opendata.dc.gov/)
-- **Format**: GeoJSON (Point features)
-- **Properties**: NAME, ADDRESS, DESCRIPTION
-
-### Future Data (Phase 2)
-
-#### Trees (`/public/data/dc_trees.geojson`)
-- **Status**: ✅ Implemented with 50 trees
-- **Data Source**: Curated dataset with realistic D.C. tree species
-- **Format**: GeoJSON (Point features)
-- **Properties**: COMMON_NAME, SPECIES, DBH, CONDITION, SEASON_TYPE
-- **Features**: Seasonal icon switching, clustering, interactive popups
-- **Real Data Source**: [Open Data DC - Urban Forestry Street Trees](https://opendata.dc.gov/datasets/urban-forestry-street-trees) (optional upgrade)
-
-#### Heat Map (`/public/data/dc_heat_monthly.geojson`)
-- **Status**: Placeholder only
-- **Real Data Source**: NASA MODIS Land Surface Temperature or similar satellite data
-- **Format**: GeoJSON (Polygon/Grid features)
-- **Properties Required**: temp_jan, temp_feb, ..., temp_dec
-- **Processing**: Significant preprocessing required using QGIS/Python to:
-  - Download satellite LST data
-  - Convert to monthly averages
-  - Create grid polygons
-  - Export as GeoJSON
-
-### How to Obtain Real GeoJSON Data
-
-1. **Museums Data**
-   - Visit [Open Data DC](https://opendata.dc.gov/)
-   - Search for "museums" or "cultural institutions"
-   - Download as GeoJSON
-   - Replace `/public/data/museums.geojson`
-
-2. **Tree Data**
-   - Visit [Open Data DC - Urban Forestry](https://opendata.dc.gov/datasets/urban-forestry-street-trees)
-   - Download as GeoJSON
-   - Verify properties: COMMON_NAME, SPECIES
-   - Save as `/public/data/dc_trees.geojson`
-
-3. **Heat Map Data**
-   - Download NASA MODIS LST data for D.C. area
-   - Use QGIS or Python (rasterio, geopandas) to process
-   - Create monthly average grids
-   - Export with properties: temp_jan through temp_dec
-   - Save as `/public/data/dc_heat_monthly.geojson`
-
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 ```
 DCmap/
 ├── app/
 │   ├── components/
-│   │   ├── map/
-│   │   │   ├── Map.tsx              # Main map component
-│   │   │   └── layers/
-│   │   │       ├── MuseumsLayer.tsx # Museums data layer
-│   │   │       ├── TreesLayer.tsx   # Phase 2: Trees layer
-│   │   │       └── HeatmapLayer.tsx # Phase 2: Heat map layer
-│   │   └── ui/
-│   │       ├── Sidebar.tsx          # Animated sidebar
-│   │       ├── SidebarToggle.tsx    # Toggle button
-│   │       ├── LayerToggle.tsx      # Individual layer controls
-│   │       └── controls/
-│   │           ├── SeasonalControls.tsx  # Phase 2: Season picker
-│   │           └── MonthSlider.tsx       # Phase 2: Month slider
-│   ├── lib/
-│   │   └── MapContext.tsx           # Map state management
-│   ├── types/
-│   │   └── map.ts                   # TypeScript type definitions
-│   ├── globals.css                  # Global styles + Mapbox CSS
-│   ├── layout.tsx                   # Root layout
-│   └── page.tsx                     # Home page
+│   │   ├── game/              # Quest system, challenges, achievements
+│   │   ├── map/               # Map, layers, avatars, effects
+│   │   └── ui/                # HUD, panels, controls, modals
+│   ├── hooks/                 # Custom React hooks
+│   ├── lib/                   # Utilities and game logic
+│   └── types/                 # TypeScript definitions
 ├── public/
-│   ├── data/                        # GeoJSON data files
-│   │   ├── museums.geojson
-│   │   ├── dc_trees.geojson
-│   │   └── dc_heat_monthly.geojson
-│   └── icons/                       # SVG icons for map markers
-│       └── museum.svg
-├── docs/
-│   └── phase2-guide.md              # Phase 2 implementation guide
-├── v1prd.md                         # Product Requirements Document
-└── todo.md                          # Task tracking
+│   └── data/                  # GeoJSON data files
+├── v1prd.md                   # Product requirements
+└── todo.md                    # Task tracking
 ```
 
-## 🛠️ Built With
+## 🛠️ Tech Stack
 
-- [Next.js](https://nextjs.org/) - React framework
-- [TypeScript](https://www.typescriptlang.org/) - Type safety
-- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) - Interactive maps
-- [Framer Motion](https://www.framer.com/motion/) - Animation library
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **Mapping:** Mapbox GL JS
+- **Animation:** Framer Motion
+- **Styling:** Tailwind CSS
+- **State:** React Context + Custom Hooks
 
-## 📝 Available Scripts
+## 📝 Available Commands
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run ESLint
+pnpm run dev           # Start development server
+pnpm run build         # Build for production
+pnpm run start         # Start production server
+pnpm run lint          # Run ESLint
+pnpm run build:walk-graph  # Regenerate walk graph (experimental)
 ```
 
-## 🎨 Customization
+## 🎨 Key Features Details
 
-### Changing Map Default View
-Edit `app/components/map/Map.tsx`:
-```typescript
-center: [-77.0369, 38.9072], // [longitude, latitude]
-zoom: 11,
-```
+### Polished HUD System
+- **Mini Stats Bar:** Compact display of streak, points, discoveries, and active quests
+- **Floating Control Panel:** Beautiful glass-morphism design for layer/season controls
+- **Smart HUD:** Context-aware displays for map vs walk mode
+- **Proximity Hints:** Shows nearby landmarks with distance and direction
 
-### Adding New Data Layers
-1. Create GeoJSON file in `/public/data/`
-2. Create layer component in `/app/components/map/layers/`
-3. Add layer toggle to `app/components/ui/Sidebar.tsx`
-4. Import and render in `app/components/map/Map.tsx`
+### Quest System
+- Multiple quest types (exploration, discovery, challenges)
+- Progress tracking for each quest
+- Rewards system with points and badges
+- Quest completion animations
+
+### Landmark Discovery
+- 10+ major D.C. landmarks
+- Discovery animations when found
+- Detailed information cards
+- Fun facts for each location
+
+### Data Layers
+- **Museums:** Cultural institutions with info popups
+- **Trees:** Urban forestry with seasonal variations
+- **Landmarks:** Major D.C. attractions
+- **Hidden Gems:** Secret spots to discover
+- **Heatmap:** Activity visualization
 
 ## 🐛 Troubleshooting
 
 ### Map not loading
-- Check that your Mapbox token is set correctly in `.env.local`
-- Ensure token starts with `pk.` (public token)
-- Refresh the page after updating environment variables
-- Check browser console for specific errors
-
-### GeoJSON not displaying
-- Verify file is in `/public/data/` directory
-- Check GeoJSON validity at [geojson.io](http://geojson.io/)
-- Ensure coordinates are in [longitude, latitude] format
-- Check browser Network tab for 404 errors
+- Check Mapbox token in `.env.local`
+- Ensure token starts with `pk.`
+- Restart dev server after env changes
 
 ### Build errors
-- Run `npm install` to ensure all dependencies are installed
-- Delete `.next` folder and rebuild
+- Delete `.next` folder: `rm -rf .next`
+- Reinstall dependencies: `pnpm install`
 - Check Node.js version (18+ required)
 
-## 📚 Learning Resources
-
-- [Mapbox GL JS Documentation](https://docs.mapbox.com/mapbox-gl-js/api/)
-- [GeoJSON Specification](https://geojson.org/)
-- [Next.js App Router](https://nextjs.org/docs/app)
-- [Framer Motion Documentation](https://www.framer.com/motion/)
+### Performance issues
+- Disable 3D view if needed
+- Close unused panels
+- Check browser console for errors
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - feel free to use for learning and projects
 
 ## 👤 Author
 
 **Prakriti Bista**
 
-## 🙏 Acknowledgments
+## 🙏 Credits
 
-- Museum data sourced from [Open Data DC](https://opendata.dc.gov/)
-- Map tiles and services by [Mapbox](https://www.mapbox.com/)
-- Inspiration from modern data visualization projects
+- Map data and services by [Mapbox](https://www.mapbox.com/)
+- Landmark data from [Open Data DC](https://opendata.dc.gov/)
+- Inspired by game UX patterns from Minecraft and GTA
 
 ---
 
-**Note**: This is Phase 1 (MVP). See `docs/phase2-guide.md` for upcoming features and `todo.md` for current tasks.
-
+**Note:** This is an evolving project. Check `v1prd.md` for detailed feature specs and `todo.md` for current development tasks.

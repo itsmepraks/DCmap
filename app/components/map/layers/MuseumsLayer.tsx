@@ -4,23 +4,28 @@ import { useEffect, useRef } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import mapboxgl, { type SymbolLayout, type SymbolPaint } from 'mapbox-gl'
 import type { MuseumProperties } from '@/app/types/map'
+import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MuseumsLayerProps {
   visible: boolean
+  onSelect?: (entity: SelectedEntity | null) => void
 }
 
 const LAYER_ID = 'museums-layer'
 const SOURCE_ID = 'museums-source'
 
-export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
+export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
   const { map } = useMap()
   const layerInitialized = useRef(false)
-  const popupRef = useRef<mapboxgl.Popup | null>(null)
   const handlersRef = useRef<{
     click?: (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => void
     mouseEnter?: () => void
     mouseLeave?: () => void
   }>({})
+
+  // Track selected feature ID locally to handle deselect logic if needed, 
+  // though mapbox feature-state is the source of truth for visual rendering.
+  const selectedIdRef = useRef<string | number | null>(null)
 
   useEffect(() => {
     if (!map) {
@@ -42,265 +47,39 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
       const properties = feature.properties as MuseumProperties
       const coordinates = (feature.geometry as GeoJSON.Point).coordinates.slice() as [number, number]
 
-      // Ensure that if the map is zoomed out such that multiple
-      // copies of the feature are visible, the popup appears
-      // over the copy being pointed to.
-      while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360
+      e.originalEvent.stopPropagation()
+
+      // Update selection state
+      if (selectedIdRef.current !== null) {
+        map.setFeatureState(
+          { source: SOURCE_ID, id: selectedIdRef.current },
+          { selected: false }
+        )
       }
 
-      // Create rich museum popup with Minecraft theme
-      const popupHTML = `
-        <div class="popup-wrapper" style="
-          padding: 0; 
-          margin: -15px; 
-          border-radius: 8px; 
-          overflow: hidden;
-          font-family: monospace;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-          border: 3px solid #5DA5DB;
-          background: linear-gradient(145deg, #EFE6D5 0%, #F5EBD9 100%);
-          min-width: 320px;
-        ">
-          <!-- Pixelated corners -->
-          <div style="position: absolute; top: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
-          <div style="position: absolute; top: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
-          <div style="position: absolute; bottom: 0; left: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
-          <div style="position: absolute; bottom: 0; right: 0; width: 2px; height: 2px; background: rgba(0,0,0,0.4);"></div>
-          
-          <!-- Header -->
-          <div style="
-            background: linear-gradient(135deg, #5DA5DB 0%, #3A7CA5 100%); 
-            padding: 16px; 
-            border-bottom: 4px solid #3A7CA5;
-            position: relative;
-          ">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                🏛️
-              </div>
-              <div style="flex: 1;">
-                <h3 style="
-                  margin: 0 0 4px 0; 
-                  color: white; 
-                  font-size: 16px; 
-                  font-weight: bold; 
-                  text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-                  font-family: monospace;
-                  line-height: 1.3;
-                ">
-                  ${properties.NAME}
-                </h3>
-                <div style="
-                  display: inline-block;
-                  padding: 2px 8px;
-                  background: rgba(255,255,255,0.2);
-                  border-radius: 4px;
-                  font-size: 10px;
-                  color: rgba(255,255,255,0.9);
-                  font-weight: bold;
-                  text-transform: uppercase;
-                ">
-                  Museum
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Content -->
-          <div style="padding: 16px; background: linear-gradient(145deg, #F5EBD9 0%, #EFE6D5 100%);">
-            ${properties.ADDRESS ? `
-              <!-- Address Section -->
-              <div style="margin-bottom: 12px;">
-                <div style="
-                  font-size: 10px; 
-                  font-weight: bold; 
-                  color: #8B7355; 
-                  text-transform: uppercase; 
-                  margin-bottom: 6px;
-                  font-family: monospace;
-                ">
-                  📍 Location
-                </div>
-                <p style="
-                  margin: 0; 
-                  color: #2C1810; 
-                  font-size: 13px; 
-                  line-height: 1.6;
-                  font-family: monospace;
-                  font-weight: 500;
-                ">
-                  ${properties.ADDRESS}
-                </p>
-              </div>
-            ` : ''}
-            
-            ${properties.DESCRIPTION ? `
-              <!-- Description Section -->
-              <div style="
-                padding: 12px; 
-                background: linear-gradient(135deg, rgba(93, 165, 219, 0.15) 0%, rgba(58, 124, 165, 0.1) 100%); 
-                border-left: 4px solid #5DA5DB; 
-                border-radius: 4px;
-                margin-bottom: 12px;
-                box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-              ">
-                <div style="
-                  font-size: 10px; 
-                  font-weight: bold; 
-                  color: #3A7CA5; 
-                  text-transform: uppercase; 
-                  margin-bottom: 4px;
-                  font-family: monospace;
-                ">
-                  📖 About This Museum
-                </div>
-                <p style="
-                  margin: 0; 
-                  color: #2C1810; 
-                  font-size: 12px; 
-                  line-height: 1.6;
-                  font-family: monospace;
-                ">
-                  ${properties.DESCRIPTION}
-                </p>
-              </div>
-            ` : ''}
-            
-            <!-- Info Grid -->
-            <div style="
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 8px;
-              margin-bottom: 12px;
-            ">
-              <!-- Admission Info -->
-              <div style="
-                padding: 8px;
-                background: linear-gradient(135deg, rgba(126, 217, 87, 0.2) 0%, rgba(93, 160, 64, 0.1) 100%);
-                border: 2px solid #7ED957;
-                border-radius: 4px;
-                text-align: center;
-              ">
-                <div style="font-size: 18px; margin-bottom: 4px;">🎫</div>
-                <div style="
-                  font-size: 9px;
-                  font-weight: bold;
-                  color: #5DA040;
-                  font-family: monospace;
-                ">
-                  FREE ENTRY
-                </div>
-              </div>
-              
-              <!-- Hours Info -->
-              <div style="
-                padding: 8px;
-                background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.1) 100%);
-                border: 2px solid #FFD700;
-                border-radius: 4px;
-                text-align: center;
-              ">
-                <div style="font-size: 18px; margin-bottom: 4px;">🕐</div>
-                <div style="
-                  font-size: 9px;
-                  font-weight: bold;
-                  color: #B8860B;
-                  font-family: monospace;
-                ">
-                  10AM-5PM
-                </div>
-              </div>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div style="
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 8px;
-            ">
-              <a 
-                href="https://www.google.com/maps/dir/?api=1&destination=${coordinates[1]},${coordinates[0]}" 
-                target="_blank"
-                style="
-                  padding: 8px;
-                  background: linear-gradient(135deg, #7ED957 0%, #5DA040 100%);
-                  border: 2px solid #5DA040;
-                  border-radius: 4px;
-                  box-shadow: 0 3px 0 #5DA040, 0 4px 8px rgba(0,0,0,0.2);
-                  color: #FFF;
-                  font-family: monospace;
-                  font-weight: bold;
-                  font-size: 11px;
-                  cursor: pointer;
-                  text-decoration: none;
-                  text-align: center;
-                  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
-                  display: block;
-                ">
-                🧭 Directions
-              </a>
-              
-              <a 
-                href="https://www.google.com/search?q=${encodeURIComponent(properties.NAME + ' DC')}" 
-                target="_blank"
-                style="
-                  padding: 8px;
-                  background: linear-gradient(135deg, #5DA5DB 0%, #3A7CA5 100%);
-                  border: 2px solid #3A7CA5;
-                  border-radius: 4px;
-                  box-shadow: 0 3px 0 #3A7CA5, 0 4px 8px rgba(0,0,0,0.2);
-                  color: #FFF;
-                  font-family: monospace;
-                  font-weight: bold;
-                  font-size: 11px;
-                  cursor: pointer;
-                  text-decoration: none;
-                  text-align: center;
-                  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
-                  display: block;
-                ">
-                🔍 Learn More
-              </a>
-            </div>
-            
-            <!-- Visit Tip -->
-            <div style="
-              margin-top: 12px;
-              padding: 8px;
-              background: linear-gradient(135deg, rgba(212, 80, 30, 0.1) 0%, rgba(184, 67, 26, 0.05) 100%);
-              border-left: 3px solid #D4501E;
-              border-radius: 4px;
-            ">
-              <p style="
-                margin: 0;
-                font-size: 10px;
-                color: #2C1810;
-                font-family: monospace;
-                line-height: 1.5;
-              ">
-                💡 <strong>Tip:</strong> Most Smithsonian museums are free and open daily!
-              </p>
-            </div>
-          </div>
-        </div>
-      `
-
-      // Remove existing popup if any
-      if (popupRef.current) {
-        popupRef.current.remove()
+      if (feature.id !== undefined) {
+        selectedIdRef.current = feature.id
+        map.setFeatureState(
+          { source: SOURCE_ID, id: feature.id },
+          { selected: true }
+        )
       }
 
-      // Create and show new popup
-      popupRef.current = new mapboxgl.Popup({
-        closeButton: true,
-        closeOnClick: true,
-        maxWidth: '340px',
-        className: 'custom-popup'
-      })
-        .setLngLat(coordinates)
-        .setHTML(popupHTML)
-        .addTo(map!)
+      // Notify parent
+      if (onSelect) {
+        onSelect({
+          id: String(feature.id || properties.NAME),
+          type: 'museum',
+          name: properties.NAME,
+          description: properties.DESCRIPTION,
+          coordinates: coordinates,
+          metadata: {
+            address: properties.ADDRESS,
+            phone: properties.PHONE,
+            url: properties.URL
+          }
+        })
+      }
     }
 
     const initializeLayer = async () => {
@@ -327,6 +106,7 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
           map.addSource(SOURCE_ID, {
             type: 'geojson',
             data: data,
+            generateId: true // Critical for feature-state
           })
           console.log('✅ Museums source added')
         }
@@ -341,12 +121,9 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
               'interpolate',
               ['linear'],
               ['zoom'],
-              10,
-              0.8,
-              14,
-              1.5,
-              18,
-              2.5
+              10, 0.8,
+              14, 1.5,
+              18, 2.5
             ],
             'icon-allow-overlap': true,
             'icon-ignore-placement': true,
@@ -356,8 +133,18 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
 
           const paint: SymbolPaint = {
             'icon-opacity': 1,
-            'icon-halo-color': '#5DA5DB',
-            'icon-halo-width': 3,
+            'icon-halo-color': [
+              'case',
+              ['boolean', ['feature-state', 'selected'], false],
+              '#FFD700', // Gold select halo
+              '#5DA5DB'  // Default blue halo
+            ],
+            'icon-halo-width': [
+              'case',
+              ['boolean', ['feature-state', 'selected'], false],
+              6, // Thicker select halo
+              3
+            ],
             'icon-halo-blur': 2
           }
 
@@ -383,10 +170,6 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
             paint['text-halo-color'] = '#FFFFFF'
             paint['text-halo-width'] = 3
             paint['text-halo-blur'] = 1
-          } else {
-            console.warn(
-              'Museums layer: style missing glyphs definition – rendering icons without text labels.'
-            )
           }
 
           map.addLayer({
@@ -396,12 +179,27 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
             layout,
             paint
           })
-          console.log('✅ Museums layer added with ENHANCED 3D visibility')
+          console.log('✅ Museums layer added with Selection System')
         }
 
         // Add click handler for popups
         handlersRef.current.click = handleClick
         map.on('click', LAYER_ID, handlersRef.current.click)
+
+        // Deselect on map background click
+        map.on('click', (e) => {
+          const features = map.queryRenderedFeatures(e.point, { layers: [LAYER_ID] })
+          if (features.length === 0 && selectedIdRef.current !== null) {
+            map.setFeatureState(
+              { source: SOURCE_ID, id: selectedIdRef.current },
+              { selected: false }
+            )
+            selectedIdRef.current = null
+            // We rely on the page/parent to handle null selection via its own map click handler 
+            // or we can call onSelect(null) here if we want this layer to drive deselection explicitly
+            // but usually it's better if one central handler does the "nothing clicked" logic.
+          }
+        })
 
         // Change cursor on hover
         handlersRef.current.mouseEnter = () => {
@@ -414,7 +212,6 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
         map.on('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
 
         layerInitialized.current = true
-        console.log('✅ Museums layer fully initialized!')
       } catch (error) {
         console.error('❌ Error initializing museums layer:', error)
       }
@@ -433,10 +230,6 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
         if (handlersRef.current.mouseLeave) {
           map.off('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
         }
-
-        if (popupRef.current) {
-          popupRef.current.remove()
-        }
       }
     }
   }, [map, visible])
@@ -447,7 +240,6 @@ export default function MuseumsLayer({ visible }: MuseumsLayerProps) {
 
     if (map.getLayer(LAYER_ID)) {
       const visibility = visible ? 'visible' : 'none'
-      console.log('🏛️ Updating museums visibility to:', visibility)
       map.setLayoutProperty(
         LAYER_ID,
         'visibility',
@@ -469,4 +261,3 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     img.src = url
   })
 }
-

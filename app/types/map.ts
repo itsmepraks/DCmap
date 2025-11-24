@@ -19,6 +19,8 @@ export interface MuseumProperties {
   NAME: string
   ADDRESS?: string
   DESCRIPTION?: string
+  PHONE?: string
+  URL?: string
 }
 
 export interface TreeProperties {

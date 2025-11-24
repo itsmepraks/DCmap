@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
+import { useState } from 'react'
 
 interface NearbyLandmark {
   id: string
@@ -18,183 +19,112 @@ interface ProximityHintProps {
 }
 
 export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new Set(), onNavigate }: ProximityHintProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   const getDirectionArrow = (direction: string) => {
     const directions: { [key: string]: string } = {
-      'N': '↑',
-      'NE': '↗',
-      'E': '→',
-      'SE': '↘',
-      'S': '↓',
-      'SW': '↙',
-      'W': '←',
-      'NW': '↖'
+      'N': '↑', 'NE': '↗', 'E': '→', 'SE': '↘',
+      'S': '↓', 'SW': '↙', 'W': '←', 'NW': '↖'
     }
     return directions[direction] || '○'
   }
 
-  const getDistanceColor = (distance: number) => {
-    if (distance < 100) return '#7ED957' // Very close - green
-    if (distance < 200) return '#FFD700' // Close - gold
-    if (distance < 500) return '#FFA500' // Medium - orange
-    return '#D4501E' // Far - red
-  }
-
-  // Only show the 3 nearest unvisited landmarks
-  const displayLandmarks = nearbyLandmarks
+  // Only show the 1 nearest unvisited landmark for minimal view
+  const nearestLandmark = nearbyLandmarks
     .filter(l => !visitedLandmarks.has(l.id))
-    .slice(0, 3)
+    .sort((a, b) => a.distance - b.distance)[0]
+
+  if (!nearestLandmark) return null
 
   return (
     <AnimatePresence>
-      {displayLandmarks.length > 0 && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-          className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-20"
+      <motion.div
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 0.95 }}
+        exit={{ y: 50, opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto"
+      >
+        {/* Compact Pill Design */}
+        <motion.button
+          onClick={() => onNavigate?.(nearestLandmark.id)}
+          whileHover={{ scale: 1.08, y: -2 }}
+          whileTap={{ scale: 0.96 }}
+          className="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl transition-all relative overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.light}F8, ${minecraftTheme.colors.beige.base}F5)`,
+            backdropFilter: 'blur(12px)',
+            border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
+            boxShadow: `0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)`
+          }}
         >
-          <div
-            className="px-4 py-3"
+          {/* Shine effect */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-[50%] pointer-events-none rounded-t-2xl"
             style={{
-              background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
-              border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
-              borderRadius: minecraftTheme.minecraft.borderRadius,
-              boxShadow: minecraftTheme.minecraft.shadowRaised,
-              imageRendering: minecraftTheme.minecraft.imageRendering,
-              maxWidth: '400px',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%)'
             }}
-          >
-            {/* Pixelated corners */}
-            <div className="absolute top-0 left-0 w-1 h-1 bg-black/40" />
-            <div className="absolute top-0 right-0 w-1 h-1 bg-black/40" />
-            <div className="absolute bottom-0 left-0 w-1 h-1 bg-black/40" />
-            <div className="absolute bottom-0 right-0 w-1 h-1 bg-black/40" />
-
-            {/* Header */}
-            <div
-              className="text-xs font-bold mb-2 flex items-center gap-2"
-              style={{
-                color: minecraftTheme.colors.terracotta.base,
-                fontFamily: 'monospace',
-                textTransform: 'uppercase'
-              }}
+          />
+          
+          {/* Icon & Pulse */}
+          <div className="relative z-10">
+            <motion.span 
+              className="text-2xl block"
+              animate={{ rotate: [0, 5, 0, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
-              <motion.span
+              {nearestLandmark.icon}
+            </motion.span>
+            {nearestLandmark.distance < 100 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+              </span>
+            )}
+          </div>
+
+          {/* Text Info */}
+          <div className="text-left flex flex-col gap-0.5 z-10">
+            <span 
+              className="text-sm font-bold font-mono leading-tight"
+              style={{ color: minecraftTheme.colors.text.primary }}
+            >
+              {nearestLandmark.name}
+            </span>
+            <div className="flex items-center gap-2">
+              <span 
+                className="text-xs font-bold font-mono"
+                style={{ color: minecraftTheme.colors.text.secondary }}
+              >
+                📍 {Math.round(nearestLandmark.distance)}m
+              </span>
+              <motion.span 
+                className="text-lg font-bold"
+                style={{ color: minecraftTheme.colors.terracotta.base }}
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
-                📍
+                {getDirectionArrow(nearestLandmark.direction)}
               </motion.span>
-              Nearby Landmarks
             </div>
-
-            {/* Landmarks list */}
-            <div className="space-y-2">
-              {displayLandmarks.map((landmark, index) => (
-                <motion.button
-                  key={landmark.id}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => onNavigate?.(landmark.id)}
-                  className="w-full flex items-center justify-between p-2 rounded transition-all hover:scale-105"
-                  style={{
-                    background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.base} 100%)`,
-                    border: `2px solid ${minecraftTheme.colors.terracotta.light}`,
-                    cursor: 'pointer',
-                    imageRendering: minecraftTheme.minecraft.imageRendering,
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-lg">{landmark.icon}</span>
-                    <div className="text-left">
-                      <div
-                        className="text-xs font-bold"
-                        style={{
-                          color: minecraftTheme.colors.text.primary,
-                          fontFamily: 'monospace'
-                        }}
-                      >
-                        {landmark.name}
-                      </div>
-                      <div
-                        className="text-[10px]"
-                        style={{
-                          color: minecraftTheme.colors.text.secondary,
-                          fontFamily: 'monospace'
-                        }}
-                      >
-                        {Math.round(landmark.distance)}m away
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Direction indicator */}
-                  <div className="flex items-center gap-2">
-                    <motion.div
-                      animate={{ 
-                        x: [0, 3, 0],
-                        scale: [1, 1.1, 1]
-                      }}
-                      transition={{ 
-                        duration: 1.5, 
-                        repeat: Infinity,
-                        ease: 'easeInOut'
-                      }}
-                      className="text-lg font-bold"
-                      style={{
-                        color: getDistanceColor(landmark.distance)
-                      }}
-                    >
-                      {getDirectionArrow(landmark.direction)}
-                    </motion.div>
-                    
-                    {/* Distance indicator */}
-                    <div
-                      className="px-2 py-1 rounded text-[10px] font-bold"
-                      style={{
-                        background: getDistanceColor(landmark.distance),
-                        color: '#FFF',
-                        fontFamily: 'monospace',
-                        minWidth: '40px',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {landmark.distance < 100 ? 'NEAR' : landmark.distance < 200 ? 'CLOSE' : landmark.distance < 500 ? 'FAR' : 'DIST'}
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Footer tip */}
-            {displayLandmarks.length > 0 && displayLandmarks[0].distance < 50 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-3 pt-2 border-t text-center"
-                style={{
-                  borderColor: minecraftTheme.colors.terracotta.light
-                }}
-              >
-                <div
-                  className="text-[10px] font-bold"
-                  style={{
-                    color: '#7ED957',
-                    fontFamily: 'monospace'
-                  }}
-                >
-                  💡 Click the landmark to discover it!
-                </div>
-              </motion.div>
-            )}
           </div>
-        </motion.div>
-      )}
+
+          {/* Navigate Icon */}
+          <motion.span 
+            className="text-xl z-10"
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            🧭
+          </motion.span>
+          
+          {/* Corner accents */}
+          <div className="absolute top-0 left-0 w-2 h-2 bg-black/20 rounded-tl-xl z-0" />
+          <div className="absolute top-0 right-0 w-2 h-2 bg-black/20 rounded-tr-xl z-0" />
+          <div className="absolute bottom-0 left-0 w-2 h-2 bg-black/20 rounded-bl-xl z-0" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 bg-black/20 rounded-br-xl z-0" />
+        </motion.button>
+      </motion.div>
     </AnimatePresence>
   )
 }
-

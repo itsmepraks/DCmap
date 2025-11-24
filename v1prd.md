@@ -4,27 +4,29 @@
 ## **Product Requirements Document: "Project Anima DC"**
 
 * **Author:** Prakriti Bista
-* **Status:** Ready for Development
-* **Version:** 1.2
-* **Last Updated:** October 16, 2025
+* **Status:** In Production
+* **Version:** 2.0
+* **Last Updated:** November 24, 2025
 
 ---
 
 ### **1. Vision & Goals**
 
-**Vision:** To create a web-based, interactive digital portrait of Washington, D.C., that visualizes the city's dynamic data layers through a sleek, animated, and artistically "cartoonish" user interface.
+**Vision:** To create a web-based, interactive gamified digital portrait of Washington, D.C., that combines data visualization with exploration gameplay, featuring a quest system, daily challenges, and immersive walk mode through a sleek, animated Minecraft-inspired UI.
 
-**Primary Goal:** To serve as a high-impact portfolio project that demonstrates advanced skills in frontend development (Next.js, TypeScript), data visualization (Mapbox), and UI/UX design.
+**Primary Goal:** To serve as a high-impact portfolio project that demonstrates advanced skills in frontend development (Next.js, TypeScript), data visualization (Mapbox), game mechanics, and UI/UX design.
 
 ---
 
 ### **2. High-Level User Flow**
 
-1.  **Landing:** User arrives on the site and is immediately presented with the full-screen interactive map of D.C., centered and zoomed appropriately. The UI controls (sidebar toggle) gracefully animate into view.
-2.  **Exploration:** User pans and zooms the map. The map feels fluid and responsive.
-3.  **Interaction:** User clicks the sidebar toggle. The sidebar animates open, revealing a list of data layers.
-4.  **Discovery:** User toggles a layer (e.g., "Museums"). Custom icons fade onto the map. The user clicks an icon, and a styled popup with information appears.
-5.  **Deeper Dive:** User activates a dynamic layer (e.g., "Greenery"). They interact with the layer's specific controls (seasonal buttons) and see the map visualization update instantly.
+1.  **Landing:** User arrives and sees the interactive map with an onboarding tutorial. The game HUD displays progress (landmarks discovered, points, active quests).
+2.  **Exploration Mode:** User pans/zooms the map. Proximity hints appear when near undiscovered landmarks. Discovery radius visualizations guide exploration.
+3.  **Discovery:** When near a landmark (within 50m), it auto-discovers with particle effects and animations. Points are awarded, and daily challenges update.
+4.  **Quest System:** User opens the Quest Panel to view and start quests. Quests have objectives (visit specific landmarks/categories) and reward points and badges.
+5.  **Walk Mode:** User toggles Walk Mode for first-person keyboard controls (WASD). The camera follows the player with cinematic third-person view. A breadcrumb trail shows the path taken.
+6.  **Data Layers:** User can toggle Museums, Trees (with seasonal variations), Heatmap, and Parks layers via the sidebar.
+7.  **Daily Engagement:** Daily challenges refresh each day. Streak counter encourages consecutive visits.
 
 ---
 
@@ -123,11 +125,85 @@ This is the initial, shippable version of the application.
 
 ---
 
-### **6. Out of Scope (For this Version)**
+---
+
+### **6. Current Feature Set (v2.0)**
+
+#### **Game Mechanics**
+* **Landmark Discovery System:** Auto-discovery within 50m radius with particle effects, animations, and achievement toasts.
+* **Quest System:** Multi-objective quests with category and specific landmark targeting. Points and badge rewards.
+* **Daily Challenges:** Three daily challenges (visit landmarks, explore distance, etc.) with refresh logic and streak tracking.
+* **Game Progress Persistence:** LocalStorage-based save system for visited landmarks, quest progress, and stats.
+* **Stats Modal:** Complete view of all landmarks (visited/unvisited), quest statistics, and badges.
+
+#### **Walk Mode**
+* **First-Person Controls:** WASD movement with Shift to sprint. Mouse look (when enabled).
+* **Road Snapping:** Player movement constrained to walkable roads using graph-based pathfinding.
+* **Third-Person Camera:** Cinematic over-the-shoulder camera with smooth following.
+* **Visual Feedback:** Walk mode HUD showing controls, speed indicator, and compass.
+* **Breadcrumb Trail:** Visual path history of visited locations.
+
+#### **Map Features**
+* **3D View Toggle:** GTA-style cinematic camera with dynamic pitch/zoom transitions.
+* **Discovery Radius:** Visual circles around landmarks showing discovery zones.
+* **Proximity Hints:** Bottom-centered UI showing nearby unvisited landmarks with navigation.
+* **World Border Warning:** Alerts when approaching map boundaries.
+* **Multiple Avatar System:** Choice of walking avatars with visual indicators.
+
+#### **Data Layers**
+* **Landmarks:** 10 major DC landmarks with rich metadata (descriptions, fun facts, categories).
+* **Hidden Gems:** Additional discoverable locations.
+* **Museums:** Cultural institutions with info panels.
+* **Trees:** DMV-wide tree data with seasonal icon variations (Spring/Summer/Fall/Winter).
+* **Parks:** Green space polygons.
+* **Heatmap:** Monthly temperature variation visualization.
+* **Road Details:** Road network layer for context.
+
+#### **UI/UX**
+* **Minecraft-Inspired Theme:** Pixelated corners, block-style borders, warm color palette.
+* **Animated HUD System:** Multiple HUDs (GameHUD, WalkModeHUD, ConsolidatedHUD) with context-aware display.
+* **Loading States:** Skeleton screens and loading indicators.
+* **Onboarding Tutorial:** First-time user guidance.
+* **Control Dock:** Unified bottom-right controls for 3D, Walk Mode, and Layers.
+* **Entity Info Panel:** Detailed view when clicking map features.
+
+---
+
+### **7. Technical Architecture**
+
+#### **Stack**
+* **Framework:** Next.js 15 with App Router
+* **Language:** TypeScript
+* **Map:** Mapbox GL JS v3
+* **Animation:** Framer Motion
+* **State Management:** React Context (MapContext, PlayerState) + useState
+* **Data Storage:** LocalStorage for persistence
+* **Testing:** Jest + ts-jest
+
+#### **Key Libraries**
+* `@turf/turf`: Geospatial calculations (distance, snapping)
+* `mapbox-gl`: Core mapping functionality
+
+#### **File Structure**
+```
+app/
+├── components/
+│   ├── map/ (Map, MapLayers, PlayerController, effects)
+│   └── ui/ (HUDs, panels, overlays, controls)
+├── hooks/ (useMapInitialization, useWalkController)
+├── lib/ (game logic, state management, utilities)
+└── types/ (TypeScript definitions)
+public/data/ (GeoJSON data files)
+```
+
+---
+
+### **8. Out of Scope (For Current Version)**
 
 * AI/ML predictive models.
 * Real-time data feeds (e.g., live bus tracking).
-* User accounts or saving preferences.
-* Mobile-specific layouts (initial focus is a responsive desktop experience).
-* Search functionality.
-* Accessibility features beyond standard HTML semantics (will be addressed in a future version).
+* User accounts or cloud saving.
+* Mobile-specific layouts (desktop-first).
+* Multiplayer or social features.
+* Advanced accessibility features (planned for future).
+* Search/filter functionality.

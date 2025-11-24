@@ -1,33 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Map from './components/map/Map'
-import Sidebar from './components/ui/Sidebar'
-import SidebarToggle from './components/ui/SidebarToggle'
-import ThreeDToggle from './components/ui/ThreeDToggle'
-import WalkModeToggle from './components/ui/WalkModeToggle'
-import AchievementToast from './components/ui/AchievementToast'
 import StatsModal from './components/ui/StatsModal'
 import GameOverlay from './components/ui/GameOverlay'
-import QuestPanel from './components/ui/QuestPanel'
-import QuestTracker from './components/ui/QuestTracker'
-import GameHUD from './components/ui/GameHUD'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
 import DiscoveryAnimation from './components/ui/DiscoveryAnimation'
 import ProximityHint from './components/ui/ProximityHint'
 import WorldBorderWarning from './components/ui/WorldBorderWarning'
 import MapLoadingSkeleton from './components/ui/MapLoadingSkeleton'
-import DailyChallengesPanel from './components/ui/DailyChallengesPanel'
-import ParticleEffect from './components/map/ParticleEffect'
-import DiscoveryRadius from './components/map/DiscoveryRadius'
-import BreadcrumbTrail from './components/map/BreadcrumbTrail'
+import ControlDock from './components/ui/ControlDock'
+import FloatingControlPanel from './components/ui/FloatingControlPanel'
+import QuestPanel from './components/game/QuestPanel'
+import DailyChallengesPanel from './components/game/DailyChallengesPanel'
+import AchievementToast from './components/game/AchievementToast'
+import ParticleEffect from './components/map/effects/ParticleEffect'
+import DiscoveryRadius from './components/map/effects/DiscoveryRadius'
+import BreadcrumbTrail from './components/map/effects/BreadcrumbTrail'
+import SmartHUD from './components/ui/hud/SmartHUD'
+import MiniStatsBar from './components/ui/hud/MiniStatsBar'
 import { MapProvider, useMap } from './lib/MapContext'
 import { PlayerProvider } from './lib/playerState'
-import { isNearBorder, getBorderDirection } from './lib/worldBorder'
-import { loadGameProgress, visitLandmark, resetGameProgress, type GameProgress } from './lib/gameState'
-import { loadQuestProgress, saveQuestProgress, startQuest, checkQuestProgress, type Quest, type QuestProgress } from './lib/questSystem'
-import { getNearbyLandmarks, type NearbyLandmark } from './lib/proximityCalculator'
-import { loadDailyChallenges, updateChallengeProgress, loadStreak, updateStreak, type DailyChallenge } from './lib/dailyChallenges'
+import { useGameState } from './hooks/useGameState'
+import { useQuestSystem } from './hooks/useQuestSystem'
+import { useDailyChallenges } from './hooks/useDailyChallenges'
+import { useLandmarks } from './hooks/useLandmarks'
 
 export default function Home() {
   return (
@@ -40,51 +37,64 @@ export default function Home() {
 }
 
 function HomeContent() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  // UI State
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false)
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
     trees: false,
     heatmap: false,
-    landmarks: true, // Landmarks visible by default for game mode
+    landmarks: true,
     hiddenGems: false
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)
   const [isWalkMode, setIsWalkMode] = useState(false)
-
-  // Game state
-  const [gameProgress, setGameProgress] = useState<GameProgress>(() => loadGameProgress())
-  const [landmarks, setLandmarks] = useState<any[]>([])
-  const [achievement, setAchievement] = useState<any>(null)
-  const [showStatsModal, setShowStatsModal] = useState(false)
-  
-  // Quest state
-  const [quests, setQuests] = useState<Quest[]>([])
-  const [questProgress, setQuestProgress] = useState<QuestProgress>(() => loadQuestProgress())
-  const [questCompletion, setQuestCompletion] = useState<any>(null)
-  
-  // Discovery animation state
-  const [showDiscovery, setShowDiscovery] = useState(false)
-  const [discoveryData, setDiscoveryData] = useState<any>(null)
-  
-  // Proximity hints
-  const [nearbyLandmarks, setNearbyLandmarks] = useState<NearbyLandmark[]>([])
-  const { map } = useMap()
-  
-  // World border warning
-  const [showBorderWarning, setShowBorderWarning] = useState(false)
-  const [borderDirection, setBorderDirection] = useState('')
-  
-  // Map loading state
   const [isMapLoaded, setIsMapLoaded] = useState(false)
-  
-  // Daily challenges and streak
-  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([])
-  const [currentStreak, setCurrentStreak] = useState({ current: 0, longest: 0, lastVisit: '' })
-  
-  // Particle effect state
   const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
 
+  // Custom Hooks
+  const gameState = useGameState()
+  const questSystem = useQuestSystem()
+  const dailyChallenges = useDailyChallenges()
+  const landmarksState = useLandmarks(gameState.gameProgress.visitedLandmarks)
+  
+  const { map } = useMap()
+
+  // Track map load state
+  useEffect(() => {
+    if (!map) return
+    
+    if (map.loaded()) {
+      setIsMapLoaded(true)
+    } else {
+      map.once('load', () => {
+        setIsMapLoaded(true)
+      })
+    }
+
+    // Fallback: Force loading state to true after 5 seconds
+    const timeout = setTimeout(() => {
+      if (map && !isMapLoaded) {
+        console.warn('⚠️ Map loading timeout - forcing ready state')
+        setIsMapLoaded(true)
+      }
+    }, 5000)
+
+    return () => clearTimeout(timeout)
+  }, [map, isMapLoaded])
+
+  // ESC key handler to close control panel
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isControlPanelOpen) {
+        setIsControlPanelOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [isControlPanelOpen])
+
+  // Handle layer toggles
   const handleToggleLayer = (layerId: keyof typeof layersVisible) => {
     setLayersVisible(prev => ({
       ...prev,
@@ -104,133 +114,20 @@ function HomeContent() {
     setIsWalkMode(prev => !prev)
   }
 
-  // Load landmarks data
-  useEffect(() => {
-    fetch('/data/landmarks.geojson')
-      .then(res => res.json())
-      .then(data => {
-        setLandmarks(data.features.map((f: any) => ({
-          id: f.properties.id,
-          name: f.properties.name,
-          description: f.properties.description,
-          funFact: f.properties.funFact,
-          category: f.properties.category,
-          icon: f.properties.icon,
-          coordinates: f.geometry.coordinates
-        })))
-      })
-      .catch(err => console.error('Failed to load landmarks:', err))
-  }, [])
+  // Handle landmark discovery (memoized to prevent unnecessary re-renders)
+  const handleLandmarkDiscovered = useCallback((landmarkId: string, landmarkData: any) => {
+    // Check if already visited
+    const isNewVisit = gameState.handleVisitLandmark(landmarkId)
+    if (!isNewVisit) return
 
-  // Load quests data
-  useEffect(() => {
-    fetch('/data/quests.json')
-      .then(res => res.json())
-      .then(data => setQuests(data))
-      .catch(err => console.error('Failed to load quests:', err))
-  }, [])
-
-  // Update streak and load challenges on mount
-  useEffect(() => {
-    // Load daily challenges
-    setDailyChallenges(loadDailyChallenges())
+    // Update quest progress
+    questSystem.handleLandmarkVisit(landmarkId)
     
-    // Update and load streak
-    const streak = updateStreak()
-    setCurrentStreak(streak)
-  }, [])
-
-  // Track map load state
-  useEffect(() => {
-    if (!map) return
-    
-    if (map.loaded()) {
-      setIsMapLoaded(true)
-    } else {
-      map.once('load', () => {
-        setIsMapLoaded(true)
-      })
-    }
-
-    // Fallback: Force loading state to true after 5 seconds if map exists
-    // This handles cases where the load event might have been missed or map is stuck
-    const timeout = setTimeout(() => {
-      if (map && !isMapLoaded) {
-        console.warn('⚠️ Map loading timeout - forcing ready state')
-        setIsMapLoaded(true)
-      }
-    }, 5000)
-
-    return () => clearTimeout(timeout)
-  }, [map])
-
-  // Update proximity hints based on map center
-  useEffect(() => {
-    if (!map || !landmarks.length) return
-
-    const updateProximity = () => {
-      const center = map.getCenter()
-      const currentPos: [number, number] = [center.lng, center.lat]
-      
-      const nearby = getNearbyLandmarks(
-        currentPos,
-        landmarks,
-        1000, // 1km radius
-        gameProgress.visitedLandmarks
-      )
-      
-      setNearbyLandmarks(nearby)
-      
-      // Check for world border warning
-      const nearBorder = isNearBorder(center.lng, center.lat)
-      setShowBorderWarning(nearBorder)
-      if (nearBorder) {
-        const direction = getBorderDirection(center.lng, center.lat)
-        if (direction) setBorderDirection(direction)
-      }
-    }
-
-    // Update on map move
-    map.on('move', updateProximity)
-    updateProximity() // Initial update
-
-    return () => {
-      map.off('move', updateProximity)
-    }
-  }, [map, landmarks, gameProgress.visitedLandmarks])
-
-  // Handle landmark discovery
-  const handleLandmarkDiscovered = (landmarkId: string, landmarkData: any) => {
-    if (gameProgress.visitedLandmarks.has(landmarkId)) return
-
-    const newProgress = visitLandmark(landmarkId, gameProgress)
-    setGameProgress(newProgress)
-
-    // Check quest progress
-    const questResult = checkQuestProgress(landmarkId, quests, questProgress)
-    setQuestProgress(questResult.progress)
-    
-    // Update quest objectives in state
-    if (questResult.updatedQuests.length > 0 || questResult.completedQuests.length > 0) {
-      setQuests(prevQuests => [...prevQuests]) // Trigger re-render
-    }
-
-    // Show quest completion if any
-    if (questResult.completedQuests.length > 0) {
-      const completedQuest = questResult.completedQuests[0]
-      setQuestCompletion({
-        title: completedQuest.title,
-        icon: completedQuest.icon,
-        rewards: completedQuest.rewards
-      })
-    }
-
     // Update daily challenges
-    const challengeResult = updateChallengeProgress(dailyChallenges, 'visit')
-    setDailyChallenges(challengeResult.challenges)
+    dailyChallenges.handleLandmarkVisit()
     
-    // Show discovery animation (full screen celebration)
-    const landmark = landmarks.find(l => l.id === landmarkId)
+    // Show discovery animation
+    const landmark = landmarksState.getLandmarkById(landmarkId)
     if (landmark) {
       // Trigger particle effect
       setParticleEffect({
@@ -238,16 +135,11 @@ function HomeContent() {
         icon: landmark.icon
       })
       
-      setDiscoveryData({
-        name: landmark.name,
-        icon: landmark.icon
-      })
-      setShowDiscovery(true)
+      landmarksState.showDiscoveryAnimation(landmarkId)
       
       // Hide discovery animation after 3 seconds and show toast
       setTimeout(() => {
-        setShowDiscovery(false)
-        setAchievement({
+        gameState.showAchievement({
           name: landmark.name,
           icon: landmark.icon,
           funFact: landmark.funFact
@@ -258,200 +150,177 @@ function HomeContent() {
     }
 
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
-  }
-
-  // Handle starting a quest
-  const handleStartQuest = (questId: string) => {
-    const newProgress = startQuest(questId, questProgress)
-    setQuestProgress(newProgress)
-  }
-
-  // Handle navigating to a landmark from proximity hint
-  const handleNavigateToLandmark = (landmarkId: string) => {
-    const landmark = landmarks.find(l => l.id === landmarkId)
-    if (landmark && map) {
-      map.flyTo({
-        center: landmark.coordinates,
-        zoom: 17,
-        duration: 2000,
-        essential: true
-      })
-    }
-  }
+  }, [gameState, questSystem, dailyChallenges, landmarksState])
 
   // Handle game reset
   const handleResetProgress = () => {
-    const newProgress = resetGameProgress()
-    setGameProgress(newProgress)
-    // Also reset quests
-    const newQuestProgress = loadQuestProgress()
-    setQuestProgress(newQuestProgress)
+    gameState.handleResetProgress()
     // Reload quests to reset objectives
-    fetch('/data/quests.json')
-      .then(res => res.json())
-      .then(data => setQuests(data))
-      .catch(err => console.error('Failed to reload quests:', err))
+    questSystem.reloadQuests()
   }
-
-  // Prepare landmarks with visited status
-  const landmarksWithStatus = landmarks.map(l => ({
-    ...l,
-    visited: gameProgress.visitedLandmarks.has(l.id)
-  }))
-
-  const activeQuestObjects = quests.filter(q => questProgress.activeQuests.includes(q.id))
 
   return (
     <main 
-        className="relative w-full h-screen overflow-hidden" 
-        style={{ background: '#F5F0E8' }}
-      >
-        {/* Loading skeleton */}
-        {!isMapLoaded && <MapLoadingSkeleton />}
-        
-        <Map 
-          layersVisible={layersVisible} 
-          currentSeason={currentSeason} 
-          is3D={is3DView} 
-          isWalking={isWalkMode}
-          landmarks={landmarks}
-          visitedLandmarks={gameProgress.visitedLandmarks}
-          onLandmarkDiscovered={handleLandmarkDiscovered}
-        />
-        
-        {/* Discovery Radius Visualization */}
-        <DiscoveryRadius
-          map={map}
-          landmarks={landmarks.map(l => ({
-            id: l.id,
-            coordinates: l.coordinates,
-            visited: gameProgress.visitedLandmarks.has(l.id)
-          }))}
-        />
+      className="relative w-full h-screen overflow-hidden" 
+      style={{ background: '#F5F0E8' }}
+    >
+      {/* Loading skeleton */}
+      {!isMapLoaded && <MapLoadingSkeleton />}
+      
+      <Map 
+        layersVisible={layersVisible} 
+        currentSeason={currentSeason} 
+        is3D={is3DView} 
+        isWalking={isWalkMode}
+        landmarks={landmarksState.landmarks}
+        visitedLandmarks={gameState.gameProgress.visitedLandmarks}
+        onLandmarkDiscovered={handleLandmarkDiscovered}
+      />
+      
+      {/* Discovery Radius Visualization */}
+      <DiscoveryRadius
+        map={map}
+        landmarks={landmarksState.landmarks.map(l => ({
+          id: l.id,
+          coordinates: l.coordinates,
+          visited: gameState.gameProgress.visitedLandmarks.has(l.id)
+        }))}
+      />
 
-        {/* Particle Effects */}
-        {particleEffect && (
-          <ParticleEffect
-            coordinates={particleEffect.coordinates}
-            icon={particleEffect.icon}
-            isActive={true}
-            map={map}
-          />
-        )}
-
-        {/* Breadcrumb Trail */}
-        <BreadcrumbTrail
+      {/* Particle Effects */}
+      {particleEffect && (
+        <ParticleEffect
+          coordinates={particleEffect.coordinates}
+          icon={particleEffect.icon}
+          isActive={true}
           map={map}
-          visitedLandmarks={gameProgress.visitedLandmarksWithTime.map(v => ({
-            id: v.id,
-            coordinates: landmarks.find(l => l.id === v.id)?.coordinates || [0, 0],
-            visitedAt: v.visitedAt
-          }))}
         />
-        
-        {/* UI Controls */}
-        <SidebarToggle
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        <ThreeDToggle
-          is3D={is3DView}
-          onToggle={handleToggle3D}
-        />
-        <WalkModeToggle
-          isWalking={isWalkMode}
-          onToggle={handleToggleWalk}
-        />
-        
-        {/* Game HUD - Top Center */}
-        <GameHUD
-          visitedCount={gameProgress.visitedLandmarks.size}
-          totalCount={10}
-          points={questProgress.totalPoints}
-          activeQuestCount={questProgress.activeQuests.length}
-        />
-        
-        {/* Daily Challenges Panel */}
+      )}
+
+      {/* Breadcrumb Trail */}
+      <BreadcrumbTrail
+        map={map}
+        visitedLandmarks={gameState.gameProgress.visitedLandmarksWithTime.map(v => ({
+          id: v.id,
+          coordinates: landmarksState.getLandmarkById(v.id)?.coordinates || [0, 0],
+          visitedAt: v.visitedAt
+        }))}
+      />
+      
+      {/* UI Controls */}
+      
+      {/* New Compact Stats Bar - Replaces scattered HUDs */}
+      <MiniStatsBar
+        streak={dailyChallenges.currentStreak.current}
+        points={questSystem.questProgress.totalPoints}
+        discovered={gameState.gameProgress.visitedLandmarks.size}
+        total={10}
+        activeQuests={questSystem.questProgress.activeQuests.length}
+        onOpenStats={gameState.openStatsModal}
+      />
+      
+      {/* Unified Bottom Right Control Dock */}
+      <ControlDock
+        is3D={is3DView}
+        onToggle3D={handleToggle3D}
+        isWalking={isWalkMode}
+        onToggleWalk={handleToggleWalk}
+        onToggleLayers={() => setIsControlPanelOpen(!isControlPanelOpen)}
+      />
+      
+      {/* Floating Control Panel - Replaces old Sidebar */}
+      <FloatingControlPanel
+        isOpen={isControlPanelOpen}
+        onClose={() => setIsControlPanelOpen(false)}
+        layersVisible={layersVisible}
+        onToggleLayer={handleToggleLayer}
+        currentSeason={currentSeason}
+        onSeasonChange={handleSeasonChange}
+      />
+      
+      {/* Smart HUD - Only shows walk mode controls and right-side stats */}
+      <SmartHUD
+        mode={isWalkMode ? 'walk' : 'map'}
+        visitedCount={gameState.gameProgress.visitedLandmarks.size}
+        totalCount={10}
+        points={questSystem.questProgress.totalPoints}
+        activeQuestCount={questSystem.questProgress.activeQuests.length}
+        nearestLandmark={
+          landmarksState.nearbyLandmarks.length > 0
+            ? {
+                name: landmarksState.nearbyLandmarks[0].name,
+                distance: landmarksState.nearbyLandmarks[0].distance
+              }
+            : undefined
+        }
+      />
+      
+      {/* Daily Challenges Panel - Now minimized by default, click streak to expand */}
+      {/* Temporarily hidden for cleaner UI - accessible via stats modal */}
+      {false && (
         <DailyChallengesPanel
-          challenges={dailyChallenges}
-          streak={currentStreak.current}
+          challenges={dailyChallenges.dailyChallenges}
+          streak={dailyChallenges.currentStreak.current}
         />
-        
-        {/* Quest Panel */}
-        <QuestPanel
-          quests={quests}
-          activeQuestIds={questProgress.activeQuests}
-          onStartQuest={handleStartQuest}
-        />
-        
-        {/* Quest Tracker */}
-        <QuestTracker activeQuests={activeQuestObjects} />
-        
-        {/* World Border Warning */}
-        <WorldBorderWarning
-          isVisible={showBorderWarning}
-          direction={borderDirection}
-        />
-        
-        {/* Proximity Hints - Show nearby landmarks */}
-        <ProximityHint
-          nearbyLandmarks={nearbyLandmarks}
-          onNavigate={handleNavigateToLandmark}
-        />
-        
-        {/* Discovery Animation - Full screen celebration */}
-        <DiscoveryAnimation
-          isVisible={showDiscovery}
-          landmarkName={discoveryData?.name || ''}
-          landmarkIcon={discoveryData?.icon || ''}
-          points={10}
-        />
-        
-        {/* Achievement Toast */}
-        <AchievementToast
-          isVisible={!!achievement}
-          landmarkName={achievement?.name || ''}
-          landmarkIcon={achievement?.icon || ''}
-          funFact={achievement?.funFact || ''}
-          onDismiss={() => setAchievement(null)}
-        />
-        
-        {/* Stats Modal */}
-        <StatsModal
-          isOpen={showStatsModal}
-          onClose={() => setShowStatsModal(false)}
-          landmarks={landmarksWithStatus}
-          visitedCount={gameProgress.visitedLandmarks.size}
-          totalCount={10}
-          onReset={handleResetProgress}
-          questStats={{
-            totalPoints: questProgress.totalPoints,
-            completedQuestsCount: questProgress.completedQuests.size,
-            totalQuestsCount: quests.length,
-            unlockedBadges: questProgress.unlockedBadges
-          }}
-        />
-        
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          layersVisible={layersVisible}
-          onToggleLayer={handleToggleLayer}
-          currentSeason={currentSeason}
-          onSeasonChange={handleSeasonChange}
-          onOpenStats={() => setShowStatsModal(true)}
-          gameStats={{
-            visited: gameProgress.visitedLandmarks.size,
-            total: 10
-          }}
-        />
-        
-        {/* GTA-style Game Overlay - Visual effects */}
-        <GameOverlay />
-        
-        {/* Onboarding Tutorial */}
-        <OnboardingTutorial />
-      </main>
+      )}
+      
+      {/* Quest Panel (Main) */}
+      <QuestPanel
+        quests={questSystem.quests}
+        activeQuestIds={questSystem.questProgress.activeQuests}
+        onStartQuest={questSystem.handleStartQuest}
+      />
+      
+      {/* World Border Warning */}
+      <WorldBorderWarning
+        isVisible={landmarksState.showBorderWarning}
+        direction={landmarksState.borderDirection}
+      />
+      
+      {/* Proximity Hints - Show nearby landmarks (Centered bottom pill) */}
+      <ProximityHint
+        nearbyLandmarks={landmarksState.nearbyLandmarks}
+        onNavigate={landmarksState.navigateToLandmark}
+      />
+      
+      {/* Discovery Animation - Full screen celebration */}
+      <DiscoveryAnimation
+        isVisible={landmarksState.showDiscovery}
+        landmarkName={landmarksState.discoveryData?.name || ''}
+        landmarkIcon={landmarksState.discoveryData?.icon || ''}
+        points={10}
+      />
+      
+      {/* Achievement Toast */}
+      <AchievementToast
+        isVisible={!!gameState.achievement}
+        landmarkName={gameState.achievement?.name || ''}
+        landmarkIcon={gameState.achievement?.icon || ''}
+        funFact={gameState.achievement?.funFact || ''}
+        onDismiss={gameState.dismissAchievement}
+      />
+      
+      {/* Stats Modal */}
+      <StatsModal
+        isOpen={gameState.showStatsModal}
+        onClose={gameState.closeStatsModal}
+        landmarks={landmarksState.landmarksWithStatus}
+        visitedCount={gameState.gameProgress.visitedLandmarks.size}
+        totalCount={10}
+        onReset={handleResetProgress}
+        questStats={{
+          totalPoints: questSystem.questProgress.totalPoints,
+          completedQuestsCount: questSystem.questProgress.completedQuests.size,
+          totalQuestsCount: questSystem.quests.length,
+          unlockedBadges: questSystem.questProgress.unlockedBadges
+        }}
+      />
+      
+      {/* GTA-style Game Overlay - Visual effects */}
+      <GameOverlay />
+      
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial />
+    </main>
   )
 }
-

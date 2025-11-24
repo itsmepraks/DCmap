@@ -13,15 +13,23 @@ interface QuestPanelProps {
 }
 
 export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: QuestPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false) // Start collapsed for cleaner UI
 
   const activeQuests = quests.filter(q => activeQuestIds.includes(q.id))
   const availableQuests = quests.filter(q => q.isUnlocked && !q.isCompleted && !activeQuestIds.includes(q.id))
   const completedQuests = quests.filter(q => q.isCompleted)
 
+  // Safe drag constraints that work with SSR
+  const dragConstraints = typeof window !== 'undefined' 
+    ? { left: -window.innerWidth + 320, right: 0, top: 0, bottom: window.innerHeight - 200 }
+    : { left: -1000, right: 0, top: 0, bottom: 600 }
+
   return (
-    <div 
-      className="fixed top-24 right-4 z-20"
+    <motion.div 
+      className="fixed top-4 right-4 z-20 cursor-move"
+      drag
+      dragMomentum={false}
+      dragConstraints={dragConstraints}
       style={{
         maxWidth: '320px',
         maxHeight: 'calc(100vh - 200px)'
@@ -42,7 +50,7 @@ export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: Que
           fontFamily: 'monospace',
           fontWeight: 'bold',
           fontSize: '14px',
-          cursor: 'pointer',
+          cursor: 'grab',
           textShadow: '1px 1px 0 rgba(0,0,0,0.5)',
           imageRendering: minecraftTheme.minecraft.imageRendering
         }}
@@ -72,7 +80,7 @@ export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: Que
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-y-auto"
+            className="overflow-y-auto cursor-auto"
             style={{
               background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
               border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -82,6 +90,7 @@ export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: Que
               maxHeight: 'calc(100vh - 280px)',
               imageRendering: minecraftTheme.minecraft.imageRendering
             }}
+            onPointerDown={(e) => e.stopPropagation()} // Prevent drag when interacting with content
           >
             {/* Pixelated corners */}
             <div className="absolute top-0 left-0 w-2 h-2 bg-black/40" />
@@ -179,7 +188,6 @@ export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: Que
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   )
 }
-

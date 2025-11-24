@@ -23,61 +23,56 @@ export default function Realistic3DAvatars({
 }: Realistic3DAvatarsProps) {
   const markerRef = useRef<mapboxgl.Marker | null>(null)
   const avatarElementRef = useRef<HTMLDivElement | null>(null)
-  const dotRef = useRef<HTMLDivElement | null>(null)
-  const arrowRef = useRef<HTMLDivElement | null>(null)
+  const personRef = useRef<HTMLDivElement | null>(null)
 
-  // Create simple position marker with static structure
+  // Create person avatar marker
   useEffect(() => {
     if (!map) return
 
     const avatarContainer = document.createElement('div')
-    avatarContainer.style.width = '20px'
-    avatarContainer.style.height = '20px'
+    avatarContainer.style.width = '40px'
+    avatarContainer.style.height = '40px'
     avatarContainer.style.position = 'relative'
     avatarContainer.style.cursor = 'pointer'
     avatarContainer.style.zIndex = '10000'
     
-    // Create Dot
-    const dot = document.createElement('div')
-    Object.assign(dot.style, {
+    // Create person figure
+    const person = document.createElement('div')
+    person.innerHTML = '🚶'
+    Object.assign(person.style, {
       position: 'absolute',
       top: '50%',
       left: '50%',
-      width: '16px',
-      height: '16px',
-      border: '3px solid #ffffff',
-      borderRadius: '50%',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-      transition: 'box-shadow 0.3s ease, background 0.3s ease',
-      transform: 'translate(-50%, -50%)', // Initial transform
-      willChange: 'transform, background' // Optimize for animations
+      fontSize: '32px',
+      transform: 'translate(-50%, -50%)',
+      transition: 'transform 0.15s ease-out',
+      willChange: 'transform',
+      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+      textShadow: '0 0 8px rgba(255,255,255,0.6)'
     })
-    avatarContainer.appendChild(dot)
-    dotRef.current = dot
+    avatarContainer.appendChild(person)
+    personRef.current = person
 
-    // Create Arrow
-    const arrow = document.createElement('div')
-    Object.assign(arrow.style, {
+    // Add shadow circle
+    const shadow = document.createElement('div')
+    Object.assign(shadow.style, {
       position: 'absolute',
-      top: '-8px',
+      bottom: '-5px',
       left: '50%',
-      width: '0',
-      height: '0',
-      borderLeft: '6px solid transparent',
-      borderRight: '6px solid transparent',
-      borderBottom: '12px solid #ffffff',
-      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
-      transform: 'translateX(-50%)', // Initial transform
-      willChange: 'transform' // Optimize for animations
+      width: '24px',
+      height: '8px',
+      background: 'radial-gradient(ellipse, rgba(0,0,0,0.3), transparent)',
+      borderRadius: '50%',
+      transform: 'translateX(-50%)',
+      transition: 'width 0.3s ease, height 0.3s ease'
     })
-    avatarContainer.appendChild(arrow)
-    arrowRef.current = arrow
+    avatarContainer.appendChild(shadow)
     
     avatarElementRef.current = avatarContainer
 
     markerRef.current = new mapboxgl.Marker({
       element: avatarContainer,
-      anchor: 'center',
+      anchor: 'bottom',
       rotationAlignment: 'map',
       pitchAlignment: 'map'
     })
@@ -97,23 +92,36 @@ export default function Realistic3DAvatars({
     }
   }, [position])
 
-  // Update visuals (rotation and color) without rebuilding DOM
+  // Update visuals (rotation and animation) without rebuilding DOM
   useEffect(() => {
-    if (!dotRef.current || !arrowRef.current) return
+    if (!personRef.current) return
 
-    const pulseColor = isMoving 
-      ? (isRunning ? 'rgba(255, 100, 100, 0.9)' : 'rgba(100, 200, 255, 0.9)')
-      : 'rgba(255, 200, 0, 0.8)'
+    // Change emoji based on state
+    // Using arrow to show clear direction (temporary for debugging)
+    let emoji = '⬆️' // Standing/pointing up
+    if (isMoving) {
+      emoji = isRunning ? '⬆️' : '⬆️' // Use arrow to see direction clearly
+    }
     
-    const shadow = `0 2px 8px rgba(0,0,0,0.4)${isMoving ? ', 0 0 0 4px rgba(255,255,255,0.3)' : ''}`
+    personRef.current.innerHTML = emoji
 
-    // Update Dot
-    dotRef.current.style.background = pulseColor
-    dotRef.current.style.boxShadow = shadow
-    dotRef.current.style.transform = `translate(-50%, -50%) rotate(${bearing}deg)`
-
-    // Update Arrow
-    arrowRef.current.style.transform = `translateX(-50%) rotate(${bearing}deg)`
+    // Rotate to face direction
+    // Bearing: 0=North(up), 90=East(right), 180=South(down), 270=West(left)
+    // Arrow emoji points up naturally, so bearing aligns correctly
+    const rotation = bearing
+    personRef.current.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`
+    
+    // Add pulse effect when moving
+    if (isMoving) {
+      const glowColor = isRunning ? 'rgba(255, 100, 100, 0.8)' : 'rgba(100, 200, 255, 0.8)'
+      personRef.current.style.textShadow = `0 0 12px ${glowColor}, 0 0 20px ${glowColor}`
+      personRef.current.style.filter = 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))'
+      // Debug log
+      console.log(`🎯 Moving - Bearing: ${bearing.toFixed(1)}°`)
+    } else {
+      personRef.current.style.textShadow = '0 0 8px rgba(255,255,255,0.6)'
+      personRef.current.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+    }
 
   }, [bearing, isMoving, isRunning])
 
