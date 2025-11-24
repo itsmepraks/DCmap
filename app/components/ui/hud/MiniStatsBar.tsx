@@ -58,12 +58,12 @@ export default function MiniStatsBar({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onOpenStats}
-      className="fixed top-6 left-6 z-30 cursor-pointer"
+      className="fixed top-2 left-2 sm:top-6 sm:left-6 z-30 cursor-pointer"
       whileHover={{ scale: 1.05, x: 2 }}
       whileTap={{ scale: 0.98 }}
     >
       <div
-        className="px-5 py-2.5 flex items-center gap-3 relative"
+        className="px-2 py-1.5 sm:px-5 sm:py-2.5 flex items-center gap-1.5 sm:gap-3 relative"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}F8, ${minecraftTheme.colors.beige.light}F5)`,
           border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -76,10 +76,10 @@ export default function MiniStatsBar({
         {/* Streak */}
         {streak > 0 && (
           <>
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md" style={{ background: 'rgba(255, 69, 0, 0.15)' }}>
-              <span className="text-lg">🔥</span>
+            <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(255, 69, 0, 0.15)' }}>
+              <span className="text-sm sm:text-lg">🔥</span>
               <span
-                className="text-base font-bold"
+                className="text-xs sm:text-base font-bold"
                 style={{
                   color: '#FF4500',
                   fontFamily: 'monospace',
@@ -94,10 +94,10 @@ export default function MiniStatsBar({
         )}
 
         {/* Points */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md" style={{ background: 'rgba(255, 215, 0, 0.15)' }}>
-          <span className="text-lg">⭐</span>
+        <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(255, 215, 0, 0.15)' }}>
+          <span className="text-sm sm:text-lg">⭐</span>
           <span
-            className="text-base font-bold"
+            className="text-xs sm:text-base font-bold"
             style={{
               color: '#FFD700',
               fontFamily: 'monospace',
@@ -109,14 +109,14 @@ export default function MiniStatsBar({
         </div>
 
         {/* Divider */}
-        <div className="w-px h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
+        <div className="w-px h-4 sm:h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
 
         {/* Discovered */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md" style={{ background: 'rgba(46, 125, 50, 0.15)' }}>
-          <span className="text-lg">🗺️</span>
+        <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(46, 125, 50, 0.15)' }}>
+          <span className="text-sm sm:text-lg">🗺️</span>
           <div className="flex flex-col">
             <span
-              className="text-xs font-bold leading-tight"
+              className="text-[10px] sm:text-xs font-bold leading-tight"
               style={{
                 color: minecraftTheme.colors.text.primary,
                 fontFamily: 'monospace'
@@ -125,7 +125,7 @@ export default function MiniStatsBar({
               {discovered}/{total}
             </span>
             <span
-              className="text-[9px] font-bold leading-tight"
+              className="text-[8px] sm:text-[9px] font-bold leading-tight"
               style={{
                 color: minecraftTheme.colors.text.secondary,
                 fontFamily: 'monospace'
@@ -139,13 +139,13 @@ export default function MiniStatsBar({
         {/* Active Quests (if any) */}
         {activeQuests > 0 && (
           <>
-            <div className="w-px h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md" style={{ background: 'rgba(212, 80, 30, 0.15)' }}>
-              <span className="text-lg">📜</span>
+            <div className="w-px h-4 sm:h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
+            <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(212, 80, 30, 0.15)' }}>
+              <span className="text-sm sm:text-lg">📜</span>
               <motion.span
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
-                className="text-base font-bold"
+                className="text-xs sm:text-base font-bold"
                 style={{
                   color: minecraftTheme.colors.terracotta.base,
                   fontFamily: 'monospace'

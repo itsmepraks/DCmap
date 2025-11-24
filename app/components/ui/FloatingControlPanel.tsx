@@ -61,9 +61,9 @@ export default function FloatingControlPanel({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-28 right-8 z-50 w-80"
+            className="fixed bottom-20 left-2 right-2 sm:bottom-28 sm:left-auto sm:right-8 sm:w-80 z-50"
             style={{
-              maxHeight: 'calc(100vh - 160px)' // Ensure it fits on screen with padding
+              maxHeight: 'calc(100vh - 120px)' // Mobile: less padding, Desktop: more
             }}
           >
             <div
@@ -85,18 +85,18 @@ export default function FloatingControlPanel({
               />
 
               {/* Header - Fixed */}
-              <div className="relative z-10 px-6 py-3 border-b-2 flex-shrink-0" style={{ borderColor: minecraftTheme.colors.terracotta.light }}>
+              <div className="relative z-10 px-4 py-2 sm:px-6 sm:py-3 border-b-2 flex-shrink-0" style={{ borderColor: minecraftTheme.colors.terracotta.light }}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <motion.span 
-                      className="text-2xl"
+                      className="text-xl sm:text-2xl"
                       animate={{ rotate: [0, 10, 0, -10, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
                     >
                       🗺️
                     </motion.span>
                     <h3 
-                      className="text-lg font-bold"
+                      className="text-sm sm:text-lg font-bold"
                       style={{ 
                         color: minecraftTheme.colors.text.primary,
                         fontFamily: 'monospace',
@@ -110,7 +110,7 @@ export default function FloatingControlPanel({
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={onClose}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center"
                     style={{
                       background: `linear-gradient(135deg, ${minecraftTheme.colors.terracotta.light}, ${minecraftTheme.colors.terracotta.base})`,
                       border: '2px solid rgba(255,255,255,0.3)',
@@ -124,7 +124,7 @@ export default function FloatingControlPanel({
 
               {/* Content - Scrollable */}
               <div 
-                className="relative z-10 p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar"
+                className="relative z-10 p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1 custom-scrollbar"
                 style={{ 
                   scrollbarWidth: 'thin',
                   scrollbarColor: `${minecraftTheme.colors.terracotta.base} transparent`
@@ -197,20 +197,20 @@ export default function FloatingControlPanel({
 
               {/* Footer hint - Fixed */}
               <div 
-                className="relative z-10 px-6 py-2 border-t-2 flex-shrink-0"
+                className="relative z-10 px-4 py-1.5 sm:px-6 sm:py-2 border-t-2 flex-shrink-0"
                 style={{ 
                   borderColor: minecraftTheme.colors.terracotta.light,
                   background: 'rgba(0,0,0,0.05)'
                 }}
               >
                 <p 
-                  className="text-xs text-center"
+                  className="text-[10px] sm:text-xs text-center"
                   style={{ 
                     color: minecraftTheme.colors.text.secondary,
                     fontFamily: 'monospace'
                   }}
                 >
-                  💡 Press <kbd className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(0,0,0,0.1)' }}>ESC</kbd> or click outside to close
+                  💡 Tap outside or <kbd className="px-1 py-0.5 rounded text-[9px] sm:text-[10px] font-bold" style={{ background: 'rgba(0,0,0,0.1)' }}>ESC</kbd> to close
                 </p>
               </div>
 
@@ -242,7 +242,7 @@ function LayerToggle({ icon, label, color, isActive, onToggle }: LayerToggleProp
       whileHover={{ x: 4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onToggle}
-      className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all relative overflow-hidden"
+      className="w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl transition-all relative overflow-hidden min-h-[44px] sm:min-h-[48px]"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${color}30, ${color}20)`
@@ -263,10 +263,10 @@ function LayerToggle({ icon, label, color, isActive, onToggle }: LayerToggleProp
         />
       )}
 
-      <div className="flex items-center gap-3 relative z-10">
-        <span className="text-xl">{icon}</span>
+      <div className="flex items-center gap-2 sm:gap-3 relative z-10">
+        <span className="text-lg sm:text-xl">{icon}</span>
         <span 
-          className="text-sm font-bold"
+          className="text-xs sm:text-sm font-bold"
           style={{ 
             color: isActive ? minecraftTheme.colors.text.primary : minecraftTheme.colors.text.secondary,
             fontFamily: 'monospace'
@@ -278,16 +278,16 @@ function LayerToggle({ icon, label, color, isActive, onToggle }: LayerToggleProp
 
       {/* Toggle indicator */}
       <div 
-        className="relative w-11 h-6 rounded-full transition-all"
+        className="relative w-10 h-5 sm:w-11 sm:h-6 rounded-full transition-all"
         style={{
           background: isActive ? color : 'rgba(0,0,0,0.2)',
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
         }}
       >
         <motion.div
-          animate={{ x: isActive ? 20 : 2 }}
+          animate={{ x: isActive ? 18 : 2 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          className="absolute top-1 w-4 h-4 rounded-full"
+          className="absolute top-0.5 sm:top-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full"
           style={{
             background: 'white',
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
@@ -313,7 +313,7 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
       whileHover={{ scale: 1.05, y: -2 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="flex flex-col items-center justify-center py-3 rounded-xl transition-all relative overflow-hidden"
+      className="flex flex-col items-center justify-center py-2 sm:py-3 rounded-xl transition-all relative overflow-hidden min-h-[60px] sm:min-h-[70px]"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${color}, ${color}CC)`
@@ -334,9 +334,9 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
         />
       )}
 
-      <span className="text-2xl mb-1 relative z-10">{icon}</span>
+      <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1 relative z-10">{icon}</span>
       <span 
-        className="text-xs font-bold uppercase relative z-10"
+        className="text-[10px] sm:text-xs font-bold uppercase relative z-10"
         style={{ 
           color: isActive ? 'white' : minecraftTheme.colors.text.secondary,
           fontFamily: 'monospace',
