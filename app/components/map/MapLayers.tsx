@@ -7,8 +7,6 @@ import Museum3DMarkers from './layers/Museum3DMarkers'
 import TreesLayer from './layers/TreesLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
 import ParksLayer from './layers/ParksLayer'
-import HiddenLandmarksLayer from './layers/HiddenLandmarksLayer'
-import HeatmapLayer from './layers/HeatmapLayer'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MapLayersProps {
@@ -36,7 +34,6 @@ export const MapLayers = memo(function MapLayers({
         season={currentSeason} 
         onSelect={onSelectEntity}
       />
-      <HeatmapLayer visible={layersVisible.heatmap} />
       <RoadDetailsLayer visible={true} />
       <MuseumsLayer 
         visible={layersVisible.museums} 
@@ -49,14 +46,6 @@ export const MapLayers = memo(function MapLayers({
         visitedLandmarks={visitedLandmarks} 
         onLandmarkDiscovered={onLandmarkDiscovered}
         onSelect={onSelectEntity}
-      />
-      <HiddenLandmarksLayer 
-        map={map} 
-        isVisible={layersVisible.hiddenGems} 
-        visitedLandmarks={Array.from(visitedLandmarks)}
-        onDiscovered={(landmarkId) => {
-          onLandmarkDiscovered(landmarkId, { id: landmarkId, name: 'Hidden Gem', coordinates: [0, 0] } as any)
-        }}
       />
     </>
   )

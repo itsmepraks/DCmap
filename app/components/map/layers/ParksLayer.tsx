@@ -37,6 +37,15 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
         console.log('🌳 Initializing ParksLayer...')
 
         // Add seasonal park layer using Mapbox's built-in landuse data
+        // Place parks BEFORE buildings so buildings occlude them properly
+        const layers = map.getStyle().layers ?? []
+        const buildingLayerId = layers.find((layer) => 
+          layer.id === 'realistic-buildings' || 
+          (layer.type === 'fill-extrusion' && layer['source-layer'] === 'building')
+        )?.id
+        const firstSymbolId = layers.find((layer) => layer.type === 'symbol')?.id
+        const beforeId = buildingLayerId || firstSymbolId
+        
         if (!map.getLayer('parks-seasonal')) {
           map.addLayer({
             id: 'parks-seasonal',
@@ -58,9 +67,9 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
               'fill-opacity': 1,
               'fill-outline-color': '#7BC47B'
             }
-          }) // Add without specifying beforeId
+          }, beforeId) // Place BEFORE buildings
 
-          console.log('✅ Added parks-seasonal layer')
+          console.log('✅ Added parks-seasonal layer (before buildings)')
         }
 
         // Set initial visibility

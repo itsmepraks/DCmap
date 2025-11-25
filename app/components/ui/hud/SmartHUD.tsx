@@ -11,14 +11,17 @@ interface NearestLandmark {
 }
 
 interface SmartHUDProps {
-  mode: 'map' | 'walk'
+  mode: 'map' | 'fly'
   // Game Stats
   visitedCount: number
   totalCount: number
   points: number
   activeQuestCount: number
-  // Walk Mode Stats (only shown in walk mode)
+  // Fly Mode Stats
   nearestLandmark?: NearestLandmark
+  flySpeed?: number
+  flyAltitude?: number
+  flyPosition?: { lng: number; lat: number }
 }
 
 export default function SmartHUD({
@@ -27,17 +30,13 @@ export default function SmartHUD({
   totalCount,
   points,
   activeQuestCount,
-  nearestLandmark
+  nearestLandmark,
+  flySpeed = 0,
+  flyAltitude = 0,
+  flyPosition
 }: SmartHUDProps) {
   const { state: playerState } = usePlayerState()
-  const completionPercentage = (visitedCount / totalCount) * 100
-
-  // Calculate derived values
   const bearing = playerState.heading
-  const metersPerDegree = 111139
-  const speedKmh = playerState.speed * metersPerDegree * 3.6
-  const formattedSpeed = Number.isFinite(speedKmh) ? speedKmh : 0
-  const locomotionLabel = playerState.locomotionMode === 'scooter' ? 'MOPED' : 'ON FOOT'
 
   const getCardinalDirection = (bearing: number) => {
     const normalized = ((bearing % 360) + 360) % 360
@@ -53,9 +52,9 @@ export default function SmartHUD({
 
   return (
     <>
-      {/* Walk Mode HUD - Bottom Center Controls */}
+      {/* Fly Mode HUD - Bottom Center Controls */}
       <AnimatePresence>
-        {mode === 'walk' && (
+        {mode === 'fly' && (
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -122,19 +121,24 @@ export default function SmartHUD({
                   <span style={{ color: minecraftTheme.colors.text.secondary }}>Move</span>
                 </div>
                 <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
-                <div className="flex items-center gap-2">
-                  <kbd className="px-2 py-1" style={{
-                    background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
-                    border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
-                    borderRadius: '2px',
-                    color: minecraftTheme.colors.text.primary,
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
-                  }}>⇧</kbd>
-                  <span style={{ color: minecraftTheme.colors.text.secondary }}>Run</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1">
+                    {['↑','↓','←','→'].map((key) => (
+                      <kbd key={key} className="px-1.5 py-0.5" style={{
+                        background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
+                        border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
+                        borderRadius: '2px',
+                        color: minecraftTheme.colors.text.primary,
+                        fontFamily: 'monospace',
+                        fontWeight: 'bold',
+                        boxShadow: '0 1px 0 ' + minecraftTheme.colors.terracotta.dark,
+                        fontSize: '0.7rem'
+                      }}>{key}</kbd>
+                    ))}
+                  </div>
+                  <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>Arrow keys</span>
                 </div>
-                <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
+                <div className="w-px h-4 hidden sm:block" style={{ background: minecraftTheme.colors.terracotta.light }} />
                 <div className="flex items-center gap-2">
                   <kbd className="px-2 py-1" style={{
                     background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
@@ -145,7 +149,7 @@ export default function SmartHUD({
                     fontWeight: 'bold',
                     boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                   }}>Mouse</kbd>
-                  <span style={{ color: minecraftTheme.colors.text.secondary }}>Look</span>
+                  <span style={{ color: minecraftTheme.colors.text.secondary }}>Mouse Look</span>
                 </div>
                 <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
                 <div className="flex items-center gap-2">
@@ -166,36 +170,42 @@ export default function SmartHUD({
         )}
       </AnimatePresence>
 
-      {/* Walk Mode Stats - Top Right */}
+      {/* Fly Mode Stats - Top Right */}
       <AnimatePresence>
-        {mode === 'walk' && (
+        {mode === 'fly' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             className="fixed top-6 right-6 z-20 flex flex-col gap-3"
           >
-            {/* Locomotion Card */}
+            {/* Position & Speed Card */}
             <div
               className="px-4 py-3 shadow-lg relative"
               style={{
-                background: 'linear-gradient(145deg, #E0F7FF 0%, #DFFFD7 100%)',
-                border: '2px solid #7ED957',
+                background: 'linear-gradient(145deg, #E0F7FF 0%, #B3E5FC 100%)',
+                border: '2px solid #4A90E2',
                 borderRadius: '8px',
-                boxShadow: '0 4px 0 #5DA040, 0 6px 12px rgba(0,0,0,0.2)',
-                minWidth: '200px'
+                boxShadow: '0 4px 0 #357ABD, 0 6px 12px rgba(0,0,0,0.2)',
+                minWidth: '240px'
               }}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold" style={{ color: '#1E3A5F', fontFamily: 'monospace' }}>
-                  ⚙️ {locomotionLabel}
+                  🦅 FLY MODE
                 </span>
                 <span className="text-xs font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
-                  {formattedSpeed.toFixed(1)} km/h
+                  {(flySpeed * 3.6).toFixed(1)} km/h
                 </span>
               </div>
-              <div className="text-[9px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
-                {playerState.locomotionMode === 'scooter' ? 'Hold Shift for turbo glow!' : 'Shift = sprint pulse'}
+              {flyPosition && (
+                <div className="text-[9px] font-bold mb-1" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
+                  📍 {flyPosition.lat.toFixed(5)}, {flyPosition.lng.toFixed(5)}
+                </div>
+              )}
+              <div className="flex items-center justify-between text-[9px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
+                <span>Altitude: {flyAltitude.toFixed(0)}m</span>
+                <span style={{ color: '#357ABD' }}>Facing: {getCardinalDirection(bearing)}</span>
               </div>
             </div>
 

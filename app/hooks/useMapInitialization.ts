@@ -39,11 +39,11 @@ export function useMapInitialization(
     let mapInstance: mapboxgl.Map | null = null
 
     try {
-      console.log('🎮 Creating GTA-like realistic 3D world map')
+      console.log('🎮 Creating cartoonish/Minecraft-style map')
       // Disable telemetry to prevent blocked requests
       mapInstance = new mapboxgl.Map({
         container: containerRef.current,
-        style: options.styleUrl || process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12',
+        style: options.styleUrl || process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/outdoors-v12',
         center: DC_CENTER,
         zoom: ZOOM_LEVELS.default,
         pitch: 50,

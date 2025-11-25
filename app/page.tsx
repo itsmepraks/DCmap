@@ -20,11 +20,15 @@ import BreadcrumbTrail from './components/map/effects/BreadcrumbTrail'
 import SmartHUD from './components/ui/hud/SmartHUD'
 import MiniStatsBar from './components/ui/hud/MiniStatsBar'
 import { MapProvider, useMap } from './lib/MapContext'
-import { PlayerProvider } from './lib/playerState'
+import { PlayerProvider, usePlayerState } from './lib/playerState'
 import { useGameState } from './hooks/useGameState'
 import { useQuestSystem } from './hooks/useQuestSystem'
 import { useDailyChallenges } from './hooks/useDailyChallenges'
 import { useLandmarks } from './hooks/useLandmarks'
+import { useFlyController } from './hooks/useFlyController'
+import FlyModeAvatar from './components/map/FlyModeAvatar'
+import LandmarkRecommendations from './components/game/LandmarkRecommendations'
+import CompletionNotification from './components/game/CompletionNotification'
 
 export default function Home() {
   return (
@@ -42,13 +46,11 @@ function HomeContent() {
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
     trees: false,
-    heatmap: false,
-    landmarks: true,
-    hiddenGems: false
+    landmarks: true
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)
-  const [isWalkMode, setIsWalkMode] = useState(false)
+  const [isFlyMode, setIsFlyMode] = useState(false)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
 
@@ -83,16 +85,24 @@ function HomeContent() {
     return () => clearTimeout(timeout)
   }, [map, isMapLoaded])
 
-  // ESC key handler to close control panel
+  // ESC key handler - exit fly mode first, then close control panel
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isControlPanelOpen) {
+      if (e.key !== 'Escape') return
+
+      if (isFlyMode) {
+        e.preventDefault()
+        setIsFlyMode(false)
+        return
+      }
+
+      if (isControlPanelOpen) {
         setIsControlPanelOpen(false)
       }
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [isControlPanelOpen])
+  }, [isFlyMode, isControlPanelOpen])
 
   // Handle layer toggles
   const handleToggleLayer = (layerId: keyof typeof layersVisible) => {
@@ -110,8 +120,8 @@ function HomeContent() {
     setIs3DView(prev => !prev)
   }
 
-  const handleToggleWalk = () => {
-    setIsWalkMode(prev => !prev)
+  const handleToggleFly = () => {
+    setIsFlyMode(prev => !prev)
   }
 
   // Handle landmark discovery (memoized to prevent unnecessary re-renders)
@@ -152,6 +162,51 @@ function HomeContent() {
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
   }, [gameState, questSystem, dailyChallenges, landmarksState])
 
+  // Fly mode controller (street-view movement)
+  const flyControllerState = useFlyController({
+    map,
+    isActive: isFlyMode,
+    landmarks: landmarksState.landmarks,
+    visitedLandmarks: gameState.gameProgress.visitedLandmarks,
+    onLandmarkDiscovered: handleLandmarkDiscovered
+  })
+  
+  const { state: playerState } = usePlayerState()
+
+  // Check completion status
+  const allLandmarksVisited = landmarksState.landmarks.length > 0 && 
+    gameState.gameProgress.visitedLandmarks.size >= landmarksState.landmarks.length
+  const hasCompletedQuest = questSystem.questCompletion !== null
+  const [showCompletion, setShowCompletion] = useState(false)
+  const [lastCompletionState, setLastCompletionState] = useState({ 
+    landmarks: false, 
+    quest: false 
+  })
+
+  // Show completion notification when status changes
+  useEffect(() => {
+    if (allLandmarksVisited && !lastCompletionState.landmarks) {
+      setShowCompletion(true)
+      setLastCompletionState(prev => ({ ...prev, landmarks: true }))
+    }
+    if (hasCompletedQuest && !lastCompletionState.quest) {
+      setShowCompletion(true)
+      setLastCompletionState(prev => ({ ...prev, quest: true }))
+    }
+  }, [allLandmarksVisited, hasCompletedQuest, lastCompletionState])
+
+  const handleNavigateToLandmark = useCallback((coordinates: [number, number]) => {
+    if (!map) return
+    map.flyTo({
+      center: coordinates,
+      zoom: 17,
+      pitch: 60,
+      bearing: 0,
+      duration: 2000,
+      essential: true
+    })
+  }, [map])
+
   // Handle game reset
   const handleResetProgress = () => {
     gameState.handleResetProgress()
@@ -171,11 +226,21 @@ function HomeContent() {
         layersVisible={layersVisible} 
         currentSeason={currentSeason} 
         is3D={is3DView} 
-        isWalking={isWalkMode}
+        isFlying={isFlyMode}
         landmarks={landmarksState.landmarks}
         visitedLandmarks={gameState.gameProgress.visitedLandmarks}
         onLandmarkDiscovered={handleLandmarkDiscovered}
       />
+
+      {/* Fly Mode Avatar - Shows where you're looking from */}
+      {isFlyMode && (
+        <FlyModeAvatar
+          map={map}
+          position={flyControllerState.position}
+          bearing={flyControllerState.bearing}
+          isActive={isFlyMode}
+        />
+      )}
       
       {/* Discovery Radius Visualization */}
       <DiscoveryRadius
@@ -223,8 +288,8 @@ function HomeContent() {
       <ControlDock
         is3D={is3DView}
         onToggle3D={handleToggle3D}
-        isWalking={isWalkMode}
-        onToggleWalk={handleToggleWalk}
+        isFlying={isFlyMode}
+        onToggleFly={handleToggleFly}
         onToggleLayers={() => setIsControlPanelOpen(!isControlPanelOpen)}
       />
       
@@ -238,11 +303,28 @@ function HomeContent() {
         onSeasonChange={handleSeasonChange}
       />
       
-      {/* Smart HUD - Only shows walk mode controls and right-side stats */}
+      {/* Landmark Recommendations - Shows unvisited landmarks */}
+      <LandmarkRecommendations
+        landmarks={landmarksState.landmarks}
+        visitedLandmarks={gameState.gameProgress.visitedLandmarks}
+        currentPosition={flyControllerState.position}
+        onNavigate={handleNavigateToLandmark}
+      />
+
+      {/* Completion Notifications */}
+      {showCompletion && (
+        <CompletionNotification
+          allLandmarksVisited={allLandmarksVisited}
+          questCompleted={hasCompletedQuest}
+          onClose={() => setShowCompletion(false)}
+        />
+      )}
+
+      {/* Smart HUD - Shows fly mode controls (street view) */}
       <SmartHUD
-        mode={isWalkMode ? 'walk' : 'map'}
+        mode={isFlyMode ? 'fly' : 'map'}
         visitedCount={gameState.gameProgress.visitedLandmarks.size}
-        totalCount={10}
+        totalCount={landmarksState.landmarks.length || 10}
         points={questSystem.questProgress.totalPoints}
         activeQuestCount={questSystem.questProgress.activeQuests.length}
         nearestLandmark={
@@ -253,6 +335,9 @@ function HomeContent() {
               }
             : undefined
         }
+        flySpeed={flyControllerState.speed}
+        flyAltitude={flyControllerState.altitude}
+        flyPosition={flyControllerState.position}
       />
       
       {/* Daily Challenges Panel - Now minimized by default, click streak to expand */}

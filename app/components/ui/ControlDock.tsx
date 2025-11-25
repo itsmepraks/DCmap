@@ -6,16 +6,16 @@ import { minecraftTheme } from '@/app/lib/theme'
 interface ControlDockProps {
   is3D: boolean
   onToggle3D: () => void
-  isWalking: boolean
-  onToggleWalk: () => void
+  isFlying: boolean
+  onToggleFly: () => void
   onToggleLayers: () => void
 }
 
 export default function ControlDock({ 
   is3D, 
   onToggle3D, 
-  isWalking, 
-  onToggleWalk,
+  isFlying, 
+  onToggleFly,
   onToggleLayers
 }: ControlDockProps) {
   return (
@@ -58,14 +58,14 @@ export default function ControlDock({
 
         <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
 
-        {/* Walk Mode */}
+        {/* Fly Mode */}
         <DockButton
-          icon="🚶"
-          label="WALK"
-          isActive={isWalking}
-          onClick={onToggleWalk}
-          color="#5DA040"
-          activeColor="#7ED957"
+          icon="🦅"
+          label="FLY"
+          isActive={isFlying}
+          onClick={onToggleFly}
+          color="#4A90E2"
+          activeColor="#6BB3FF"
         />
       </div>
       

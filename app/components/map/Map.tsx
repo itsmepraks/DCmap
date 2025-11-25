@@ -6,29 +6,26 @@ import { useMap } from '@/app/lib/MapContext'
 import type { LayerVisibility } from '@/app/types/map'
 import { useMapInitialization } from '@/app/hooks/useMapInitialization'
 import { MapLayers } from './MapLayers'
-import { PlayerController } from './PlayerController'
 import EntityInfoPanel, { type SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MapProps {
   layersVisible: LayerVisibility
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   is3D: boolean
-  isWalking: boolean
+  isFlying: boolean
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  onPlayerPositionChange?: (position: { lng: number; lat: number; bearing: number; nearestLandmark: any }) => void
 }
 
 export default function Map({
   layersVisible,
   currentSeason,
   is3D,
-  isWalking,
+  isFlying,
   landmarks,
   visitedLandmarks,
-  onLandmarkDiscovered,
-  onPlayerPositionChange
+  onLandmarkDiscovered
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const { map } = useMap()
@@ -36,9 +33,9 @@ export default function Map({
   
   const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
 
-  // Handle 3D view toggle with GTA-like cinematic animation
+  // Handle 3D view toggle with cinematic animation (disabled while flying)
   useEffect(() => {
-    if (!map || isWalking) return // Don't interfere with walk mode camera
+    if (!map || isFlying) return // Don't interfere with fly mode street camera
 
     // GTA-like cinematic 3D transformation
     map.easeTo({
@@ -51,7 +48,7 @@ export default function Map({
     })
 
     console.log(`🎮 ${is3D ? 'Entering GTA-like 3D world mode' : 'Returning to overview mode'}`)
-  }, [map, is3D, isWalking])
+  }, [map, is3D, isFlying])
 
   // Close panel on map click if not clicking a feature
   useEffect(() => {
@@ -105,14 +102,6 @@ export default function Map({
             visitedLandmarks={visitedLandmarks}
             onLandmarkDiscovered={onLandmarkDiscovered}
             onSelectEntity={setSelectedEntity}
-          />
-          <PlayerController
-            map={map}
-            isWalking={isWalking}
-            landmarks={landmarks}
-            visitedLandmarks={visitedLandmarks}
-            onLandmarkDiscovered={onLandmarkDiscovered}
-            onPlayerPositionChange={onPlayerPositionChange}
           />
           <EntityInfoPanel 
             entity={selectedEntity}

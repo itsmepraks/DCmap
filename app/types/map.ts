@@ -8,9 +8,7 @@ export interface MapContextValue {
 export interface LayerVisibility {
   museums: boolean
   trees: boolean
-  heatmap: boolean
   landmarks: boolean
-  hiddenGems: boolean
 }
 
 export type LayerId = keyof LayerVisibility

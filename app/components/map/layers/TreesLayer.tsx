@@ -115,10 +115,22 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
         createSeasonIcons()
 
         const layers = map.getStyle().layers ?? []
+        // Find building layer to place trees BEFORE buildings (for proper occlusion)
+        // Buildings should render on top of trees to occlude them
+        const buildingLayerId = layers.find((layer) => 
+          layer.id === 'realistic-buildings' || 
+          (layer.type === 'fill-extrusion' && layer['source-layer'] === 'building')
+        )?.id
+        
+        // If building layer exists, place trees BEFORE it
+        // Otherwise, find first symbol layer (which comes after most base layers)
         const firstSymbolId = layers.find((layer) => layer.type === 'symbol')?.id
+        const beforeId = buildingLayerId || firstSymbolId
+        
         const addLayer = (layer: mapboxgl.AnyLayer) => {
           if (!map.getLayer(layer.id)) {
-            map.addLayer(layer, firstSymbolId)
+            // Place trees BEFORE buildings so buildings render on top and occlude trees
+            map.addLayer(layer, beforeId)
           }
         }
 
@@ -418,6 +430,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
     if (map.getLayer(TREE_POINT_LAYER_ID)) {
       map.setLayoutProperty(TREE_POINT_LAYER_ID, 'icon-image', `tree-icon-${season}`)
     }
+    console.log(`🍂 TreesLayer season updated to: ${season}`)
   }, [map, season, seasonColors])
 
   return null

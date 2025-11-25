@@ -27,20 +27,21 @@ export default function HeatmapLayer({ visible, month = 7 }: HeatmapLayerProps) 
   useEffect(() => {
     if (!map) return
 
+    const mapInstance = map
     const sourceId = 'heat-data'
     const layerId = 'heat-layer'
 
     // Add source if it doesn't exist
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, {
+    if (!mapInstance.getSource(sourceId)) {
+      mapInstance.addSource(sourceId, {
         type: 'geojson',
         data: '/data/dc_heat_monthly.geojson'
       })
     }
 
     // Add layer if it doesn't exist
-    if (!map.getLayer(layerId)) {
-      map.addLayer({
+    if (!mapInstance.getLayer(layerId)) {
+      mapInstance.addLayer({
         id: layerId,
         type: 'heatmap',
         source: sourceId,
@@ -97,9 +98,9 @@ export default function HeatmapLayer({ visible, month = 7 }: HeatmapLayerProps) 
     }
 
     // Try to move layer below labels if possible
-    if (map.getLayer(layerId) && map.getLayer('waterway-label')) {
+    if (mapInstance.getLayer(layerId) && mapInstance.getLayer('waterway-label')) {
       try {
-        map.moveLayer(layerId, 'waterway-label')
+        mapInstance.moveLayer(layerId, 'waterway-label')
       } catch (e) {
         console.debug('Could not move heatmap below waterway-label')
       }
@@ -107,11 +108,12 @@ export default function HeatmapLayer({ visible, month = 7 }: HeatmapLayerProps) 
 
     // Cleanup function
     return () => {
-      if (map.getLayer(layerId)) {
-        map.removeLayer(layerId)
+      if (!mapInstance) return
+      if (mapInstance.getLayer(layerId)) {
+        mapInstance.removeLayer(layerId)
       }
-      if (map.getSource(sourceId)) {
-        map.removeSource(sourceId)
+      if (mapInstance.getSource(sourceId)) {
+        mapInstance.removeSource(sourceId)
       }
     }
   }, [map]) // Run once on map load
