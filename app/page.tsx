@@ -17,7 +17,6 @@ import AchievementToast from './components/game/AchievementToast'
 import ParticleEffect from './components/map/effects/ParticleEffect'
 import DiscoveryRadius from './components/map/effects/DiscoveryRadius'
 import BreadcrumbTrail from './components/map/effects/BreadcrumbTrail'
-import SmartHUD from './components/ui/hud/SmartHUD'
 import MiniStatsBar from './components/ui/hud/MiniStatsBar'
 import { MapProvider, useMap } from './lib/MapContext'
 import { PlayerProvider, usePlayerState } from './lib/playerState'
@@ -27,8 +26,8 @@ import { useDailyChallenges } from './hooks/useDailyChallenges'
 import { useLandmarks } from './hooks/useLandmarks'
 import { useFlyController } from './hooks/useFlyController'
 import FlyModeAvatar from './components/map/FlyModeAvatar'
-import LandmarkRecommendations from './components/game/LandmarkRecommendations'
 import CompletionNotification from './components/game/CompletionNotification'
+import UnifiedHUD from './components/ui/hud/UnifiedHUD'
 
 export default function Home() {
   return (
@@ -303,14 +302,6 @@ function HomeContent() {
         onSeasonChange={handleSeasonChange}
       />
       
-      {/* Landmark Recommendations - Shows unvisited landmarks */}
-      <LandmarkRecommendations
-        landmarks={landmarksState.landmarks}
-        visitedLandmarks={gameState.gameProgress.visitedLandmarks}
-        currentPosition={flyControllerState.position}
-        onNavigate={handleNavigateToLandmark}
-      />
-
       {/* Completion Notifications */}
       {showCompletion && (
         <CompletionNotification
@@ -320,13 +311,69 @@ function HomeContent() {
         />
       )}
 
-      {/* Smart HUD - Shows fly mode controls (street view) */}
-      <SmartHUD
+      {/* Unified HUD - Consolidates recommendations, fly controls, and stats */}
+      <UnifiedHUD
         mode={isFlyMode ? 'fly' : 'map'}
-        visitedCount={gameState.gameProgress.visitedLandmarks.size}
-        totalCount={landmarksState.landmarks.length || 10}
-        points={questSystem.questProgress.totalPoints}
-        activeQuestCount={questSystem.questProgress.activeQuests.length}
+        recommendedLandmark={
+          (() => {
+            const unvisited = landmarksState.landmarks.filter(
+              l => !gameState.gameProgress.visitedLandmarks.has(l.id)
+            )
+            if (unvisited.length === 0) return null
+            
+            if (flyControllerState.position) {
+              let nearest: typeof unvisited[0] | null = null
+              let nearestDistance = Infinity
+              
+              unvisited.forEach(landmark => {
+                const R = 6371000
+                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
+                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
+                const a = 
+                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                const d = R * c
+                if (d < nearestDistance) {
+                  nearestDistance = d
+                  nearest = landmark
+                }
+              })
+              
+              return nearest ? nearest : null
+            }
+            return unvisited[0] || null
+          })()
+        }
+        recommendationDistance={
+          (() => {
+            const unvisited = landmarksState.landmarks.filter(
+              l => !gameState.gameProgress.visitedLandmarks.has(l.id)
+            )
+            if (unvisited.length === 0 || !flyControllerState.position) return null
+            
+            let nearestDistance = Infinity
+            unvisited.forEach(landmark => {
+              const R = 6371000
+              const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
+              const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
+              const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2)
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+              const d = R * c
+              if (d < nearestDistance) nearestDistance = d
+            })
+            return nearestDistance !== Infinity ? nearestDistance : null
+          })()
+        }
+        onNavigateToRecommendation={handleNavigateToLandmark}
+        flySpeed={flyControllerState.speed}
+        flyAltitude={flyControllerState.altitude}
+        flyPosition={flyControllerState.position}
+        flyBearing={flyControllerState.bearing || 0}
         nearestLandmark={
           landmarksState.nearbyLandmarks.length > 0
             ? {
@@ -335,9 +382,6 @@ function HomeContent() {
               }
             : undefined
         }
-        flySpeed={flyControllerState.speed}
-        flyAltitude={flyControllerState.altitude}
-        flyPosition={flyControllerState.position}
       />
       
       {/* Daily Challenges Panel - Now minimized by default, click streak to expand */}
