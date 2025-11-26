@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import { getNearbyLandmarks, type NearbyLandmark } from '@/app/lib/proximityCalculator'
 import { isNearBorder, getBorderDirection } from '@/app/lib/worldBorder'
@@ -27,6 +27,7 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
   const [discoveryData, setDiscoveryData] = useState<DiscoveryData | null>(null)
   const [showBorderWarning, setShowBorderWarning] = useState(false)
   const [borderDirection, setBorderDirection] = useState('')
+  const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(null)
   
   const { map } = useMap()
 
@@ -48,13 +49,26 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
       .catch(err => console.error('Failed to load landmarks:', err))
   }, [])
 
-  // Update proximity hints based on map center
+  // Update proximity hints in real-time based on map center or fly position
+  // Uses requestAnimationFrame for smooth real-time distance updates
   useEffect(() => {
     if (!map || !landmarks.length) return
 
-    const updateProximity = () => {
+    let animationFrameId: number | null = null
+    let lastUpdateTime = 0
+    const UPDATE_INTERVAL = 100 // Update every 100ms for smooth real-time feel
+
+    const updateProximity = (currentTime: number) => {
+      // Throttle updates to every 100ms for performance
+      if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+        animationFrameId = requestAnimationFrame(updateProximity)
+        return
+      }
+      lastUpdateTime = currentTime
+
+      // Use currentPosition if set (from fly mode), otherwise use map center
       const center = map.getCenter()
-      const currentPos: [number, number] = [center.lng, center.lat]
+      const currentPos: [number, number] = currentPosition || [center.lng, center.lat]
       
       const nearby = getNearbyLandmarks(
         currentPos,
@@ -63,13 +77,8 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
         visitedLandmarks
       )
       
-      // Only update if nearby landmarks actually changed
-      setNearbyLandmarks(prev => {
-        if (JSON.stringify(prev.map(l => l.id)) === JSON.stringify(nearby.map(l => l.id))) {
-          return prev
-        }
-        return nearby
-      })
+      // Always update to get real-time distance changes (not just when IDs change)
+      setNearbyLandmarks(nearby)
       
       // Check for world border warning
       const nearBorder = isNearBorder(center.lng, center.lat)
@@ -78,16 +87,34 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
         const direction = getBorderDirection(center.lng, center.lat)
         if (direction) setBorderDirection(direction)
       }
+
+      animationFrameId = requestAnimationFrame(updateProximity)
     }
 
-    // Update on map move
-    map.on('move', updateProximity)
-    updateProximity() // Initial update
+    // Start continuous updates for real-time distance tracking
+    animationFrameId = requestAnimationFrame(updateProximity)
+
+    // Also update on map move for immediate response
+    const handleMapMove = () => {
+      const center = map.getCenter()
+      const currentPos: [number, number] = currentPosition || [center.lng, center.lat]
+      const nearby = getNearbyLandmarks(
+        currentPos,
+        landmarks,
+        1000,
+        visitedLandmarks
+      )
+      setNearbyLandmarks(nearby)
+    }
+    map.on('move', handleMapMove)
 
     return () => {
-      map.off('move', updateProximity)
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId)
+      }
+      map.off('move', handleMapMove)
     }
-  }, [map, landmarks])
+  }, [map, landmarks, visitedLandmarks, currentPosition])
 
   const showDiscoveryAnimation = (landmarkId: string) => {
     const landmark = landmarks.find(l => l.id === landmarkId)
@@ -126,6 +153,11 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
     visited: visitedLandmarks.has(l.id)
   }))
 
+  // Function to update current position (called from fly controller for real-time updates)
+  const updateCurrentPosition = useCallback((position: [number, number] | null) => {
+    setCurrentPosition(position)
+  }, [])
+
   return {
     landmarks,
     landmarksWithStatus,
@@ -136,7 +168,8 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
     borderDirection,
     showDiscoveryAnimation,
     navigateToLandmark,
-    getLandmarkById
+    getLandmarkById,
+    updateCurrentPosition
   }
 }
 

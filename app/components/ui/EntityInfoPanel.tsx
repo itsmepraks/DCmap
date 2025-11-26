@@ -40,7 +40,7 @@ export default function EntityInfoPanel({ entity, onClose, onNavigate }: EntityI
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 50, scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed right-4 top-24 z-40 w-80 pointer-events-auto cursor-move"
+          className="fixed right-4 top-32 sm:top-36 z-50 w-72 sm:w-80 pointer-events-auto cursor-move"
           drag
           dragMomentum={false}
           dragConstraints={{ left: -window.innerWidth + 320, right: 0, top: 0, bottom: window.innerHeight - 200 }}

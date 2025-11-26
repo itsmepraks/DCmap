@@ -58,7 +58,7 @@ export default function MiniStatsBar({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onOpenStats}
-      className="fixed top-2 left-2 sm:top-6 sm:left-6 z-30 cursor-pointer"
+      className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 cursor-pointer"
       whileHover={{ scale: 1.05, x: 2 }}
       whileTap={{ scale: 0.98 }}
     >

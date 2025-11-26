@@ -25,9 +25,13 @@ import { useQuestSystem } from './hooks/useQuestSystem'
 import { useDailyChallenges } from './hooks/useDailyChallenges'
 import { useLandmarks } from './hooks/useLandmarks'
 import { useFlyController } from './hooks/useFlyController'
+import { useWaypointSystem } from './hooks/useWaypointSystem'
+import { useExperience } from './hooks/useExperience'
 import FlyModeAvatar from './components/map/FlyModeAvatar'
 import CompletionNotification from './components/game/CompletionNotification'
 import UnifiedHUD from './components/ui/hud/UnifiedHUD'
+import WaypointLayer from './components/map/WaypointLayer'
+import QuestWaypoints from './components/game/QuestWaypoints'
 
 export default function Home() {
   return (
@@ -45,7 +49,8 @@ function HomeContent() {
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
     trees: false,
-    landmarks: true
+    landmarks: true,
+    parks: false
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)
@@ -58,6 +63,8 @@ function HomeContent() {
   const questSystem = useQuestSystem()
   const dailyChallenges = useDailyChallenges()
   const landmarksState = useLandmarks(gameState.gameProgress.visitedLandmarks)
+  const waypointSystem = useWaypointSystem()
+  const experience = useExperience()
   
   const { map } = useMap()
 
@@ -127,13 +134,42 @@ function HomeContent() {
   const handleLandmarkDiscovered = useCallback((landmarkId: string, landmarkData: any) => {
     // Check if already visited
     const isNewVisit = gameState.handleVisitLandmark(landmarkId)
-    if (!isNewVisit) return
+    
+    // IMPORTANT: Always check quest progress, even if landmark was already visited
+    // This ensures quest objectives update even if user visited landmark before starting quest
+    const questResult = questSystem.handleLandmarkVisit(landmarkId)
+    
+    // Only award XP and show animations for NEW visits
+    if (!isNewVisit) {
+      // Still log quest progress updates for already-visited landmarks
+      if (questResult.updatedQuests.length > 0 || questResult.completedQuests.length > 0) {
+        console.log('🎯 Quest progress updated for already-visited landmark:', landmarkId)
+      }
+      return
+    }
 
-    // Update quest progress
-    questSystem.handleLandmarkVisit(landmarkId)
+    // Award XP for landmark discovery
+    const xpGained = experience.awardLandmarkXP()
+    console.log(`✨ +${xpGained} XP from landmark discovery!`)
+    
+    // Award XP for quest completion if any
+    if (questResult.completedQuests.length > 0) {
+      questResult.completedQuests.forEach(() => {
+        const questXP = experience.awardQuestXP()
+        console.log(`🎯 +${questXP} XP from quest completion!`)
+      })
+    }
     
     // Update daily challenges
-    dailyChallenges.handleLandmarkVisit()
+    const challengeResult = dailyChallenges.handleLandmarkVisit()
+    
+    // Award XP for daily challenge completion if any
+    if (challengeResult.completedChallenges.length > 0) {
+      challengeResult.completedChallenges.forEach(() => {
+        const challengeXP = experience.awardDailyChallengeXP()
+        console.log(`🔥 +${challengeXP} XP from daily challenge!`)
+      })
+    }
     
     // Show discovery animation
     const landmark = landmarksState.getLandmarkById(landmarkId)
@@ -159,7 +195,7 @@ function HomeContent() {
     }
 
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
-  }, [gameState, questSystem, dailyChallenges, landmarksState])
+  }, [gameState, questSystem, dailyChallenges, landmarksState, experience])
 
   // Fly mode controller (street-view movement)
   const flyControllerState = useFlyController({
@@ -167,7 +203,13 @@ function HomeContent() {
     isActive: isFlyMode,
     landmarks: landmarksState.landmarks,
     visitedLandmarks: gameState.gameProgress.visitedLandmarks,
-    onLandmarkDiscovered: handleLandmarkDiscovered
+    onLandmarkDiscovered: handleLandmarkDiscovered,
+    onPositionChange: (pos) => {
+      // Update landmarks hook with real-time fly position for accurate distance calculations
+      if (pos && pos.lng && pos.lat) {
+        landmarksState.updateCurrentPosition([pos.lng, pos.lat])
+      }
+    }
   })
   
   const { state: playerState } = usePlayerState()
@@ -240,6 +282,22 @@ function HomeContent() {
           isActive={isFlyMode}
         />
       )}
+
+      {/* Waypoint Layer - Shows waypoints on map */}
+      <WaypointLayer
+        map={map}
+        waypoints={waypointSystem.waypoints}
+        activeWaypointId={waypointSystem.activeWaypointId}
+        onWaypointClick={(waypoint) => handleNavigateToLandmark(waypoint.coordinates)}
+      />
+
+      {/* Quest Waypoints - Auto-generate waypoints for active quest objectives */}
+      <QuestWaypoints
+        activeQuests={questSystem.activeQuestObjects}
+        landmarks={landmarksState.landmarks}
+        onAddWaypoint={waypointSystem.addWaypoint}
+        onRemoveWaypoint={waypointSystem.removeWaypoint}
+      />
       
       {/* Discovery Radius Visualization */}
       <DiscoveryRadius
@@ -276,9 +334,9 @@ function HomeContent() {
       {/* New Compact Stats Bar - Replaces scattered HUDs */}
       <MiniStatsBar
         streak={dailyChallenges.currentStreak.current}
-        points={questSystem.questProgress.totalPoints}
+        points={questSystem.questProgress.totalPoints + experience.experience.totalXP}
         discovered={gameState.gameProgress.visitedLandmarks.size}
-        total={10}
+        total={landmarksState.landmarks.length || 10}
         activeQuests={questSystem.questProgress.activeQuests.length}
         onOpenStats={gameState.openStatsModal}
       />
@@ -321,6 +379,44 @@ function HomeContent() {
             )
             if (unvisited.length === 0) return null
             
+            // PRIORITY 1: Find unvisited landmarks that are part of active quest objectives
+            const questObjectiveLandmarks: typeof unvisited = []
+            questSystem.activeQuestObjects.forEach(quest => {
+              quest.objectives.forEach(objective => {
+                if (!objective.completed && objective.type === 'visit') {
+                  const landmark = unvisited.find(l => l.id === objective.target)
+                  if (landmark && !questObjectiveLandmarks.find(l => l.id === landmark.id)) {
+                    questObjectiveLandmarks.push(landmark)
+                  }
+                }
+              })
+            })
+            
+            // If we have quest objective landmarks, prioritize the nearest one
+            if (questObjectiveLandmarks.length > 0 && flyControllerState.position) {
+              let nearest: typeof questObjectiveLandmarks[0] | null = null
+              let nearestDistance = Infinity
+              
+              questObjectiveLandmarks.forEach(landmark => {
+                const R = 6371000
+                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
+                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
+                const a = 
+                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                const d = R * c
+                if (d < nearestDistance) {
+                  nearestDistance = d
+                  nearest = landmark
+                }
+              })
+              
+              if (nearest) return nearest
+            }
+            
+            // PRIORITY 2: Fall back to nearest unvisited landmark (not in quest)
             if (flyControllerState.position) {
               let nearest: typeof unvisited[0] | null = null
               let nearestDistance = Infinity
@@ -353,20 +449,80 @@ function HomeContent() {
             )
             if (unvisited.length === 0 || !flyControllerState.position) return null
             
-            let nearestDistance = Infinity
-            unvisited.forEach(landmark => {
-              const R = 6371000
-              const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-              const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-              const a = 
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2)
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-              const d = R * c
-              if (d < nearestDistance) nearestDistance = d
-            })
-            return nearestDistance !== Infinity ? nearestDistance : null
+            // Calculate distance to recommended landmark (which prioritizes quest objectives)
+            type LandmarkType = typeof unvisited[0]
+            const recommended = ((): LandmarkType | null => {
+              // PRIORITY 1: Quest objective landmarks
+              const questObjectiveLandmarks: LandmarkType[] = []
+              questSystem.activeQuestObjects.forEach(quest => {
+                quest.objectives.forEach(objective => {
+                  if (!objective.completed && objective.type === 'visit') {
+                    const landmark = unvisited.find(l => l.id === objective.target)
+                    if (landmark && !questObjectiveLandmarks.find(l => l.id === landmark.id)) {
+                      questObjectiveLandmarks.push(landmark)
+                    }
+                  }
+                })
+              })
+              
+              if (questObjectiveLandmarks.length > 0) {
+                let nearest: LandmarkType | null = null
+                let nearestDistance = Infinity
+                
+                questObjectiveLandmarks.forEach(landmark => {
+                  const R = 6371000
+                  const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
+                  const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
+                  const a = 
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
+                    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+                  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                  const d = R * c
+                  if (d < nearestDistance) {
+                    nearestDistance = d
+                    nearest = landmark
+                  }
+                })
+                
+                if (nearest) return nearest
+              }
+              
+              // PRIORITY 2: Nearest unvisited landmark
+              let nearest: LandmarkType | null = null
+              let nearestDistance = Infinity
+              
+              unvisited.forEach(landmark => {
+                const R = 6371000
+                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
+                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
+                const a = 
+                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                const d = R * c
+                if (d < nearestDistance) {
+                  nearestDistance = d
+                  nearest = landmark
+                }
+              })
+              
+              return nearest
+            })()
+            
+            if (!recommended) return null
+            
+            // Calculate distance to recommended landmark
+            const R = 6371000
+            const dLat = (recommended.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
+            const dLng = (recommended.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
+            const a = 
+              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(recommended.coordinates[1] * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2)
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+            return R * c
           })()
         }
         onNavigateToRecommendation={handleNavigateToLandmark}
@@ -409,6 +565,7 @@ function HomeContent() {
       {/* Proximity Hints - Show nearby landmarks (Centered bottom pill) */}
       <ProximityHint
         nearbyLandmarks={landmarksState.nearbyLandmarks}
+        visitedLandmarks={gameState.gameProgress.visitedLandmarks}
         onNavigate={landmarksState.navigateToLandmark}
       />
       

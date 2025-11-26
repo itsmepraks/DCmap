@@ -9,6 +9,7 @@ export interface LayerVisibility {
   museums: boolean
   trees: boolean
   landmarks: boolean
+  parks: boolean
 }
 
 export type LayerId = keyof LayerVisibility
@@ -26,21 +27,6 @@ export interface TreeProperties {
   SPECIES?: string
   DBH?: number
   CONDITION?: string
-}
-
-export interface HeatmapProperties {
-  temp_jan?: number
-  temp_feb?: number
-  temp_mar?: number
-  temp_apr?: number
-  temp_may?: number
-  temp_jun?: number
-  temp_jul?: number
-  temp_aug?: number
-  temp_sep?: number
-  temp_oct?: number
-  temp_nov?: number
-  temp_dec?: number
 }
 
 export interface GeoJSONFeature<T = Record<string, unknown>> {

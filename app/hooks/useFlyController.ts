@@ -23,9 +23,58 @@ export interface FlyControllerState {
 }
 
 const METERS_PER_DEG_LAT = 111132
-const MOVE_SPEED = 2000 // meters per second - extremely fast, 50x faster
+const MOVE_SPEED = 600 // meters per second - responsive, matches key presses
 const CAMERA_PITCH = 75 // degrees - looking down at street level
 const CAMERA_ZOOM = 18.5 // close zoom for street view
+const MIN_ALTITUDE = 3 // minimum altitude in meters
+const MAX_ALTITUDE = 200 // maximum altitude in meters
+const SAFE_BUILDING_CLEARANCE = 5 // meters above buildings
+const COLLISION_CHECK_RADIUS = 25 // meters - check buildings within this radius
+
+// Smooth interpolation function
+function lerp(start: number, end: number, factor: number): number {
+  return start + (end - start) * factor
+}
+
+// Get building height at a position
+function getBuildingHeightAtPosition(
+  map: mapboxgl.Map,
+  position: [number, number],
+  radius: number
+): number {
+  try {
+    const point = map.project(position)
+    const pixels = radius * (map.getZoom() / 18) // Convert meters to pixels
+    
+    // Query buildings in a small area around the position
+    const features = map.queryRenderedFeatures(
+      [
+        [point.x - pixels, point.y - pixels],
+        [point.x + pixels, point.y + pixels]
+      ],
+      {
+        layers: ['realistic-buildings', 'building-roofs'],
+        filter: ['has', 'height']
+      }
+    )
+
+    if (features.length === 0) return 0
+
+    // Find the tallest building
+    let maxHeight = 0
+    features.forEach(feature => {
+      const height = feature.properties?.height
+      if (typeof height === 'number' && height > maxHeight) {
+        maxHeight = height
+      }
+    })
+
+    return maxHeight
+  } catch (error) {
+    console.debug('Building height query failed:', error)
+    return 0
+  }
+}
 
 export function useFlyController({
   map,
@@ -63,11 +112,13 @@ export function useFlyController({
     // Track pressed keys
     const keys = new Set<string>()
     
-    // Track player position
+    // Track player position and altitude
     const center = map.getCenter()
     let position: [number, number] = [center.lng, center.lat]
     let bearing = map.getBearing()
-
+    let targetAltitude = 6 // Target altitude we want to reach
+    let currentAltitude = 6 // Current altitude (smoothly interpolated)
+    
     // Store original interaction state
     const originalState = {
       dragPan: map.dragPan.isEnabled(),
@@ -93,15 +144,6 @@ export function useFlyController({
       duration: 800
     })
 
-    // Initialize position in state
-    setControllerState({
-      isMoving: false,
-      speed: 0,
-      altitude: 6,
-      position: { lng: position[0], lat: position[1] },
-      bearing: bearing
-    })
-
     // Mouse look
     let isMouseDown = false
     const canvas = map.getCanvas()
@@ -111,6 +153,15 @@ export function useFlyController({
       if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault()
         keys.add(key)
+      }
+      // Altitude control
+      if (key === ' ' || key === 'space') {
+        e.preventDefault()
+        targetAltitude = Math.min(targetAltitude + 10, MAX_ALTITUDE)
+      }
+      if (key === 'shift') {
+        e.preventDefault()
+        targetAltitude = Math.max(targetAltitude - 10, MIN_ALTITUDE)
       }
     }
 
@@ -132,22 +183,23 @@ export function useFlyController({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isMouseDown) return
-      // More responsive mouse look - 2x faster
-      bearing += e.movementX * 0.6
+      bearing += e.movementX * 0.5 // Smooth mouse look
       const currentPitch = map.getPitch()
-      const newPitch = Math.max(50, Math.min(85, currentPitch - e.movementY * 0.4))
+      const newPitch = Math.max(50, Math.min(85, currentPitch - e.movementY * 0.3))
       map.setBearing(bearing)
       map.setPitch(newPitch)
     }
 
-    // Animation loop
+    // Animation loop with smooth interpolation
     let lastTime = performance.now()
     let animationFrameId: number
+    let lastLandmarkCheck = 0
 
     const animate = (currentTime: number) => {
       if (!map || !isActive) return
 
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.008) // Cap at ~120fps for ultra-smooth movement
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.016) // Cap at 60fps for smoothness
+      // Use actual delta time for more accurate movement matching key presses
       lastTime = currentTime
 
       // Calculate movement direction
@@ -160,6 +212,22 @@ export function useFlyController({
       if (keys.has('d') || keys.has('arrowright')) right = 1
 
       const isMoving = forward !== 0 || right !== 0
+
+      // Smooth altitude interpolation
+      const altitudeLerpFactor = Math.min(dt * 8, 1) // Smooth altitude changes
+      currentAltitude = lerp(currentAltitude, targetAltitude, altitudeLerpFactor)
+
+      // Check for building collisions and adjust altitude
+      if (currentTime - lastLandmarkCheck > 100) { // Check every 100ms
+        const buildingHeight = getBuildingHeightAtPosition(map, position, COLLISION_CHECK_RADIUS)
+        const requiredAltitude = buildingHeight + SAFE_BUILDING_CLEARANCE
+        
+        if (requiredAltitude > targetAltitude) {
+          targetAltitude = Math.min(requiredAltitude, MAX_ALTITUDE)
+        }
+        
+        lastLandmarkCheck = currentTime
+      }
 
       if (isMoving) {
         // Calculate movement in meters
@@ -180,14 +248,21 @@ export function useFlyController({
         position[0] += forwardLng + strafeLng
         position[1] += forwardLat + strafeLat
 
-        // Update map center with smooth interpolation for ultra-responsive feel
-        const currentCenter = map.getCenter()
-        const targetLng = position[0]
-        const targetLat = position[1]
+        // IMMEDIATE camera update - no smoothing, matches key presses exactly
+        // Use jumpTo for instant camera movement (no easing)
+        map.jumpTo({
+          center: [position[0], position[1]],
+          bearing: bearing
+        })
+
+        // Update camera altitude by adjusting pitch/zoom based on altitude
+        // Higher altitude = less pitch, more zoom out
+        const altitudeFactor = Math.max(0, Math.min(1, (currentAltitude - 3) / 50))
+        const dynamicPitch = CAMERA_PITCH - (altitudeFactor * 20) // Reduce pitch at higher altitudes
+        const dynamicZoom = CAMERA_ZOOM - (altitudeFactor * 2) // Zoom out at higher altitudes
         
-        // Immediate update for maximum responsiveness
-        map.setCenter([targetLng, targetLat])
-        map.setBearing(bearing)
+        map.setPitch(dynamicPitch)
+        map.setZoom(dynamicZoom)
 
         // Update player state
         updatePose({
@@ -202,37 +277,49 @@ export function useFlyController({
         setControllerState({
           isMoving: true,
           speed: MOVE_SPEED,
-          altitude: 6,
+          altitude: currentAltitude,
           position: { lng: position[0], lat: position[1] },
           bearing: bearing
         })
       } else {
+        // When stopped, IMMEDIATELY stop camera movement
+        // Use jumpTo to ensure camera stops exactly where it is (no drift)
+        map.jumpTo({
+          center: [position[0], position[1]],
+          bearing: bearing
+        })
+
+        // Still update altitude even when not moving
         setControllerState(prev => ({ 
           ...prev, 
           isMoving: false, 
           speed: 0,
+          altitude: currentAltitude,
           position: { lng: position[0], lat: position[1] },
           bearing: bearing
         }))
       }
 
-      // Check landmarks (throttled)
-      const now = Date.now()
-      if (now % 500 < dt * 1000) {
-        const playerPos = { lng: position[0], lat: position[1] }
-        const nearby = checkNearbyLandmarks(playerPos, landmarks, visitedLandmarks, 40)
-        nearby.forEach(hit => {
-          const landmarkData = landmarks.find(l => l.id === hit.id)
-          if (landmarkData) {
-            landmarkCallbackRef.current?.(hit.id, landmarkData)
+          // Update position callback in real-time for proximity hints (every frame)
+          if (positionCallbackRef.current) {
+            positionCallbackRef.current({ 
+              lng: position[0], 
+              lat: position[1], 
+              bearing 
+            })
           }
-        })
 
-        const nearest = findNearestLandmark(playerPos, landmarks)
-        if (nearest && positionCallbackRef.current) {
-          positionCallbackRef.current({ ...playerPos, bearing })
-        }
-      }
+          // Check landmarks (throttled)
+          if (currentTime - lastLandmarkCheck > 500) {
+            const playerPos = { lng: position[0], lat: position[1] }
+            const nearby = checkNearbyLandmarks(playerPos, landmarks, visitedLandmarks, 40)
+            nearby.forEach(hit => {
+              const landmarkData = landmarks.find(l => l.id === hit.id)
+              if (landmarkData) {
+                landmarkCallbackRef.current?.(hit.id, landmarkData)
+              }
+            })
+          }
 
       animationFrameId = requestAnimationFrame(animate)
     }

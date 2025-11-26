@@ -238,8 +238,24 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
         // Add map click listener to deselect when clicking empty space
         map.on('click', (e) => {
           // If clicking on nothing interactive
+          // Only query layers that exist in the map
+          const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer'].filter(
+            layerId => map.getLayer(layerId)
+          )
+          
+          if (availableLayers.length === 0) {
+            if (selectedFeatureId !== null) {
+              map.setFeatureState(
+                { source: 'landmarks', id: selectedFeatureId },
+                { selected: false }
+              )
+              selectedFeatureId = null
+            }
+            return
+          }
+          
           const features = map.queryRenderedFeatures(e.point, {
-            layers: ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer']
+            layers: availableLayers
           })
           
           if (features.length === 0 && selectedFeatureId !== null) {

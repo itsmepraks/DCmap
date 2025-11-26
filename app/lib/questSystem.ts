@@ -97,17 +97,23 @@ export function completeObjective(
   objectiveIndex: number,
   quests: Quest[],
   progress: QuestProgress
-): { progress: QuestProgress; questCompleted: boolean; rewards?: QuestRewards } {
+): { progress: QuestProgress; questCompleted: boolean; rewards?: QuestRewards; updatedQuest?: Quest } {
   const quest = quests.find(q => q.id === questId)
   if (!quest) {
     return { progress, questCompleted: false }
   }
 
-  // Mark objective as completed
-  quest.objectives[objectiveIndex].completed = true
+  // Create updated quest with completed objective (don't mutate original)
+  const updatedObjectives = quest.objectives.map((obj, idx) => 
+    idx === objectiveIndex ? { ...obj, completed: true } : obj
+  )
+  const updatedQuest: Quest = {
+    ...quest,
+    objectives: updatedObjectives
+  }
 
   // Check if all objectives are completed
-  const allCompleted = quest.objectives.every(obj => obj.completed)
+  const allCompleted = updatedQuest.objectives.every(obj => obj.completed)
   
   if (allCompleted) {
     const newProgress = {
@@ -124,12 +130,17 @@ export function completeObjective(
     return {
       progress: newProgress,
       questCompleted: true,
-      rewards: quest.rewards
+      rewards: quest.rewards,
+      updatedQuest: { ...updatedQuest, isCompleted: true }
     }
   }
 
   saveQuestProgress(progress)
-  return { progress, questCompleted: false }
+  return { 
+    progress, 
+    questCompleted: false,
+    updatedQuest
+  }
 }
 
 export function checkQuestProgress(
@@ -139,6 +150,7 @@ export function checkQuestProgress(
 ): { progress: QuestProgress; completedQuests: Quest[]; updatedQuests: Quest[] } {
   const completedQuestsList: Quest[] = []
   const updatedQuestsList: Quest[] = []
+  let currentProgress = progress
 
   // Check active quests for objectives matching this landmark
   progress.activeQuests.forEach(questId => {
@@ -146,25 +158,30 @@ export function checkQuestProgress(
     if (!quest) return
 
     let questUpdated = false
+    let updatedQuest: Quest | undefined
+
     quest.objectives.forEach((objective, index) => {
       if (!objective.completed && objective.target === landmarkId) {
-        const result = completeObjective(questId, index, quests, progress)
-        progress = result.progress
+        const result = completeObjective(questId, index, quests, currentProgress)
+        currentProgress = result.progress
         questUpdated = true
+        updatedQuest = result.updatedQuest
 
-        if (result.questCompleted) {
-          completedQuestsList.push(quest)
+        if (result.questCompleted && updatedQuest) {
+          completedQuestsList.push(updatedQuest)
         }
       }
     })
 
-    if (questUpdated && !completedQuestsList.includes(quest)) {
-      updatedQuestsList.push(quest)
+    if (questUpdated && updatedQuest) {
+      if (!completedQuestsList.includes(updatedQuest)) {
+        updatedQuestsList.push(updatedQuest)
+      }
     }
   })
 
   return {
-    progress,
+    progress: currentProgress,
     completedQuests: completedQuestsList,
     updatedQuests: updatedQuestsList
   }

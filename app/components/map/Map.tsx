@@ -56,8 +56,18 @@ export default function Map({
 
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       // If clicking on nothing interactive, close panel
+      // Only query layers that exist in the map
+      const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer'].filter(
+        layerId => map.getLayer(layerId)
+      )
+      
+      if (availableLayers.length === 0) {
+        setSelectedEntity(null)
+        return
+      }
+      
       const features = map.queryRenderedFeatures(e.point, {
-        layers: ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer']
+        layers: availableLayers
       })
       if (features.length === 0) {
         setSelectedEntity(null)

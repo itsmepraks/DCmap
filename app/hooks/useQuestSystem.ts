@@ -37,12 +37,64 @@ export function useQuestSystem() {
   }
 
   const handleLandmarkVisit = (landmarkId: string) => {
-    const questResult = checkQuestProgress(landmarkId, quests, questProgress)
+    // Get latest state and check quest progress
+    const currentQuests = quests
+    const currentProgress = questProgress
+    
+    const questResult = checkQuestProgress(landmarkId, currentQuests, currentProgress)
+    
+    console.log('🎯 Quest check for landmark:', landmarkId)
+    console.log('📊 Active quests:', currentProgress.activeQuests)
+    console.log('📋 Current quest objectives:', currentQuests.find(q => currentProgress.activeQuests.includes(q.id))?.objectives)
+    console.log('✅ Updated quests:', questResult.updatedQuests.length)
+    console.log('🏆 Completed quests:', questResult.completedQuests.length)
+    
+    // Update quest progress first
     setQuestProgress(questResult.progress)
     
-    // Update quest objectives in state
+    // Then update quests to reflect completed objectives
+    // CRITICAL: Merge objectives to preserve previously completed ones
     if (questResult.updatedQuests.length > 0 || questResult.completedQuests.length > 0) {
-      setQuests(prevQuests => [...prevQuests]) // Trigger re-render
+      setQuests(prevQuests => {
+        const updatedQuests = prevQuests.map(quest => {
+          // Check if this quest was updated
+          const updatedQuest = questResult.updatedQuests.find(q => q.id === quest.id)
+          if (updatedQuest) {
+            console.log(`✨ Updating quest: ${quest.id}`, updatedQuest.objectives)
+            // Merge objectives: preserve previously completed ones, add newly completed
+            const mergedObjectives = quest.objectives.map((prevObj, idx) => {
+              const newObj = updatedQuest.objectives[idx]
+              // If this objective was already completed, keep it completed
+              // Otherwise, use the new status from updatedQuest
+              const isCompleted = prevObj.completed || (newObj && newObj.completed)
+              return { ...prevObj, completed: isCompleted }
+            })
+            return { ...quest, objectives: mergedObjectives }
+          }
+          
+          // Check if this quest was completed
+          const completedQuest = questResult.completedQuests.find(q => q.id === quest.id)
+          if (completedQuest) {
+            console.log(`🏆 Quest completed: ${quest.id}`)
+            // Merge objectives: preserve previously completed ones
+            const mergedObjectives = quest.objectives.map((prevObj, idx) => {
+              const newObj = completedQuest.objectives[idx]
+              const isCompleted = prevObj.completed || (newObj && newObj.completed)
+              return { ...prevObj, completed: isCompleted }
+            })
+            return { ...quest, isCompleted: true, objectives: mergedObjectives }
+          }
+          
+          return quest
+        })
+        
+        console.log('📝 Final quest state:', updatedQuests.map(q => ({
+          id: q.id,
+          objectives: q.objectives.map(obj => ({ target: obj.target, completed: obj.completed }))
+        })))
+        
+        return updatedQuests
+      })
     }
 
     // Show quest completion if any

@@ -54,17 +54,18 @@ export default function UnifiedHUD({
 
   return (
     <>
-      {/* Top Right: Recommendation (Compact) */}
+      {/* Top Right: Recommendation (Compact) - Positioned to avoid overlap */}
       <AnimatePresence>
         {mode === 'map' && showRecommendation && recommendedLandmark && (
           <motion.div
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 100, opacity: 0 }}
-            className="fixed top-6 right-6 z-30"
+            className="fixed top-20 right-4 sm:top-24 sm:right-6 z-40"
+            style={{ maxWidth: '240px' }}
           >
             <div
-              className="px-4 py-3 shadow-lg relative cursor-pointer group"
+              className="px-3 py-2 shadow-lg relative cursor-pointer group"
               onClick={() => onNavigateToRecommendation?.(recommendedLandmark.coordinates)}
               style={{
                 background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
@@ -72,8 +73,8 @@ export default function UnifiedHUD({
                 borderRadius: minecraftTheme.minecraft.borderRadius,
                 boxShadow: minecraftTheme.minecraft.shadowRaised,
                 imageRendering: minecraftTheme.minecraft.imageRendering,
-                minWidth: '200px',
-                maxWidth: '280px'
+                minWidth: '180px',
+                maxWidth: '240px'
               }}
             >
               <div className="flex items-center gap-2">
@@ -110,61 +111,64 @@ export default function UnifiedHUD({
         )}
       </AnimatePresence>
 
-      {/* Fly Mode: Top Right Stats Panel */}
+      {/* Fly Mode: Top Right Stats Panel - Positioned to avoid overlap */}
       <AnimatePresence>
         {mode === 'fly' && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 z-20 flex flex-col gap-2"
+            className="fixed top-20 right-4 sm:top-24 sm:right-6 z-40 flex flex-col gap-2"
+            style={{ maxWidth: '200px' }}
           >
-            {/* Speed/Position Card */}
+            {/* Speed/Position Card - Compact */}
             <div
-              className="px-3 py-2 shadow-lg relative"
+              className="px-2.5 py-1.5 shadow-lg relative"
               style={{
                 background: 'linear-gradient(145deg, #E0F7FF 0%, #B3E5FC 100%)',
                 border: '2px solid #4A90E2',
                 borderRadius: '6px',
                 boxShadow: '0 4px 0 #357ABD, 0 6px 12px rgba(0,0,0,0.2)',
-                minWidth: '180px'
+                minWidth: '160px',
+                maxWidth: '180px'
               }}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-bold" style={{ color: '#1E3A5F', fontFamily: 'monospace' }}>
-                  🦅 FLY MODE
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[8px] font-bold" style={{ color: '#1E3A5F', fontFamily: 'monospace' }}>
+                  🦅 FLY
                 </span>
-                <span className="text-xs font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
-                  {(flySpeed * 3.6).toFixed(1)} km/h
+                <span className="text-[10px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
+                  {(flySpeed * 3.6).toFixed(0)} km/h
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[9px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
+              <div className="flex items-center justify-between text-[8px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
                 <span>Alt: {flyAltitude.toFixed(0)}m</span>
                 <span style={{ color: '#357ABD' }}>{getCardinalDirection(flyBearing)}</span>
               </div>
             </div>
 
-            {/* Nearest Landmark Card */}
+            {/* Nearest Landmark Card - Compact */}
             {nearestLandmark && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="px-3 py-2 shadow-lg relative"
+                className="px-2.5 py-1.5 shadow-lg relative"
                 style={{
                   background: 'linear-gradient(145deg, #FFF0F5 0%, #FFE0F0 100%)',
                   border: '2px solid #FFB87A',
                   borderRadius: '6px',
                   boxShadow: '0 4px 0 #FF9955, 0 6px 12px rgba(0,0,0,0.2)',
-                  minWidth: '180px',
+                  minWidth: '160px',
+                  maxWidth: '180px',
                 }}
               >
-                <div className="text-[9px] font-bold mb-1" style={{ color: minecraftTheme.colors.text.light, fontFamily: 'monospace' }}>
+                <div className="text-[8px] font-bold mb-0.5" style={{ color: minecraftTheme.colors.text.light, fontFamily: 'monospace' }}>
                   🎯 NEAREST
                 </div>
-                <div className="text-xs font-bold truncate" style={{ color: minecraftTheme.colors.text.primary, fontFamily: 'monospace' }}>
+                <div className="text-[10px] font-bold truncate" style={{ color: minecraftTheme.colors.text.primary, fontFamily: 'monospace' }}>
                   {nearestLandmark.name}
                 </div>
-                <div className="text-[9px] font-bold mt-0.5" style={{ color: minecraftTheme.colors.terracotta.base, fontFamily: 'monospace' }}>
+                <div className="text-[8px] font-bold mt-0.5" style={{ color: minecraftTheme.colors.terracotta.base, fontFamily: 'monospace' }}>
                   📍 {formatDistance(nearestLandmark.distance)}
                 </div>
               </motion.div>
@@ -180,7 +184,7 @@ export default function UnifiedHUD({
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
-            className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10"
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30"
           >
             <motion.div
               animate={{ scale: showFlyControls ? 1 : 0.9, opacity: showFlyControls ? 1 : 0.7 }}
@@ -258,6 +262,29 @@ export default function UnifiedHUD({
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>Mouse</kbd>
                       <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>Look</span>
+                    </div>
+                    <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
+                    <div className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                        background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
+                        border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
+                        borderRadius: '2px',
+                        color: minecraftTheme.colors.text.primary,
+                        fontFamily: 'monospace',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
+                      }}>Space</kbd>
+                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>↑</span>
+                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                        background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
+                        border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
+                        borderRadius: '2px',
+                        color: minecraftTheme.colors.text.primary,
+                        fontFamily: 'monospace',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
+                      }}>Shift</kbd>
+                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>↓</span>
                     </div>
                     <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
                     <div className="flex items-center gap-1.5">

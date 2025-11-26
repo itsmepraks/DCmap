@@ -40,35 +40,89 @@ export function useMapInitialization(
 
     try {
       console.log('🎮 Creating cartoonish/Minecraft-style map')
-      // Disable telemetry to prevent blocked requests
-      mapInstance = new mapboxgl.Map({
-        container: containerRef.current,
-        style: options.styleUrl || process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/outdoors-v12',
-        center: DC_CENTER,
-        zoom: ZOOM_LEVELS.default,
-        pitch: 50,
-        bearing: 0,
-        antialias: true,
-        maxPitch: 85,
-        minZoom: ZOOM_LEVELS.min,
-        maxZoom: ZOOM_LEVELS.max,
-        preserveDrawingBuffer: false,
-        refreshExpiredTiles: true,
-        fadeDuration: 200,
-        crossSourceCollisions: false,
-        renderWorldCopies: false,
-        pitchWithRotate: true,
-        touchZoomRotate: true,
-        touchPitch: true,
-        trackResize: true,
-        attributionControl: true // Required by Mapbox terms
-      })
-
       
-      // Apply world border after creation
-      applyWorldBorder(mapInstance)
+      // Load custom cartoonish style JSON
+      const loadCartoonStyle = async () => {
+        try {
+          const response = await fetch('/custom-isometric-style.json')
+          const cartoonStyle = await response.json()
+          
+          // Update center and zoom to match our defaults
+          cartoonStyle.center = DC_CENTER
+          cartoonStyle.zoom = ZOOM_LEVELS.default
+          cartoonStyle.pitch = 50
+          cartoonStyle.bearing = 0
+          
+          // Disable telemetry to prevent blocked requests
+          mapInstance = new mapboxgl.Map({
+            container: containerRef.current,
+            style: cartoonStyle, // Use custom cartoon style
+            center: DC_CENTER,
+            zoom: ZOOM_LEVELS.default,
+            pitch: 50,
+            bearing: 0,
+            antialias: true,
+            maxPitch: 85,
+            minZoom: ZOOM_LEVELS.min,
+            maxZoom: ZOOM_LEVELS.max,
+            preserveDrawingBuffer: false,
+            refreshExpiredTiles: true,
+            fadeDuration: 0, // No fade for instant cartoonish appearance
+            crossSourceCollisions: false,
+            renderWorldCopies: false,
+            pitchWithRotate: true,
+            touchZoomRotate: true,
+            touchPitch: true,
+            trackResize: true,
+            attributionControl: true // Required by Mapbox terms
+          })
+          
+          // Ensure cartoonish style is visible immediately
+          mapInstance.once('style.load', () => {
+            console.log('✅ Cartoonish map style loaded with bright colors!')
+            // Force a repaint to ensure style is visible
+            mapInstance?.triggerRepaint()
+          })
+          
+          // Continue with rest of initialization
+          initializeMapFeatures()
+        } catch (error) {
+          console.error('Failed to load custom cartoon style, falling back to outdoors-v12:', error)
+          // Fallback to outdoors-v12 if custom style fails
+          mapInstance = new mapboxgl.Map({
+            container: containerRef.current,
+            style: options.styleUrl || process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/outdoors-v12',
+            center: DC_CENTER,
+            zoom: ZOOM_LEVELS.default,
+            pitch: 50,
+            bearing: 0,
+            antialias: true,
+            maxPitch: 85,
+            minZoom: ZOOM_LEVELS.min,
+            maxZoom: ZOOM_LEVELS.max,
+            preserveDrawingBuffer: false,
+            refreshExpiredTiles: true,
+            fadeDuration: 0,
+            crossSourceCollisions: false,
+            renderWorldCopies: false,
+            pitchWithRotate: true,
+            touchZoomRotate: true,
+            touchPitch: true,
+            trackResize: true,
+            attributionControl: true
+          })
+          initializeMapFeatures()
+        }
+      }
+      
+      // Initialize map features (terrain, sky, buildings, etc.)
+      const initializeMapFeatures = () => {
+        if (!mapInstance) return
+        
+        // Apply world border after creation
+        applyWorldBorder(mapInstance)
 
-      mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
+        mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
       mapInstance.on('load', () => {
         console.log('✅ Map loaded successfully!')
@@ -472,6 +526,10 @@ export function useMapInitialization(
       mapInstance.on('error', (e) => {
         console.error('❌ Map error:', e.error)
       })
+      }
+      
+      // Start loading the cartoon style
+      loadCartoonStyle()
     } catch (error) {
       console.error('❌ Error creating map:', error)
       isInitialized.current = false
