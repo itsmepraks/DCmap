@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useMemo, useReducer, type ReactNode } from 'react'
+import { createContext, useContext, useReducer, type ReactNode } from 'react'
 import type { AvatarType } from '@/app/types/avatar'
 
 export type LocomotionMode = 'human' | 'scooter'
@@ -117,22 +117,20 @@ const PlayerContext = createContext<PlayerContextValue | undefined>(undefined)
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(playerReducer, DEFAULT_STATE)
 
-  const value = useMemo<PlayerContextValue>(() => {
-    const setAvatarType = (avatarType: AvatarType) => dispatch({ type: 'SET_AVATAR', avatarType })
-    const setLocomotionMode = (mode: LocomotionMode) => dispatch({ type: 'SET_LOCOMOTION', locomotionMode: mode })
-    const updatePose = (payload: UpdatePosePayload) => dispatch({ type: 'UPDATE_POSE', payload })
-    const setCameraRig = (config: Partial<CameraRigConfig>) => dispatch({ type: 'SET_CAMERA_RIG', payload: config })
-    const resetPlayer = () => dispatch({ type: 'RESET' })
+  const setAvatarType = (avatarType: AvatarType) => dispatch({ type: 'SET_AVATAR', avatarType })
+  const setLocomotionMode = (mode: LocomotionMode) => dispatch({ type: 'SET_LOCOMOTION', locomotionMode: mode })
+  const updatePose = (payload: UpdatePosePayload) => dispatch({ type: 'UPDATE_POSE', payload })
+  const setCameraRig = (config: Partial<CameraRigConfig>) => dispatch({ type: 'SET_CAMERA_RIG', payload: config })
+  const resetPlayer = () => dispatch({ type: 'RESET' })
 
-    return {
-      state,
-      setAvatarType,
-      setLocomotionMode,
-      updatePose,
-      setCameraRig,
-      resetPlayer
-    }
-  }, [state])
+  const value: PlayerContextValue = {
+    state,
+    setAvatarType,
+    setLocomotionMode,
+    updatePose,
+    setCameraRig,
+    resetPlayer
+  }
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
 }

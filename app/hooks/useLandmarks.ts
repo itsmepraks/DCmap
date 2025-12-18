@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import { getNearbyLandmarks, type NearbyLandmark } from '@/app/lib/proximityCalculator'
 import { isNearBorder, getBorderDirection } from '@/app/lib/worldBorder'
@@ -154,9 +154,9 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
   }))
 
   // Function to update current position (called from fly controller for real-time updates)
-  const updateCurrentPosition = useCallback((position: [number, number] | null) => {
+  const updateCurrentPosition = (position: [number, number] | null) => {
     setCurrentPosition(position)
-  }, [])
+  }
 
   return {
     landmarks,

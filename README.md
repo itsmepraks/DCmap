@@ -143,7 +143,6 @@ DCmap/
 ├── public/
 │   ├── data/                  # GeoJSON data files (landmarks, museums, trees, quests)
 │   └── custom-isometric-style.json  # Custom cartoonish map style
-├── v1prd.md                   # Product requirements document
 └── todo.md                    # Development task tracking
 ```
 
@@ -164,6 +163,8 @@ pnpm run dev           # Start development server
 pnpm run build         # Build for production
 pnpm run start         # Start production server
 pnpm run lint          # Run ESLint
+pnpm test              # Run Jest tests
+pnpm run build:walk-graph  # Build walk graph data
 ```
 
 ## 🎨 Key Features Details
@@ -196,7 +197,7 @@ pnpm run lint          # Run ESLint
 - Persistent waypoint storage
 
 ### Landmark Discovery
-- 10+ major D.C. landmarks
+- 10 major D.C. landmarks
 - Discovery animations when found
 - Detailed information cards
 - Fun facts for each location
@@ -247,4 +248,4 @@ MIT License - feel free to use for learning and projects
 
 ---
 
-**Note:** This is an evolving project. Check `v1prd.md` for detailed feature specs and `todo.md` for current development tasks.
+**Note:** This is an evolving project. Check `todo.md` for current development tasks.

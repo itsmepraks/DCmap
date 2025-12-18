@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   loadExperience,
   addXP,
@@ -13,11 +13,6 @@ import {
 
 export function useExperience() {
   const [experience, setExperience] = useState<ExperienceData>(() => loadExperience())
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    setExperience(loadExperience())
-  }, [])
 
   const awardLandmarkXP = () => {
     const xp = getXPFromLandmark()
