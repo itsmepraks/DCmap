@@ -44,6 +44,12 @@ export function useMapInitialization(
       // Load custom cartoonish style JSON
       const loadCartoonStyle = async () => {
         try {
+          // Check container ref is still available
+          if (!containerRef.current) {
+            console.error('❌ Map container ref is null')
+            return
+          }
+          
           const response = await fetch('/custom-isometric-style.json')
           const cartoonStyle = await response.json()
           
