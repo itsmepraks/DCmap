@@ -5,7 +5,7 @@ import { useMap } from '@/app/lib/MapContext'
 import { getNearbyLandmarks, type NearbyLandmark } from '@/app/lib/proximityCalculator'
 import { isNearBorder, getBorderDirection } from '@/app/lib/worldBorder'
 
-interface Landmark {
+export interface Landmark {
   id: string
   name: string
   description: string
