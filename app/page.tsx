@@ -248,11 +248,13 @@ function HomeContent() {
     })
   }, [map])
 
-  // Handle game reset
+  // Handle game reset - reset ALL systems
   const handleResetProgress = () => {
-    gameState.handleResetProgress()
-    // Reload quests to reset objectives
-    questSystem.reloadQuests()
+    gameState.handleResetProgress()        // Reset visited landmarks
+    questSystem.resetProgress()            // Reset quest progress and reload quests
+    experience.reset()                      // Reset XP and levels
+    waypointSystem.clearAllWaypoints()     // Clear all waypoints
+    dailyChallenges.resetChallenges()      // Reset daily challenges and streak
   }
 
   return (

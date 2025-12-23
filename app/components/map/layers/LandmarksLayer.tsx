@@ -15,6 +15,17 @@ interface LandmarksLayerProps {
 
 export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandmarkDiscovered, onSelect }: LandmarksLayerProps) {
   const isInitialized = useRef(false)
+  // Use refs to store latest callbacks to avoid stale closures
+  const onLandmarkDiscoveredRef = useRef(onLandmarkDiscovered)
+  const onSelectRef = useRef(onSelect)
+  const visitedLandmarksRef = useRef(visitedLandmarks)
+
+  // Update refs when props change
+  useEffect(() => {
+    onLandmarkDiscoveredRef.current = onLandmarkDiscovered
+    onSelectRef.current = onSelect
+    visitedLandmarksRef.current = visitedLandmarks
+  }, [onLandmarkDiscovered, onSelect, visitedLandmarks])
 
   useEffect(() => {
     if (!map || isInitialized.current) return
@@ -200,10 +211,10 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
           // GeoJSON coordinates are [longitude, latitude]
           const coordinates = (feature.geometry as any).coordinates.slice()
           const [lng, lat] = coordinates
-          const isVisited = visitedLandmarks.has(properties.id)
+          const isVisited = visitedLandmarksRef.current.has(properties.id)
           
           // Check discovery
-          if (!isVisited && onLandmarkDiscovered) {
+          if (!isVisited && onLandmarkDiscoveredRef.current) {
             const center = map.getCenter()
             const distance = calculateDistance(
               [center.lng, center.lat],
@@ -211,15 +222,15 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
             )
             
             if (distance <= 50) {
-              onLandmarkDiscovered(properties.id, properties)
+              onLandmarkDiscoveredRef.current(properties.id, properties)
             }
           }
           
           console.log(`📍 Selected landmark: ${properties.name}`)
 
           // Call onSelect instead of creating a popup
-          if (onSelect) {
-            onSelect({
+          if (onSelectRef.current) {
+            onSelectRef.current({
               id: properties.id,
               type: 'landmark',
               name: properties.name,
@@ -264,7 +275,7 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
               { selected: false }
             )
             selectedFeatureId = null
-            if (onSelect) onSelect(null)
+            if (onSelectRef.current) onSelectRef.current(null)
           }
         })
 

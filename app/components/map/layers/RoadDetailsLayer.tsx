@@ -238,7 +238,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
     }
 
     initializeLayer()
-  }, [map])
+  }, [map, visible])
 
   // Update visibility
   useEffect(() => {

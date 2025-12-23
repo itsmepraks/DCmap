@@ -100,7 +100,7 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
         }
       }
     }
-  }, [map])
+  }, [map, visible])
 
   // Handle visibility changes
   useEffect(() => {

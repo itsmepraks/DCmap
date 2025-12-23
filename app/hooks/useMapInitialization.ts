@@ -43,13 +43,14 @@ export function useMapInitialization(
       
       // Load custom cartoonish style JSON
       const loadCartoonStyle = async () => {
+        // Store container in local variable for type narrowing
+        const container = containerRef.current
+        if (!container) {
+          console.error('❌ Map container ref is null')
+          return
+        }
+        
         try {
-          // Check container ref is still available
-          if (!containerRef.current) {
-            console.error('❌ Map container ref is null')
-            return
-          }
-          
           const response = await fetch('/custom-isometric-style.json')
           const cartoonStyle = await response.json()
           
@@ -61,7 +62,7 @@ export function useMapInitialization(
           
           // Disable telemetry to prevent blocked requests
           mapInstance = new mapboxgl.Map({
-            container: containerRef.current,
+            container: container,
             style: cartoonStyle, // Use custom cartoon style
             center: DC_CENTER,
             zoom: ZOOM_LEVELS.default,
@@ -95,8 +96,13 @@ export function useMapInitialization(
         } catch (error) {
           console.error('Failed to load custom cartoon style, falling back to outdoors-v12:', error)
           // Fallback to outdoors-v12 if custom style fails
+          // Use the same container variable from outer scope
+          if (!container) {
+            console.error('❌ Map container ref is null in fallback')
+            return
+          }
           mapInstance = new mapboxgl.Map({
-            container: containerRef.current,
+            container: container,
             style: options.styleUrl || process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/outdoors-v12',
             center: DC_CENTER,
             zoom: ZOOM_LEVELS.default,

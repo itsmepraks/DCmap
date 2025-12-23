@@ -48,13 +48,26 @@ export function useDailyChallenges() {
     return streak
   }
 
+  const resetChallenges = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('dc-daily-challenges')
+      localStorage.removeItem('dc-streak')
+    }
+    const today = new Date().toISOString().split('T')[0]
+    const newChallenges = loadDailyChallenges()
+    setDailyChallenges(newChallenges)
+    const streak = loadStreak()
+    setCurrentStreak(streak)
+  }
+
   return {
     dailyChallenges,
     currentStreak,
     handleLandmarkVisit,
     handleDiscover,
     handleExplore,
-    refreshStreak
+    refreshStreak,
+    resetChallenges
   }
 }
 

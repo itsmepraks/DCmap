@@ -5,6 +5,7 @@ import {
   loadQuestProgress,
   startQuest,
   checkQuestProgress,
+  resetQuestProgress,
   type Quest,
   type QuestProgress
 } from '@/app/lib/questSystem'
@@ -74,6 +75,14 @@ export function useQuestSystem() {
     [quests, questProgress.activeQuests]
   )
 
+  const resetProgress = () => {
+    const newProgress = resetQuestProgress()
+    setQuestProgress(newProgress)
+    setCompletedQuest(null)
+    // Reload quests to reset objectives
+    reloadQuests()
+  }
+
   return {
     quests,
     questProgress,
@@ -82,7 +91,8 @@ export function useQuestSystem() {
     handleStartQuest,
     handleLandmarkVisit,
     dismissQuestCompletion: () => setCompletedQuest(null),
-    reloadQuests
+    reloadQuests,
+    resetProgress
   }
 }
 

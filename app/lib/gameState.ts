@@ -112,9 +112,11 @@ export function resetGameProgress(): GameProgress {
   // Clear all related storage
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem('dcmap_quest_progress')
-    localStorage.removeItem('dcmap_daily_challenges')
-    localStorage.removeItem('dcmap_streak')
+    localStorage.removeItem('dc-explorer-quests')      // Fixed: correct quest storage key
+    localStorage.removeItem('dc-daily-challenges')      // Fixed: correct challenges storage key
+    localStorage.removeItem('dc-streak')                // Fixed: correct streak storage key
+    localStorage.removeItem('dc-experience')            // Added: clear experience
+    localStorage.removeItem('dc-waypoints')             // Added: clear waypoints
   }
   
   const newProgress = {
