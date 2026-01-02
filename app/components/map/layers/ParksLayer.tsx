@@ -107,6 +107,8 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
     if (!map || !isInitialized.current) return
 
     const visibility = visible ? 'visible' : 'none'
+    // #region agent log
+    // #endregion
     
     try {
       if (map.getLayer && map.getLayer('parks-seasonal')) {

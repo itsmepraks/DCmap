@@ -1,614 +1,123 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import Map from './components/map/Map'
+import { MapProvider } from './lib/MapContext'
+import { PlayerProvider } from './lib/playerState'
+import StateManager from './components/layout/StateManager'
+import MapSection from './components/layout/MapSection'
+import GameUI from './components/layout/GameUI'
+import HUDSystem from './components/layout/HUDSystem'
 import StatsModal from './components/ui/StatsModal'
 import GameOverlay from './components/ui/GameOverlay'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
-import DiscoveryAnimation from './components/ui/DiscoveryAnimation'
-import ProximityHint from './components/ui/ProximityHint'
-import WorldBorderWarning from './components/ui/WorldBorderWarning'
-import MapLoadingSkeleton from './components/ui/MapLoadingSkeleton'
-import ControlDock from './components/ui/ControlDock'
-import FloatingControlPanel from './components/ui/FloatingControlPanel'
-import QuestPanel from './components/game/QuestPanel'
-import DailyChallengesPanel from './components/game/DailyChallengesPanel'
-import AchievementToast from './components/game/AchievementToast'
-import ParticleEffect from './components/map/effects/ParticleEffect'
-import DiscoveryRadius from './components/map/effects/DiscoveryRadius'
-import BreadcrumbTrail from './components/map/effects/BreadcrumbTrail'
-import MiniStatsBar from './components/ui/hud/MiniStatsBar'
-import { MapProvider, useMap } from './lib/MapContext'
-import { PlayerProvider, usePlayerState } from './lib/playerState'
-import { useGameState } from './hooks/useGameState'
-import { useQuestSystem } from './hooks/useQuestSystem'
-import { useDailyChallenges } from './hooks/useDailyChallenges'
-import { useLandmarks } from './hooks/useLandmarks'
-import { useFlyController } from './hooks/useFlyController'
-import { useWaypointSystem } from './hooks/useWaypointSystem'
-import { useExperience } from './hooks/useExperience'
-import FlyModeAvatar from './components/map/FlyModeAvatar'
-import CompletionNotification from './components/game/CompletionNotification'
-import UnifiedHUD from './components/ui/hud/UnifiedHUD'
-import WaypointLayer from './components/map/WaypointLayer'
-import QuestWaypoints from './components/game/QuestWaypoints'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 
 export default function Home() {
   return (
-    <PlayerProvider>
-      <MapProvider>
-        <HomeContent />
-      </MapProvider>
-    </PlayerProvider>
-  )
-}
+    <ErrorBoundary>
+      <PlayerProvider>
+        <MapProvider>
+          <StateManager>
+            {(state) => (
+              <main
+                className="relative w-full h-screen overflow-hidden"
+                style={{ background: '#F5F0E8' }}
+              >
+                {/* Map and Effects */}
+                <MapSection
+                  layersVisible={state.layersVisible}
+                  currentSeason={state.currentSeason}
+                  is3D={state.is3DView}
+                  isFlying={state.isFlyMode}
+                  landmarks={state.landmarksState.landmarks}
+                  visitedLandmarks={state.gameState.gameProgress.visitedLandmarks}
+                  activeQuestObjects={state.questSystem.activeQuestObjects}
+                  onLandmarkDiscovered={state.handleLandmarkDiscovered}
+                  onNavigateToLandmark={state.handleNavigateToLandmark}
+                  waypoints={state.waypointSystem.waypoints}
+                  activeWaypointId={state.waypointSystem.activeWaypointId}
+                  onAddWaypoint={state.waypointSystem.addWaypoint}
+                  onRemoveWaypoint={state.waypointSystem.removeWaypoint}
+                  gameProgress={state.gameState.gameProgress}
+                  landmarksState={state.landmarksState}
+                  playerPosition={state.playerPosition}
+                  progressiveWaypoints={state.progressiveWaypoints}
+                  onProgressiveWaypointsUpdate={state.handleProgressiveWaypointsUpdate}
+                />
 
-function HomeContent() {
-  // UI State
-  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false)
-  const [layersVisible, setLayersVisible] = useState({
-    museums: false,
-    trees: false,
-    landmarks: true,
-    parks: false
-  })
-  const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
-  const [is3DView, setIs3DView] = useState(false)
-  const [isFlyMode, setIsFlyMode] = useState(false)
-  const [isMapLoaded, setIsMapLoaded] = useState(false)
-  const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
+                {/* Game UI Elements */}
+                <GameUI
+                  quests={state.questSystem.quests}
+                  activeQuestIds={state.questSystem.questProgress.activeQuests}
+                  onStartQuest={state.questSystem.handleStartQuest}
+                  achievement={state.gameState.achievement}
+                  onDismissAchievement={state.gameState.dismissAchievement}
+                  showCompletion={state.showCompletion}
+                  allLandmarksVisited={state.allLandmarksVisited}
+                  hasCompletedQuest={state.hasCompletedQuest}
+                  onCloseCompletion={() => state.setShowCompletion(false)}
+                  nearbyLandmarks={state.landmarksState.nearbyLandmarks}
+                  visitedLandmarks={state.gameState.gameProgress.visitedLandmarks}
+                  onNavigateToLandmark={state.handleNavigateToLandmark}
+                  landmarks={state.landmarksState.landmarks}
+                  showDiscovery={state.landmarksState.showDiscovery}
+                  discoveryData={state.landmarksState.discoveryData}
+                />
 
-  // Custom Hooks
-  const gameState = useGameState()
-  const questSystem = useQuestSystem()
-  const dailyChallenges = useDailyChallenges()
-  const landmarksState = useLandmarks(gameState.gameProgress.visitedLandmarks)
-  const waypointSystem = useWaypointSystem()
-  const experience = useExperience()
-  
-  const { map } = useMap()
+                {/* HUD and Controls */}
+                <HUDSystem
+                  isMapLoaded={state.isMapLoaded}
+                  streak={state.dailyChallenges.currentStreak.current}
+                  points={state.questSystem.questProgress.totalPoints + state.experience.experience.totalXP}
+                  discovered={state.gameState.gameProgress.visitedLandmarks.size}
+                  total={state.landmarksState.landmarks.length || 10}
+                  activeQuests={state.questSystem.questProgress.activeQuests.length}
+                  onOpenStats={state.gameState.openStatsModal}
+                  is3D={state.is3DView}
+                  onToggle3D={state.handleToggle3D}
+                  isFlying={state.isFlyMode}
+                  onToggleFly={state.handleToggleFly}
+                  onToggleLayers={() => state.setIsControlPanelOpen(!state.isControlPanelOpen)}
+                  isControlPanelOpen={state.isControlPanelOpen}
+                  onCloseControlPanel={() => state.setIsControlPanelOpen(false)}
+                  layersVisible={state.layersVisible}
+                  onToggleLayer={state.handleToggleLayer}
+                  currentSeason={state.currentSeason}
+                  onSeasonChange={state.handleSeasonChange}
+                  flyControllerState={state.flyControllerState}
+                  landmarksState={state.landmarksState}
+                  questSystem={state.questSystem}
+                  gameState={state.gameState}
+                  onNavigateToLandmark={state.handleNavigateToLandmark}
+                  showBorderWarning={state.landmarksState.showBorderWarning}
+                  borderDirection={state.landmarksState.borderDirection}
+                  currentObjective={state.currentObjective}
+                  nearestUndiscovered={state.nearestUndiscovered}
+                />
 
-  // Track map load state
-  useEffect(() => {
-    if (!map) return
-    
-    if (map.loaded()) {
-      setIsMapLoaded(true)
-    } else {
-      map.once('load', () => {
-        setIsMapLoaded(true)
-      })
-    }
+                {/* Modal Overlays */}
+                <StatsModal
+                  isOpen={state.gameState.showStatsModal}
+                  onClose={state.gameState.closeStatsModal}
+                  landmarks={state.landmarksState.landmarksWithStatus}
+                  visitedCount={state.gameState.gameProgress.visitedLandmarks.size}
+                  totalCount={10}
+                  onReset={state.handleResetProgress}
+                  questStats={{
+                    totalPoints: state.questSystem.questProgress.totalPoints,
+                    completedQuestsCount: state.questSystem.questProgress.completedQuests.size,
+                    totalQuestsCount: state.questSystem.quests.length,
+                    unlockedBadges: state.questSystem.questProgress.unlockedBadges
+                  }}
+                />
 
-    // Fallback: Force loading state to true after 5 seconds
-    const timeout = setTimeout(() => {
-      if (map && !isMapLoaded) {
-        console.warn('⚠️ Map loading timeout - forcing ready state')
-        setIsMapLoaded(true)
-      }
-    }, 5000)
-
-    return () => clearTimeout(timeout)
-  }, [map, isMapLoaded])
-
-  // ESC key handler - exit fly mode first, then close control panel
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-
-      if (isFlyMode) {
-        e.preventDefault()
-        setIsFlyMode(false)
-        return
-      }
-
-      if (isControlPanelOpen) {
-        setIsControlPanelOpen(false)
-      }
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [isFlyMode, isControlPanelOpen])
-
-  // Handle layer toggles
-  const handleToggleLayer = (layerId: keyof typeof layersVisible) => {
-    setLayersVisible(prev => ({
-      ...prev,
-      [layerId]: !prev[layerId],
-    }))
-  }
-
-  const handleSeasonChange = (season: 'spring' | 'summer' | 'fall' | 'winter') => {
-    setCurrentSeason(season)
-  }
-
-  const handleToggle3D = () => {
-    setIs3DView(prev => !prev)
-  }
-
-  const handleToggleFly = () => {
-    setIsFlyMode(prev => !prev)
-  }
-
-  // Handle landmark discovery (memoized to prevent unnecessary re-renders)
-  const handleLandmarkDiscovered = useCallback((landmarkId: string, landmarkData: any) => {
-    // Check if already visited
-    const isNewVisit = gameState.handleVisitLandmark(landmarkId)
-    
-    // IMPORTANT: Always check quest progress, even if landmark was already visited
-    // This ensures quest objectives update even if user visited landmark before starting quest
-    const questResult = questSystem.handleLandmarkVisit(landmarkId)
-    
-    // Only award XP and show animations for NEW visits
-    if (!isNewVisit) {
-      // Still log quest progress updates for already-visited landmarks
-      if (questResult.updatedQuests.length > 0 || questResult.completedQuests.length > 0) {
-        console.log('🎯 Quest progress updated for already-visited landmark:', landmarkId)
-      }
-      return
-    }
-
-    // Award XP for landmark discovery
-    const xpGained = experience.awardLandmarkXP()
-    console.log(`✨ +${xpGained} XP from landmark discovery!`)
-    
-    // Award XP for quest completion if any
-    if (questResult.completedQuests.length > 0) {
-      questResult.completedQuests.forEach(() => {
-        const questXP = experience.awardQuestXP()
-        console.log(`🎯 +${questXP} XP from quest completion!`)
-      })
-    }
-    
-    // Update daily challenges
-    const challengeResult = dailyChallenges.handleLandmarkVisit()
-    
-    // Award XP for daily challenge completion if any
-    if (challengeResult.completedChallenges.length > 0) {
-      challengeResult.completedChallenges.forEach(() => {
-        const challengeXP = experience.awardDailyChallengeXP()
-        console.log(`🔥 +${challengeXP} XP from daily challenge!`)
-      })
-    }
-    
-    // Show discovery animation
-    const landmark = landmarksState.getLandmarkById(landmarkId)
-    if (landmark) {
-      // Trigger particle effect
-      setParticleEffect({
-        coordinates: landmark.coordinates,
-        icon: landmark.icon
-      })
-      
-      landmarksState.showDiscoveryAnimation(landmarkId)
-      
-      // Hide discovery animation after 3 seconds and show toast
-      setTimeout(() => {
-        gameState.showAchievement({
-          name: landmark.name,
-          icon: landmark.icon,
-          funFact: landmark.funFact
-        })
-        // Clear particle effect
-        setParticleEffect(null)
-      }, 3000)
-    }
-
-    console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
-  }, [gameState, questSystem, dailyChallenges, landmarksState, experience])
-
-  // Fly mode controller (street-view movement)
-  const flyControllerState = useFlyController({
-    map,
-    isActive: isFlyMode,
-    landmarks: landmarksState.landmarks,
-    visitedLandmarks: gameState.gameProgress.visitedLandmarks,
-    onLandmarkDiscovered: handleLandmarkDiscovered,
-    onPositionChange: (pos) => {
-      // Update landmarks hook with real-time fly position for accurate distance calculations
-      if (pos && pos.lng && pos.lat) {
-        landmarksState.updateCurrentPosition([pos.lng, pos.lat])
-      }
-    }
-  })
-  
-  const { state: playerState } = usePlayerState()
-
-  // Check completion status
-  const allLandmarksVisited = landmarksState.landmarks.length > 0 && 
-    gameState.gameProgress.visitedLandmarks.size >= landmarksState.landmarks.length
-  const hasCompletedQuest = questSystem.questCompletion !== null
-  const [showCompletion, setShowCompletion] = useState(false)
-  const [lastCompletionState, setLastCompletionState] = useState({ 
-    landmarks: false, 
-    quest: false 
-  })
-
-  // Show completion notification when status changes
-  useEffect(() => {
-    if (allLandmarksVisited && !lastCompletionState.landmarks) {
-      setShowCompletion(true)
-      setLastCompletionState(prev => ({ ...prev, landmarks: true }))
-    }
-    if (hasCompletedQuest && !lastCompletionState.quest) {
-      setShowCompletion(true)
-      setLastCompletionState(prev => ({ ...prev, quest: true }))
-    }
-  }, [allLandmarksVisited, hasCompletedQuest, lastCompletionState])
-
-  const handleNavigateToLandmark = useCallback((coordinates: [number, number]) => {
-    if (!map) return
-    map.flyTo({
-      center: coordinates,
-      zoom: 17,
-      pitch: 60,
-      bearing: 0,
-      duration: 2000,
-      essential: true
-    })
-  }, [map])
-
-  // Handle game reset - reset ALL systems
-  const handleResetProgress = () => {
-    gameState.handleResetProgress()        // Reset visited landmarks
-    questSystem.resetProgress()            // Reset quest progress and reload quests
-    experience.reset()                      // Reset XP and levels
-    waypointSystem.clearAllWaypoints()     // Clear all waypoints
-    dailyChallenges.resetChallenges()      // Reset daily challenges and streak
-  }
-
-  return (
-    <main 
-      className="relative w-full h-screen overflow-hidden" 
-      style={{ background: '#F5F0E8' }}
-    >
-      {/* Loading skeleton */}
-      {!isMapLoaded && <MapLoadingSkeleton />}
-      
-      <Map 
-        layersVisible={layersVisible} 
-        currentSeason={currentSeason} 
-        is3D={is3DView} 
-        isFlying={isFlyMode}
-        landmarks={landmarksState.landmarks}
-        visitedLandmarks={gameState.gameProgress.visitedLandmarks}
-        onLandmarkDiscovered={handleLandmarkDiscovered}
-      />
-
-      {/* Fly Mode Avatar - Shows where you're looking from */}
-      {isFlyMode && (
-        <FlyModeAvatar
-          map={map}
-          position={flyControllerState.position}
-          bearing={flyControllerState.bearing}
-          isActive={isFlyMode}
-        />
-      )}
-
-      {/* Waypoint Layer - Shows waypoints on map */}
-      <WaypointLayer
-        map={map}
-        waypoints={waypointSystem.waypoints}
-        activeWaypointId={waypointSystem.activeWaypointId}
-        onWaypointClick={(waypoint) => handleNavigateToLandmark(waypoint.coordinates)}
-      />
-
-      {/* Quest Waypoints - Auto-generate waypoints for active quest objectives */}
-      <QuestWaypoints
-        activeQuests={questSystem.activeQuestObjects}
-        landmarks={landmarksState.landmarks}
-        onAddWaypoint={waypointSystem.addWaypoint}
-        onRemoveWaypoint={waypointSystem.removeWaypoint}
-      />
-      
-      {/* Discovery Radius Visualization */}
-      <DiscoveryRadius
-        map={map}
-        landmarks={landmarksState.landmarks.map(l => ({
-          id: l.id,
-          coordinates: l.coordinates,
-          visited: gameState.gameProgress.visitedLandmarks.has(l.id)
-        }))}
-      />
-
-      {/* Particle Effects */}
-      {particleEffect && (
-        <ParticleEffect
-          coordinates={particleEffect.coordinates}
-          icon={particleEffect.icon}
-          isActive={true}
-          map={map}
-        />
-      )}
-
-      {/* Breadcrumb Trail */}
-      <BreadcrumbTrail
-        map={map}
-        visitedLandmarks={gameState.gameProgress.visitedLandmarksWithTime.map(v => ({
-          id: v.id,
-          coordinates: landmarksState.getLandmarkById(v.id)?.coordinates || [0, 0],
-          visitedAt: v.visitedAt
-        }))}
-      />
-      
-      {/* UI Controls */}
-      
-      {/* New Compact Stats Bar - Replaces scattered HUDs */}
-      <MiniStatsBar
-        streak={dailyChallenges.currentStreak.current}
-        points={questSystem.questProgress.totalPoints + experience.experience.totalXP}
-        discovered={gameState.gameProgress.visitedLandmarks.size}
-        total={landmarksState.landmarks.length || 10}
-        activeQuests={questSystem.questProgress.activeQuests.length}
-        onOpenStats={gameState.openStatsModal}
-      />
-      
-      {/* Unified Bottom Right Control Dock */}
-      <ControlDock
-        is3D={is3DView}
-        onToggle3D={handleToggle3D}
-        isFlying={isFlyMode}
-        onToggleFly={handleToggleFly}
-        onToggleLayers={() => setIsControlPanelOpen(!isControlPanelOpen)}
-      />
-      
-      {/* Floating Control Panel - Replaces old Sidebar */}
-      <FloatingControlPanel
-        isOpen={isControlPanelOpen}
-        onClose={() => setIsControlPanelOpen(false)}
-        layersVisible={layersVisible}
-        onToggleLayer={handleToggleLayer}
-        currentSeason={currentSeason}
-        onSeasonChange={handleSeasonChange}
-      />
-      
-      {/* Completion Notifications */}
-      {showCompletion && (
-        <CompletionNotification
-          allLandmarksVisited={allLandmarksVisited}
-          questCompleted={hasCompletedQuest}
-          onClose={() => setShowCompletion(false)}
-        />
-      )}
-
-      {/* Unified HUD - Consolidates recommendations, fly controls, and stats */}
-      <UnifiedHUD
-        mode={isFlyMode ? 'fly' : 'map'}
-        recommendedLandmark={
-          (() => {
-            const unvisited = landmarksState.landmarks.filter(
-              l => !gameState.gameProgress.visitedLandmarks.has(l.id)
-            )
-            if (unvisited.length === 0) return null
-            
-            // PRIORITY 1: Find unvisited landmarks that are part of active quest objectives
-            const questObjectiveLandmarks: typeof unvisited = []
-            questSystem.activeQuestObjects.forEach(quest => {
-              quest.objectives.forEach(objective => {
-                if (!objective.completed && objective.type === 'visit') {
-                  const landmark = unvisited.find(l => l.id === objective.target)
-                  if (landmark && !questObjectiveLandmarks.find(l => l.id === landmark.id)) {
-                    questObjectiveLandmarks.push(landmark)
-                  }
-                }
-              })
-            })
-            
-            // If we have quest objective landmarks, prioritize the nearest one
-            if (questObjectiveLandmarks.length > 0 && flyControllerState.position) {
-              let nearest: typeof questObjectiveLandmarks[0] | null = null
-              let nearestDistance = Infinity
-              
-              questObjectiveLandmarks.forEach(landmark => {
-                const R = 6371000
-                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-                const a = 
-                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                const d = R * c
-                if (d < nearestDistance) {
-                  nearestDistance = d
-                  nearest = landmark
-                }
-              })
-              
-              if (nearest) return nearest
-            }
-            
-            // PRIORITY 2: Fall back to nearest unvisited landmark (not in quest)
-            if (flyControllerState.position) {
-              let nearest: typeof unvisited[0] | null = null
-              let nearestDistance = Infinity
-              
-              unvisited.forEach(landmark => {
-                const R = 6371000
-                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-                const a = 
-                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                const d = R * c
-                if (d < nearestDistance) {
-                  nearestDistance = d
-                  nearest = landmark
-                }
-              })
-              
-              return nearest ? nearest : null
-            }
-            return unvisited[0] || null
-          })()
-        }
-        recommendationDistance={
-          (() => {
-            const unvisited = landmarksState.landmarks.filter(
-              l => !gameState.gameProgress.visitedLandmarks.has(l.id)
-            )
-            if (unvisited.length === 0 || !flyControllerState.position) return null
-            
-            // Calculate distance to recommended landmark (which prioritizes quest objectives)
-            type LandmarkType = typeof unvisited[0]
-            const recommended = ((): LandmarkType | null => {
-              // PRIORITY 1: Quest objective landmarks
-              const questObjectiveLandmarks: LandmarkType[] = []
-              questSystem.activeQuestObjects.forEach(quest => {
-                quest.objectives.forEach(objective => {
-                  if (!objective.completed && objective.type === 'visit') {
-                    const landmark = unvisited.find(l => l.id === objective.target)
-                    if (landmark && !questObjectiveLandmarks.find(l => l.id === landmark.id)) {
-                      questObjectiveLandmarks.push(landmark)
-                    }
-                  }
-                })
-              })
-              
-              if (questObjectiveLandmarks.length > 0) {
-                let nearest: LandmarkType | null = null
-                let nearestDistance = Infinity
-                
-                questObjectiveLandmarks.forEach(landmark => {
-                  const R = 6371000
-                  const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-                  const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-                  const a = 
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                    Math.sin(dLng / 2) * Math.sin(dLng / 2)
-                  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                  const d = R * c
-                  if (d < nearestDistance) {
-                    nearestDistance = d
-                    nearest = landmark
-                  }
-                })
-                
-                if (nearest) return nearest
-              }
-              
-              // PRIORITY 2: Nearest unvisited landmark
-              let nearest: LandmarkType | null = null
-              let nearestDistance = Infinity
-              
-              unvisited.forEach(landmark => {
-                const R = 6371000
-                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-                const a = 
-                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                const d = R * c
-                if (d < nearestDistance) {
-                  nearestDistance = d
-                  nearest = landmark
-                }
-              })
-              
-              return nearest
-            })()
-            
-            if (!recommended) return null
-            
-            // Calculate distance to recommended landmark
-            const R = 6371000
-            const dLat = (recommended.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-            const dLng = (recommended.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-            const a = 
-              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(recommended.coordinates[1] * Math.PI / 180) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2)
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-            return R * c
-          })()
-        }
-        onNavigateToRecommendation={handleNavigateToLandmark}
-        flySpeed={flyControllerState.speed}
-        flyAltitude={flyControllerState.altitude}
-        flyPosition={flyControllerState.position}
-        flyBearing={flyControllerState.bearing || 0}
-        nearestLandmark={
-          landmarksState.nearbyLandmarks.length > 0
-            ? {
-                name: landmarksState.nearbyLandmarks[0].name,
-                distance: landmarksState.nearbyLandmarks[0].distance
-              }
-            : undefined
-        }
-      />
-      
-      {/* Daily Challenges Panel - Now minimized by default, click streak to expand */}
-      {/* Temporarily hidden for cleaner UI - accessible via stats modal */}
-      {false && (
-        <DailyChallengesPanel
-          challenges={dailyChallenges.dailyChallenges}
-          streak={dailyChallenges.currentStreak.current}
-        />
-      )}
-      
-      {/* Quest Panel (Main) */}
-      <QuestPanel
-        quests={questSystem.quests}
-        activeQuestIds={questSystem.questProgress.activeQuests}
-        onStartQuest={questSystem.handleStartQuest}
-      />
-      
-      {/* World Border Warning */}
-      <WorldBorderWarning
-        isVisible={landmarksState.showBorderWarning}
-        direction={landmarksState.borderDirection}
-      />
-      
-      {/* Proximity Hints - Show nearby landmarks (Centered bottom pill) */}
-      <ProximityHint
-        nearbyLandmarks={landmarksState.nearbyLandmarks}
-        visitedLandmarks={gameState.gameProgress.visitedLandmarks}
-        onNavigate={landmarksState.navigateToLandmark}
-      />
-      
-      {/* Discovery Animation - Full screen celebration */}
-      <DiscoveryAnimation
-        isVisible={landmarksState.showDiscovery}
-        landmarkName={landmarksState.discoveryData?.name || ''}
-        landmarkIcon={landmarksState.discoveryData?.icon || ''}
-        points={10}
-      />
-      
-      {/* Achievement Toast */}
-      <AchievementToast
-        isVisible={!!gameState.achievement}
-        landmarkName={gameState.achievement?.name || ''}
-        landmarkIcon={gameState.achievement?.icon || ''}
-        funFact={gameState.achievement?.funFact || ''}
-        onDismiss={gameState.dismissAchievement}
-      />
-      
-      {/* Stats Modal */}
-      <StatsModal
-        isOpen={gameState.showStatsModal}
-        onClose={gameState.closeStatsModal}
-        landmarks={landmarksState.landmarksWithStatus}
-        visitedCount={gameState.gameProgress.visitedLandmarks.size}
-        totalCount={10}
-        onReset={handleResetProgress}
-        questStats={{
-          totalPoints: questSystem.questProgress.totalPoints,
-          completedQuestsCount: questSystem.questProgress.completedQuests.size,
-          totalQuestsCount: questSystem.quests.length,
-          unlockedBadges: questSystem.questProgress.unlockedBadges
-        }}
-      />
-      
-      {/* GTA-style Game Overlay - Visual effects */}
-      <GameOverlay />
-      
-      {/* Onboarding Tutorial */}
-      <OnboardingTutorial />
-    </main>
+                {/* Global Overlays */}
+                <GameOverlay />
+                <OnboardingTutorial />
+              </main>
+            )}
+          </StateManager>
+        </MapProvider>
+      </PlayerProvider>
+    </ErrorBoundary>
   )
 }

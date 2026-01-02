@@ -33,6 +33,19 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
     if (!map) return
     if (!visible) return // Don't initialize if not visible
 
+    // Only show 3D markers at zoom 14+ to avoid distraction at lower zooms
+    const currentZoom = map.getZoom()
+    if (currentZoom < 14) {
+      // Hide markers at low zoom - 2D icons handle that
+      markersRef.current.forEach(marker => {
+        if (marker && typeof marker.remove === 'function') {
+          marker.remove()
+        }
+      })
+      markersRef.current = []
+      return
+    }
+
     const initializeMarkers = async () => {
       try {
         // Wait for map style to load
@@ -79,8 +92,9 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
           // Create 3D museum building marker
           // CRITICAL: Ensure marker element doesn't use fixed positioning
           const markerElement = document.createElement('div')
-          markerElement.style.width = '60px'
-          markerElement.style.height = '80px'
+          // Smaller base size - scales with zoom
+          markerElement.style.width = '50px'
+          markerElement.style.height = '65px'
           markerElement.style.position = 'absolute' // Must be absolute, NOT fixed
           markerElement.style.pointerEvents = 'auto'
           markerElement.style.cursor = 'pointer'
@@ -103,8 +117,8 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
                 bottom: 0;
                 left: 50%;
                 transform: translateX(-50%) perspective(500px) rotateX(10deg);
-                width: 70px;
-                height: 90px;
+                width: 60px;
+                height: 75px;
                 transform-style: preserve-3d;
               ">
                 <!-- Main building structure (white walls) -->
@@ -113,8 +127,8 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
                   bottom: 0;
                   left: 50%;
                   transform: translateX(-50%);
-                  width: 60px;
-                  height: 75px;
+                  width: 50px;
+                  height: 62px;
                   background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 50%, #E8E8E8 100%);
                   border-radius: 4px 4px 2px 2px;
                   box-shadow: 
@@ -145,7 +159,7 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
                 <!-- Colored roof (dark red like reference) -->
                 <div style="
                   position: absolute;
-                  bottom: 75px;
+                  bottom: 62px;
                   left: 50%;
                   transform: translateX(-50%) translateZ(0);
                   width: 0;
@@ -293,7 +307,51 @@ export default function Museum3DMarkers({ visible }: Museum3DMarkersProps) {
 
     initializeMarkers()
 
+    // Update marker visibility and scale based on zoom - throttle for performance
+    let zoomUpdateTimeout: NodeJS.Timeout | null = null
+    const handleZoomChange = () => {
+      if (!map) return
+      
+      // Throttle zoom updates to reduce overhead
+      if (zoomUpdateTimeout) {
+        clearTimeout(zoomUpdateTimeout)
+      }
+      
+      zoomUpdateTimeout = setTimeout(() => {
+        const zoom = map.getZoom()
+        markersRef.current.forEach(marker => {
+          if (marker) {
+            const el = marker.getElement()
+            if (el) {
+              // Hide at zoom < 14, show at zoom >= 14
+              const shouldShow = zoom >= 14
+              el.style.display = shouldShow ? 'block' : 'none'
+              
+              // Scale markers based on zoom for smoother transitions
+              if (shouldShow) {
+                const scale = Math.min(1, (zoom - 14) / 4) // Scale from 0 to 1 between zoom 14-18
+                const baseScale = 0.7 + (scale * 0.3) // Scale between 0.7x and 1x
+                el.style.transform = `scale(${baseScale})`
+                el.style.transformOrigin = 'center bottom'
+              }
+            }
+          }
+        })
+      }, 50) // Throttle to 20fps for zoom updates
+    }
+
+    if (map) {
+      map.on('zoom', handleZoomChange)
+      handleZoomChange() // Initial check
+    }
+
     return () => {
+      if (zoomUpdateTimeout) {
+        clearTimeout(zoomUpdateTimeout)
+      }
+      if (map) {
+        map.off('zoom', handleZoomChange)
+      }
       // Cleanup handled in the main effect cleanup
     }
   }, [map, visible])

@@ -210,8 +210,8 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
             type: 'geojson',
             data: treeData,
             cluster: true,
-            clusterMaxZoom: 14,
-            clusterRadius: 50,
+            clusterMaxZoom: 15, // Cluster until zoom 15 for better performance
+            clusterRadius: 60, // Larger radius = fewer clusters = better performance
             generateId: true // Needed for feature-state
           })
         }
@@ -396,6 +396,8 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
   useEffect(() => {
     if (!map || !isInitialized.current) return
     const visibility = visible ? 'visible' : 'none'
+    // #region agent log
+    // #endregion
     ;[
       'dmv-tree-canopy-base',
       'dmv-tree-canopy-volume',

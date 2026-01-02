@@ -56,10 +56,10 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
 
     let animationFrameId: number | null = null
     let lastUpdateTime = 0
-    const UPDATE_INTERVAL = 100 // Update every 100ms for smooth real-time feel
+    const UPDATE_INTERVAL = 200 // Update every 200ms for better performance (reduced from 100ms)
 
     const updateProximity = (currentTime: number) => {
-      // Throttle updates to every 100ms for performance
+      // Throttle updates to every 200ms for better performance
       if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
         animationFrameId = requestAnimationFrame(updateProximity)
         return
@@ -77,8 +77,15 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
         visitedLandmarks
       )
       
-      // Always update to get real-time distance changes (not just when IDs change)
-      setNearbyLandmarks(nearby)
+      // Only update if nearby landmarks actually changed to reduce re-renders
+      setNearbyLandmarks(prev => {
+        const prevIds = new Set(prev.map(l => l.id))
+        const newIds = new Set(nearby.map(l => l.id))
+        if (prevIds.size === newIds.size && [...prevIds].every(id => newIds.has(id))) {
+          return prev // No change, skip re-render
+        }
+        return nearby
+      })
       
       // Check for world border warning
       const nearBorder = isNearBorder(center.lng, center.lat)

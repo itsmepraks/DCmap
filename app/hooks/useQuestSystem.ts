@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   loadQuestProgress,
   startQuest,
@@ -9,6 +9,11 @@ import {
   type Quest,
   type QuestProgress
 } from '@/app/lib/questSystem'
+import {
+  getCurrentObjectiveInfo,
+  type CurrentObjectiveInfo
+} from '@/app/lib/progressiveWaypointSystem'
+import type { Coordinates } from '@/app/lib/proximityDetector'
 
 export function useQuestSystem() {
   const [quests, setQuests] = useState<Quest[]>([])
@@ -83,6 +88,27 @@ export function useQuestSystem() {
     reloadQuests()
   }
 
+  /**
+   * Get current objective info for HUD display
+   * Requires landmarks and player position to calculate distance
+   */
+  const getObjectiveInfo = useCallback((
+    landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>,
+    playerPosition: Coordinates | null
+  ): CurrentObjectiveInfo | null => {
+    return getCurrentObjectiveInfo(activeQuestObjects, landmarks, playerPosition)
+  }, [activeQuestObjects])
+
+  /**
+   * Get quest progress percentage for the first active quest
+   */
+  const getQuestProgressPercentage = useCallback((): number => {
+    if (activeQuestObjects.length === 0) return 0
+    const quest = activeQuestObjects[0]
+    const completed = quest.objectives.filter(o => o.completed).length
+    return (completed / quest.objectives.length) * 100
+  }, [activeQuestObjects])
+
   return {
     quests,
     questProgress,
@@ -92,7 +118,10 @@ export function useQuestSystem() {
     handleLandmarkVisit,
     dismissQuestCompletion: () => setCompletedQuest(null),
     reloadQuests,
-    resetProgress
+    resetProgress,
+    // New progressive waypoint helpers
+    getObjectiveInfo,
+    getQuestProgressPercentage
   }
 }
 

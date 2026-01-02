@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
 import { formatDistance } from '@/app/lib/proximityDetector'
+import type { CurrentObjectiveInfo } from '@/app/lib/progressiveWaypointSystem'
 
 interface Landmark {
   id: string
@@ -24,6 +25,12 @@ interface UnifiedHUDProps {
   flyPosition?: { lng: number; lat: number }
   flyBearing?: number
   nearestLandmark?: { name: string; distance: number }
+  // Quest Progress (NEW)
+  currentObjective?: CurrentObjectiveInfo | null
+  onNavigateToObjective?: (coordinates: [number, number]) => void
+  // Nearest undiscovered landmark (NEW)
+  nearestUndiscovered?: { id: string; name: string; distance: number; coordinates: [number, number] } | null
+  onNavigateToUndiscovered?: (coordinates: [number, number]) => void
 }
 
 export default function UnifiedHUD({
@@ -35,10 +42,16 @@ export default function UnifiedHUD({
   flyAltitude = 0,
   flyPosition,
   flyBearing = 0,
-  nearestLandmark
+  nearestLandmark,
+  currentObjective,
+  onNavigateToObjective,
+  nearestUndiscovered,
+  onNavigateToUndiscovered
 }: UnifiedHUDProps) {
   const [showFlyControls, setShowFlyControls] = useState(true)
   const [showRecommendation, setShowRecommendation] = useState(true)
+  const [showQuestCard, setShowQuestCard] = useState(true)
+  const [showNearestCard, setShowNearestCard] = useState(true)
 
   const getCardinalDirection = (bearing: number) => {
     const normalized = ((bearing % 360) + 360) % 360
@@ -173,6 +186,156 @@ export default function UnifiedHUD({
                 </div>
               </motion.div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Quest Objective Card (NEW - Hybrid HUD) */}
+      <AnimatePresence>
+        {showQuestCard && currentObjective && (
+          <motion.div
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 100, opacity: 0 }}
+            className="fixed top-32 right-4 sm:top-36 sm:right-6 z-40"
+            style={{ maxWidth: '220px' }}
+          >
+            <div
+              className="px-3 py-2 shadow-lg relative cursor-pointer group"
+              onClick={() => currentObjective.coordinates && onNavigateToObjective?.(currentObjective.coordinates)}
+              style={{
+                background: `linear-gradient(145deg, #FFF8DC 0%, #FFE4B5 100%)`,
+                border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
+                borderRadius: minecraftTheme.minecraft.borderRadius,
+                boxShadow: '0 4px 0 #B8431A, 0 6px 12px rgba(0,0,0,0.2)',
+                imageRendering: minecraftTheme.minecraft.imageRendering,
+              }}
+            >
+              {/* Header with quest icon and progress */}
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-lg">{currentObjective.quest.icon}</span>
+                  <span className="text-[10px] font-bold" style={{ 
+                    color: minecraftTheme.colors.text.secondary,
+                    fontFamily: 'monospace'
+                  }}>
+                    QUEST
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold" style={{ 
+                    color: minecraftTheme.colors.terracotta.base,
+                    fontFamily: 'monospace'
+                  }}>
+                    {currentObjective.completedCount}/{currentObjective.totalCount}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowQuestCard(false)
+                    }}
+                    className="opacity-50 hover:opacity-100 transition-opacity text-xs ml-1"
+                    style={{ color: minecraftTheme.colors.text.secondary }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              
+              {/* Current objective */}
+              <div className="flex items-center gap-2">
+                <div className="text-xl">🎯</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold truncate" style={{ 
+                    color: minecraftTheme.colors.text.primary,
+                    fontFamily: 'monospace'
+                  }}>
+                    {currentObjective.objective.description}
+                  </div>
+                  {currentObjective.distanceFromPlayer !== null && (
+                    <div className="text-[10px] mt-0.5" style={{ 
+                      color: minecraftTheme.colors.text.secondary,
+                      fontFamily: 'monospace'
+                    }}>
+                      📍 {formatDistance(currentObjective.distanceFromPlayer)}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Progress bar */}
+              <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${currentObjective.progressPercentage}%` }}
+                  transition={{ duration: 0.5 }}
+                  className="h-full rounded-full"
+                  style={{
+                    background: `linear-gradient(90deg, #7ED957, #5DA5DB)`
+                  }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Nearest Undiscovered Landmark Card (NEW - Hybrid HUD) */}
+      <AnimatePresence>
+        {showNearestCard && nearestUndiscovered && mode === 'map' && (
+          <motion.div
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 100, opacity: 0 }}
+            className="fixed z-40"
+            style={{ 
+              maxWidth: '200px',
+              top: currentObjective && showQuestCard ? '220px' : '80px',
+              right: '16px'
+            }}
+          >
+            <div
+              className="px-2.5 py-1.5 shadow-lg relative cursor-pointer group"
+              onClick={() => onNavigateToUndiscovered?.(nearestUndiscovered.coordinates)}
+              style={{
+                background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
+                border: `2px solid ${minecraftTheme.colors.accent.green}`,
+                borderRadius: minecraftTheme.minecraft.borderRadius,
+                boxShadow: '0 3px 0 #5DA040, 0 5px 10px rgba(0,0,0,0.15)',
+                imageRendering: minecraftTheme.minecraft.imageRendering,
+              }}
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[8px] font-bold" style={{ 
+                  color: minecraftTheme.colors.accent.greenDark,
+                  fontFamily: 'monospace'
+                }}>
+                  🧭 NEAREST
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowNearestCard(false)
+                  }}
+                  className="opacity-50 hover:opacity-100 transition-opacity text-[8px]"
+                  style={{ color: minecraftTheme.colors.text.secondary }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="text-[10px] font-bold truncate" style={{ 
+                color: minecraftTheme.colors.text.primary,
+                fontFamily: 'monospace'
+              }}>
+                {nearestUndiscovered.name}
+              </div>
+              <div className="text-[8px] mt-0.5" style={{ 
+                color: minecraftTheme.colors.accent.green,
+                fontFamily: 'monospace'
+              }}>
+                📍 {formatDistance(nearestUndiscovered.distance)}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

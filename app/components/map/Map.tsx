@@ -33,21 +33,23 @@ export default function Map({
   
   const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
 
-  // Handle 3D view toggle with cinematic animation (disabled while flying)
+  // Handle 3D view toggle with smooth animation (disabled while flying)
   useEffect(() => {
     if (!map || isFlying) return // Don't interfere with fly mode street camera
 
-    // GTA-like cinematic 3D transformation
+    // Cancel any ongoing animations first to prevent conflicts
+    map.stop()
+
+    // Smooth 3D transformation - use shorter duration for better responsiveness
     map.easeTo({
       pitch: is3D ? 70 : 45,           // More dramatic angle for immersive 3D
       zoom: is3D ? 16 : 12,            // Wider zoom to show MD/VA region
-      duration: 2000,                  // Smooth cinematic transition
-      easing: (t) => t < 0.5 
-        ? 4 * t * t * t                // Ease-in cubic
-        : 1 - Math.pow(-2 * t + 2, 3) / 2  // Ease-out cubic
+      duration: 1000,                  // Faster transition (reduced from 2000ms)
+      easing: (t) => t * (2 - t),      // Smooth ease-out for better performance
+      essential: true                   // Essential animation - can't be interrupted
     })
 
-    console.log(`🎮 ${is3D ? 'Entering GTA-like 3D world mode' : 'Returning to overview mode'}`)
+    console.log(`🎮 ${is3D ? 'Entering 3D world mode' : 'Returning to overview mode'}`)
   }, [map, is3D, isFlying])
 
   // Close panel on map click if not clicking a feature

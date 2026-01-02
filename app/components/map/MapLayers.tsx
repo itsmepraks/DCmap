@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import type mapboxgl from 'mapbox-gl'
 import type { LayerVisibility } from '@/app/types/map'
 import MuseumsLayer from './layers/MuseumsLayer'
@@ -26,6 +26,11 @@ export const MapLayers = memo(function MapLayers({
   onLandmarkDiscovered,
   onSelectEntity
 }: MapLayersProps) {
+  useEffect(() => {
+    // #region agent log
+    // #endregion
+  }, [layersVisible, currentSeason, map])
+
   return (
     <>
       <ParksLayer visible={layersVisible.trees} season={currentSeason} />

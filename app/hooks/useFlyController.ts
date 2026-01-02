@@ -194,6 +194,7 @@ export function useFlyController({
     let lastTime = performance.now()
     let animationFrameId: number
     let lastLandmarkCheck = 0
+    let frameCount = 0 // For throttling state updates
 
     const animate = (currentTime: number) => {
       if (!map || !isActive) return
@@ -248,12 +249,10 @@ export function useFlyController({
         position[0] += forwardLng + strafeLng
         position[1] += forwardLat + strafeLat
 
-        // IMMEDIATE camera update - no smoothing, matches key presses exactly
-        // Use jumpTo for instant camera movement (no easing)
-        map.jumpTo({
-          center: [position[0], position[1]],
-          bearing: bearing
-        })
+        // Smooth camera update - use setCenter/setBearing for instant but smooth updates
+        // This avoids animation queue buildup that causes lag
+        map.setCenter([position[0], position[1]])
+        map.setBearing(bearing)
 
         // Update camera altitude by adjusting pitch/zoom based on altitude
         // Higher altitude = less pitch, more zoom out
@@ -261,8 +260,15 @@ export function useFlyController({
         const dynamicPitch = CAMERA_PITCH - (altitudeFactor * 20) // Reduce pitch at higher altitudes
         const dynamicZoom = CAMERA_ZOOM - (altitudeFactor * 2) // Zoom out at higher altitudes
         
-        map.setPitch(dynamicPitch)
-        map.setZoom(dynamicZoom)
+        // Only update pitch/zoom if they changed significantly to reduce overhead
+        const currentPitch = map.getPitch()
+        const currentZoom = map.getZoom()
+        if (Math.abs(currentPitch - dynamicPitch) > 0.5) {
+          map.setPitch(dynamicPitch)
+        }
+        if (Math.abs(currentZoom - dynamicZoom) > 0.1) {
+          map.setZoom(dynamicZoom)
+        }
 
         // Update player state
         updatePose({
@@ -274,34 +280,38 @@ export function useFlyController({
           }
         })
 
-        setControllerState({
-          isMoving: true,
-          speed: MOVE_SPEED,
-          altitude: currentAltitude,
-          position: { lng: position[0], lat: position[1] },
-          bearing: bearing
-        })
+        // Throttle state updates to reduce re-renders (update every 3 frames ~50ms)
+        frameCount++
+        if (frameCount % 3 === 0) {
+          setControllerState({
+            isMoving: true,
+            speed: MOVE_SPEED,
+            altitude: currentAltitude,
+            position: { lng: position[0], lat: position[1] },
+            bearing: bearing
+          })
+        }
       } else {
-        // When stopped, IMMEDIATELY stop camera movement
-        // Use jumpTo to ensure camera stops exactly where it is (no drift)
-        map.jumpTo({
-          center: [position[0], position[1]],
-          bearing: bearing
-        })
+        // When stopped, instantly stop camera movement
+        map.setCenter([position[0], position[1]])
+        map.setBearing(bearing)
 
-        // Still update altitude even when not moving
-        setControllerState(prev => ({ 
-          ...prev, 
-          isMoving: false, 
-          speed: 0,
-          altitude: currentAltitude,
-          position: { lng: position[0], lat: position[1] },
-          bearing: bearing
-        }))
+        // Update state less frequently when stopped
+        frameCount++
+        if (frameCount % 5 === 0) {
+          setControllerState(prev => ({ 
+            ...prev, 
+            isMoving: false, 
+            speed: 0,
+            altitude: currentAltitude,
+            position: { lng: position[0], lat: position[1] },
+            bearing: bearing
+          }))
+        }
       }
 
-          // Update position callback in real-time for proximity hints (every frame)
-          if (positionCallbackRef.current) {
+          // Update position callback (throttled to reduce overhead)
+          if (positionCallbackRef.current && frameCount % 3 === 0) {
             positionCallbackRef.current({ 
               lng: position[0], 
               lat: position[1], 

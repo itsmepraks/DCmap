@@ -1191,11 +1191,17 @@ Bottom-Left:          Bottom-Right:
 
 ---
 
-**Last Updated**: November 15, 2025
-**Current Phase**: Phase 2 - F4 Complete ✅ + Complete UI Redesign ✅ + Live Location ✅ + 3D Maps ✅ + TRUE First-Person Walk Mode ✅ + Enhanced 3D Visibility ✅ + Third-Person Avatar ✅ + Complete UX Overhaul ✅ + Build Errors Fixed ✅ + Runtime Errors Fixed ✅ + User Guide Created ✅ + Button Layout Fixed ✅ + UI Consistency Redesign Complete ✅ + 3D Walking Character ✅ + Multi-Avatar System ✅ + Simple Third-Person Camera Fix ✅ + Performance Optimization ✅ + **Ultra-Simple Street View Mode ✅** | F5 Pending
-**Next Up**: User testing with ultra-simple road-level walk mode
+**Last Updated**: January 2, 2026
+**Current Phase**: Phase 2 - F4 Complete ✅ + Complete UI Redesign ✅ + Live Location ✅ + 3D Maps ✅ + TRUE First-Person Walk Mode ✅ + Enhanced 3D Visibility ✅ + Third-Person Avatar ✅ + Complete UX Overhaul ✅ + Build Errors Fixed ✅ + Runtime Errors Fixed ✅ + User Guide Created ✅ + Button Layout Fixed ✅ + UI Consistency Redesign Complete ✅ + 3D Walking Character ✅ + Multi-Avatar System ✅ + Simple Third-Person Camera Fix ✅ + Performance Optimization ✅ + Ultra-Simple Street View Mode ✅ + **Progressive Waypoint System ✅** | F5 Pending
+**Next Up**: User testing with progressive waypoint system
 
 ---
+
+## Tooling / Dev Environment Fixes (Dec 28, 2025)
+
+- [x] **Fixed pnpm self-update EPERM on Windows**: `pnpm self-update` was failing with `EPERM ... unlink ...AppData\\Local\\pnpm\\pnpm.EXE` because Windows cannot replace a running executable. Switched pnpm to a user-global npm install and removed the conflicting local `pnpm.exe` from PATH by renaming it.
+  - **Result**: `pnpm -v` reports `10.26.2` and `pnpm run dev` starts successfully.
+  - **Note**: Prefer updating pnpm via `npm i -g pnpm@<version>` on this machine instead of `pnpm self-update` to avoid the same Windows file-lock issue.
 
 ### Ultra-Simple Street View Mode - November 15, 2025
 
@@ -2121,4 +2127,120 @@ Walk mode now provides a truly immersive first-person experience of Washington D
 - **Code Cleanup**: Deleted unused `useChaseCamera.ts` and legacy `PlayerAvatar.tsx`.
 - **Documentation**: Moved feature log markdown files to `docs/archive/` for better project organization.
 - **Robustness Check**: Verified type safety and linter status (clean).
+
+---
+
+### Progressive Waypoint System - January 2, 2026 ✅
+
+**Problem Identified:**
+- All waypoints/markers rendered at the same time
+- No "game-ish" logic for progressive objective display
+- Nearest waypoint HUD not reflective of quest progress
+- No visual hierarchy between current and upcoming objectives
+
+**Solution: Progressive Waypoint Revelation System**
+
+1. **Created `progressiveWaypointSystem.ts`** ✅
+   - `getCurrentObjective(quest)` - Gets the first uncompleted objective
+   - `getUpcomingObjectives(quest)` - Gets remaining objectives after current
+   - `calculateWaypointOpacity(distance, isPrimary)` - Fades waypoints based on proximity
+   - `isWaypointVisible(distance, isPrimary)` - Distance-based visibility check (500m reveal radius)
+   - `buildProgressiveWaypoints()` - Constructs waypoint list with visibility/opacity
+   - `getCurrentObjectiveInfo()` - Detailed info for HUD display
+
+2. **Refactored `QuestWaypoints.tsx`** ✅
+   - Changed from "add all waypoints" to progressive system
+   - Primary waypoint: Current objective (100% opacity, always visible)
+   - Secondary waypoints: Within 500m (50% opacity, faded)
+   - Hidden: Beyond 500m (not rendered)
+   - Uses `onWaypointsUpdate` callback for state management
+
+3. **Enhanced `WaypointLayer.tsx`** ✅
+   - Added `isPrimary`, `opacity`, `isVisible` properties
+   - CSS animations for primary waypoints (pulsing glow)
+   - Fade-in animation for secondary waypoints appearing in range
+   - Different sizes: 40px primary, 28px secondary
+   - Dynamic z-index based on priority
+
+4. **Updated `UnifiedHUD.tsx`** ✅
+   - New "Quest Progress Card" showing:
+     * Current objective description
+     * Distance to target
+     * Progress bar (X/Y objectives)
+   - New "Nearest Undiscovered Landmark" card
+   - Both cards clickable to navigate
+   - Dismissible with X button
+
+5. **Extended `useQuestSystem.ts`** ✅
+   - Added `getObjectiveInfo()` helper for HUD
+   - Added `getQuestProgressPercentage()` helper
+
+6. **Wired `StateManager.tsx`** ✅
+   - Tracks `playerPosition` from fly controller or map center
+   - Computes `currentObjective` info for HUD
+   - Computes `nearestUndiscovered` landmark
+   - Manages `progressiveWaypoints` state
+   - Passes all new props through render prop pattern
+
+**Waypoint Visibility Rules:**
+
+| Type | Condition | Opacity | Visual |
+|------|-----------|---------|--------|
+| Primary | Current objective | 100% | Pulsing glow, larger icon (40px) |
+| Secondary | Within 500m, not current | 30-60% | Faded, smaller icon (28px) |
+| Hidden | Beyond 500m, not current | 0% | Not rendered |
+
+**HUD Layout (Top Right):**
+1. Quest Progress Card (if active quest)
+   - Quest icon + progress count (e.g., "2/4")
+   - 🎯 Current objective description
+   - Distance in meters/km
+   - Progress bar with gradient
+
+2. Nearest Undiscovered Card (below quest card)
+   - 🧭 Landmark name
+   - Distance to nearest unvisited
+
+**Technical Implementation:**
+
+```typescript
+// Progressive waypoint visibility
+const REVEAL_RADIUS_METERS = 500
+
+// Primary waypoint - always visible
+if (isPrimary) return { opacity: 1.0, isVisible: true }
+
+// Secondary waypoints - distance-based reveal
+if (distance <= REVEAL_RADIUS_METERS) {
+  const normalizedDistance = distance / REVEAL_RADIUS_METERS
+  return { 
+    opacity: 0.6 - (normalizedDistance * 0.3),
+    isVisible: true 
+  }
+}
+return { opacity: 0, isVisible: false }
+```
+
+**Files Created:**
+- `app/lib/progressiveWaypointSystem.ts` - Core utility functions
+
+**Files Modified:**
+- `app/components/game/QuestWaypoints.tsx` - Progressive waypoint generation
+- `app/components/map/WaypointLayer.tsx` - Enhanced rendering with animations
+- `app/components/ui/hud/UnifiedHUD.tsx` - Quest objective + nearest landmark cards
+- `app/hooks/useQuestSystem.ts` - Current objective helpers
+- `app/components/layout/StateManager.tsx` - Position tracking + state management
+- `app/components/layout/MapSection.tsx` - Progressive waypoint props
+- `app/components/layout/HUDSystem.tsx` - New HUD props
+- `app/page.tsx` - Wire up all new props
+
+**Result:**
+🎯 **Sequential objective targeting** - Only current objective is primary
+🌫️ **Distance-based fog of war** - Upcoming objectives fade in within 500m
+📍 **Clear visual hierarchy** - Primary waypoints pulse, secondary fade
+🎮 **Game-like progression** - Focus on one objective at a time
+📊 **Quest progress HUD** - Shows current objective + distance + progress bar
+🧭 **Nearest landmark HUD** - Always shows closest undiscovered landmark
+✨ **Smooth animations** - Pulsing primary, fade-in secondary
+🔧 **Zero linting errors** - Clean TypeScript implementation
 

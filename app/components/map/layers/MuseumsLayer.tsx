@@ -121,9 +121,12 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
               'interpolate',
               ['linear'],
               ['zoom'],
-              10, 0.8,
-              14, 1.5,
-              18, 2.5
+              8, 0.4,   // Much smaller at low zoom
+              10, 0.6,  // Smaller than before
+              12, 0.8,  // Medium size
+              14, 1.2,  // Slightly larger
+              16, 1.6,  // Large when close
+              18, 2.0   // Maximum size (reduced from 2.5)
             ],
             'icon-allow-overlap': true,
             'icon-ignore-placement': true,
@@ -155,12 +158,11 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
               'interpolate',
               ['linear'],
               ['zoom'],
-              10,
-              0,
-              14,
-              12,
-              18,
-              16
+              10, 0,    // Hide text at low zoom
+              12, 0,    // Still hidden
+              14, 10,   // Smaller text
+              16, 14,   // Medium text
+              18, 16    // Maximum text size
             ]
             layout['text-offset'] = [0, 2]
             layout['text-anchor'] = 'top'
@@ -240,6 +242,8 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
 
     if (map.getLayer(LAYER_ID)) {
       const visibility = visible ? 'visible' : 'none'
+      // #region agent log
+      // #endregion
       map.setLayoutProperty(
         LAYER_ID,
         'visibility',

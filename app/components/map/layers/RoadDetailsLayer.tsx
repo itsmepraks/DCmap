@@ -35,13 +35,14 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           }
         }
 
-        // Add realistic sidewalks along roads
+        // Add realistic sidewalks along roads - only show at high zoom for performance
         if (!map.getLayer('sidewalks-left')) {
           map.addLayer({
             id: 'sidewalks-left',
             type: 'line',
             source: 'composite',
             'source-layer': 'road',
+            minzoom: 15, // Only render at zoom 15+ for performance
             filter: [
               'in',
               ['get', 'class'],
@@ -53,7 +54,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                14, 4,
+                15, 4,
                 16, 6,
                 18, 8
               ],
@@ -61,7 +62,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                14, 10,
+                15, 10,
                 16, 15,
                 18, 20
               ]
@@ -75,6 +76,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
             type: 'line',
             source: 'composite',
             'source-layer': 'road',
+            minzoom: 15, // Only render at zoom 15+ for performance
             filter: [
               'in',
               ['get', 'class'],
@@ -86,7 +88,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                14, 4,
+                15, 4,
                 16, 6,
                 18, 8
               ],
@@ -94,7 +96,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                14, -10,
+                15, -10,
                 16, -15,
                 18, -20
               ]
@@ -102,13 +104,14 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           }, firstSymbolId)
         }
         
-        // Add sidewalk borders
+        // Add sidewalk borders - only at high zoom
         if (!map.getLayer('sidewalk-borders')) {
           map.addLayer({
             id: 'sidewalk-borders',
             type: 'line',
             source: 'composite',
             'source-layer': 'road',
+            minzoom: 16, // Only render at zoom 16+ for performance
             filter: [
               'in',
               ['get', 'class'],
@@ -128,13 +131,14 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           }, firstSymbolId)
         }
 
-        // Add realistic zebra crosswalks
+        // Add realistic zebra crosswalks - only at high zoom
         if (!map.getLayer('zebra-crosswalks')) {
           map.addLayer({
             id: 'zebra-crosswalks',
             type: 'line',
             source: 'composite',
             'source-layer': 'road',
+            minzoom: 16, // Only render at zoom 16+ for performance
             filter: [
               'in',
               ['get', 'class'],
@@ -156,13 +160,14 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           }, firstSymbolId)
         }
 
-        // Add realistic road center lines (yellow dashed)
+        // Add realistic road center lines (yellow dashed) - only at medium+ zoom
         if (!map.getLayer('road-center-lines')) {
           map.addLayer({
             id: 'road-center-lines',
             type: 'line',
             source: 'composite',
             'source-layer': 'road',
+            minzoom: 14, // Only render at zoom 14+ for performance
             filter: [
               'in',
               ['get', 'class'],
@@ -183,13 +188,14 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           }, firstSymbolId)
         }
         
-        // Add road edge lines (white solid)
+        // Add road edge lines (white solid) - only at medium+ zoom
         if (!map.getLayer('road-edge-lines')) {
           map.addLayer({
             id: 'road-edge-lines',
             type: 'line',
             source: 'composite',
             'source-layer': 'road',
+            minzoom: 15, // Only render at zoom 15+ for performance
             filter: [
               'in',
               ['get', 'class'],
