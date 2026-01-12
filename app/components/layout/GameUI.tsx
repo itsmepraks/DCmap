@@ -2,10 +2,12 @@
 
 import QuestPanel from '../game/QuestPanel'
 import LandmarkExplorer from '../game/LandmarkExplorer'
+import MuseumExplorer from '../game/MuseumExplorer'
 import AchievementToast from '../game/AchievementToast'
 import CompletionNotification from '../game/CompletionNotification'
 import ProximityHint from '../ui/ProximityHint'
 import DiscoveryAnimation from '../ui/DiscoveryAnimation'
+import EntityInfoPanel, { type SelectedEntity } from '../ui/EntityInfoPanel'
 
 interface GameUIProps {
   // Quest system
@@ -32,6 +34,19 @@ interface GameUIProps {
   // Discovery animation
   showDiscovery: boolean
   discoveryData: any
+
+  // Entity Selection
+  selectedEntity: SelectedEntity | null
+  onCloseEntityPanel: () => void
+  onSelectEntity: (entity: SelectedEntity) => void
+
+  // Layer State
+  layersVisible: {
+    museums: boolean
+    trees: boolean
+    landmarks: boolean
+    parks: boolean
+  }
 }
 
 export default function GameUI({
@@ -49,7 +64,11 @@ export default function GameUI({
   onNavigateToLandmark,
   landmarks,
   showDiscovery,
-  discoveryData
+  discoveryData,
+  selectedEntity,
+  onCloseEntityPanel,
+  onSelectEntity,
+  layersVisible
 }: GameUIProps) {
   // Create wrapper function for ProximityHint that takes landmarkId and calls coordinate-based function
   const handleNavigateToLandmark = (landmarkId: string) => {
@@ -64,6 +83,13 @@ export default function GameUI({
       <LandmarkExplorer
         landmarks={landmarks}
         onNavigate={onNavigateToLandmark}
+      />
+
+      {/* Museum Explorer (Only visible when museum layer is on) */}
+      <MuseumExplorer
+        isVisible={layersVisible.museums}
+        onNavigate={onNavigateToLandmark}
+        onSelect={onSelectEntity}
       />
       
       {/* Quest Panel (Hidden in favor of Landmark Explorer) */}
@@ -81,6 +107,13 @@ export default function GameUI({
           onClose={onCloseCompletion}
         />
       )}
+
+      {/* Entity Info Panel - Centered Popup */}
+      <EntityInfoPanel
+        entity={selectedEntity}
+        onClose={onCloseEntityPanel}
+        onNavigate={onNavigateToLandmark}
+      />
 
       {/* Proximity Hints - Show nearby landmarks (Centered bottom pill) */}
       <ProximityHint

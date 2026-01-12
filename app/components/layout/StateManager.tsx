@@ -14,6 +14,8 @@ import { calculateDistance, type Coordinates } from '@/app/lib/proximityDetector
 import type { CurrentObjectiveInfo } from '@/app/lib/progressiveWaypointSystem'
 import type { ProgressiveWaypointData } from '@/app/components/game/QuestWaypoints'
 
+import { type SelectedEntity } from '../ui/EntityInfoPanel'
+
 interface StateManagerProps {
   children: (props: StateManagerReturn) => React.ReactNode
 }
@@ -71,6 +73,11 @@ interface StateManagerReturn {
   nearestUndiscovered: { id: string; name: string; distance: number; coordinates: [number, number] } | null
   progressiveWaypoints: ProgressiveWaypointData[]
   handleProgressiveWaypointsUpdate: (waypoints: ProgressiveWaypointData[]) => void
+  
+  // Entity Selection (New)
+  selectedEntity: SelectedEntity | null
+  setSelectedEntity: (entity: SelectedEntity | null) => void
+  clearSelectedEntity: () => void
 }
 
 export default function StateManager({ children }: StateManagerProps) {
@@ -92,8 +99,13 @@ export default function StateManager({ children }: StateManagerProps) {
     quest: false
   })
   const [progressiveWaypoints, setProgressiveWaypoints] = useState<ProgressiveWaypointData[]>([])
+  
+  // Entity Selection State
+  const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
+  const clearSelectedEntity = useCallback(() => setSelectedEntity(null), [])
 
   // Custom Hooks
+
   const gameState = useGameState()
   const questSystem = useQuestSystem()
   const dailyChallenges = useDailyChallenges()
@@ -347,7 +359,12 @@ export default function StateManager({ children }: StateManagerProps) {
     isMapLoaded,
 
     // Game Systems
-    gameState,
+    gameState: {
+      ...gameState,
+      selectedEntity,
+      setSelectedEntity,
+      clearSelectedEntity
+    },
     questSystem,
     dailyChallenges,
     landmarksState,
@@ -377,7 +394,12 @@ export default function StateManager({ children }: StateManagerProps) {
     currentObjective,
     nearestUndiscovered,
     progressiveWaypoints,
-    handleProgressiveWaypointsUpdate
+    handleProgressiveWaypointsUpdate,
+    
+    // Entity Selection
+    selectedEntity,
+    setSelectedEntity,
+    clearSelectedEntity
   }
 
   return <>{children(props)}</>

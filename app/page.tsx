@@ -61,6 +61,10 @@ export default function Home() {
                   landmarks={state.landmarksState.landmarksWithStatus}
                   showDiscovery={state.landmarksState.showDiscovery}
                   discoveryData={state.landmarksState.discoveryData}
+                  selectedEntity={state.gameState.selectedEntity}
+                  onCloseEntityPanel={state.gameState.clearSelectedEntity}
+                  onSelectEntity={state.gameState.setSelectedEntity}
+                  layersVisible={state.layersVisible}
                 />
 
                 {/* HUD and Controls */}

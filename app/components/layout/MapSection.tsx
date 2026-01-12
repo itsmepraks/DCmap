@@ -12,6 +12,8 @@ import { useMap } from '@/app/lib/MapContext'
 import type { Landmark } from '@/app/hooks/useLandmarks'
 import type { Coordinates } from '@/app/lib/proximityDetector'
 
+import { type SelectedEntity } from '../ui/EntityInfoPanel'
+
 interface MapSectionProps {
   // Map configuration
   layersVisible: {
@@ -32,7 +34,8 @@ interface MapSectionProps {
   // Callbacks
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
   onNavigateToLandmark: (coordinates: [number, number]) => void
-
+  onSelectEntity?: (entity: SelectedEntity | null) => void
+  
   // Waypoint system (legacy)
   waypoints: any[]
   activeWaypointId: string | null
@@ -67,7 +70,8 @@ export default function MapSection({
   landmarksState,
   playerPosition,
   progressiveWaypoints,
-  onProgressiveWaypointsUpdate
+  onProgressiveWaypointsUpdate,
+  onSelectEntity
 }: MapSectionProps) {
   const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
   const { map } = useMap()
@@ -89,6 +93,7 @@ export default function MapSection({
         isFlying={isFlying}
         landmarks={landmarks}
         visitedLandmarks={visitedLandmarks}
+        onSelect={onSelectEntity}
         onLandmarkDiscovered={(landmarkId, landmarkData) => {
           onLandmarkDiscovered(landmarkId, landmarkData)
           // Trigger particle effect for new discoveries
