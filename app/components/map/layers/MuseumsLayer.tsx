@@ -9,6 +9,7 @@ import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 interface MuseumsLayerProps {
   visible: boolean
   onSelect?: (entity: SelectedEntity | null) => void
+  onMuseumDiscovered?: (id: string, data: any) => void
 }
 
 const LAYER_ID = 'museums-layer'
@@ -16,7 +17,7 @@ const CLUSTER_LAYER_ID = 'museums-clusters'
 const CLUSTER_COUNT_LAYER_ID = 'museums-cluster-count'
 const SOURCE_ID = 'museums-source'
 
-export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
+export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: MuseumsLayerProps) {
   const { map } = useMap()
   const layerInitialized = useRef(false)
   const handlersRef = useRef<{
@@ -71,10 +72,13 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
         )
       }
 
+      // Use name as ID for consistency with MuseumExplorer which loads from GeoJSON directly
+      const museumId = properties.NAME ? String(properties.NAME) : String(feature.id);
+
       // Notify parent
       if (onSelect) {
         onSelect({
-          id: String(feature.id || properties.NAME),
+          id: museumId,
           type: 'museum',
           name: properties.NAME,
           description: properties.DESCRIPTION,
@@ -84,6 +88,14 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
             phone: properties.PHONE,
             url: properties.URL
           }
+        })
+      }
+
+      // Mark as discovered/visited
+      if (onMuseumDiscovered) {
+        onMuseumDiscovered(museumId, {
+          name: properties.NAME,
+          type: 'museum'
         })
       }
     }

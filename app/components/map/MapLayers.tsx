@@ -43,6 +43,7 @@ export const MapLayers = memo(function MapLayers({
       <MuseumsLayer 
         visible={layersVisible.museums} 
         onSelect={onSelectEntity}
+        onMuseumDiscovered={onLandmarkDiscovered}
       />
       <Museum3DMarkers visible={layersVisible.museums} />
       <LandmarksLayer 

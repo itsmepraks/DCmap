@@ -83,7 +83,7 @@ export default function EntityInfoPanel({ entity, onClose, onNavigate }: EntityI
               </h2>
               
               {entity.visited && (
-                <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm bg-green-50 py-1.5 px-4 rounded-full mx-auto w-fit border border-green-200">
+                <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm bg-green-50 py-1.5 px-4 rounded-full mx-auto w-fit border border-green-200 mt-2">
                   <span>✓ VISITED</span>
                   <span className="w-1 h-1 rounded-full bg-green-400" />
                   <span>+XP EARNED</span>

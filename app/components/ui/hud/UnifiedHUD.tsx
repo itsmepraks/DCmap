@@ -208,96 +208,12 @@ export default function UnifiedHUD({
           )}
         </AnimatePresence>
 
-        {/* Quest Objective Card */}
-        <AnimatePresence>
+        {/* Quest Objective Card - Removed as requested */}
+        {/* <AnimatePresence>
           {showQuestCard && currentObjective && (
-            <motion.div
-              initial={{ x: 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 100, opacity: 0 }}
-              className="pointer-events-auto"
-              style={{ maxWidth: '220px' }}
-              onPointerDown={(e) => e.stopPropagation()} // Allow clicking inside without dragging
-            >
-              <div
-                className="px-3 py-2 shadow-lg relative group"
-                onClick={() => currentObjective.coordinates && onNavigateToObjective?.(currentObjective.coordinates)}
-                style={{
-                  background: `linear-gradient(145deg, #FFF8DC 0%, #FFE4B5 100%)`,
-                  border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
-                  borderRadius: minecraftTheme.minecraft.borderRadius,
-                  boxShadow: '0 4px 0 #B8431A, 0 6px 12px rgba(0,0,0,0.2)',
-                  imageRendering: minecraftTheme.minecraft.imageRendering,
-                }}
-              >
-                {/* Header with quest icon and progress */}
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1">
-                    <span className="text-lg">{currentObjective.quest.icon}</span>
-                    <span className="text-[10px] font-bold" style={{ 
-                      color: minecraftTheme.colors.text.secondary,
-                      fontFamily: 'monospace'
-                    }}>
-                      QUEST
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-bold" style={{ 
-                      color: minecraftTheme.colors.terracotta.base,
-                      fontFamily: 'monospace'
-                    }}>
-                      {currentObjective.completedCount}/{currentObjective.totalCount}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowQuestCard(false)
-                      }}
-                      className="opacity-50 hover:opacity-100 transition-opacity text-xs ml-1"
-                      style={{ color: minecraftTheme.colors.text.secondary }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Current objective */}
-                <div className="flex items-center gap-2">
-                  <div className="text-xl">🎯</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold truncate" style={{ 
-                      color: minecraftTheme.colors.text.primary,
-                      fontFamily: 'monospace'
-                    }}>
-                      {currentObjective.objective.description}
-                    </div>
-                    {currentObjective.distanceFromPlayer !== null && (
-                      <div className="text-[10px] mt-0.5" style={{ 
-                        color: minecraftTheme.colors.text.secondary,
-                        fontFamily: 'monospace'
-                      }}>
-                        📍 {formatDistance(currentObjective.distanceFromPlayer)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Progress bar */}
-                <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${currentObjective.progressPercentage}%` }}
-                    transition={{ duration: 0.5 }}
-                    className="h-full rounded-full"
-                    style={{
-                      background: `linear-gradient(90deg, #7ED957, #5DA5DB)`
-                    }}
-                  />
-                </div>
-              </div>
-            </motion.div>
+            // ... quest card code ...
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
 
         {/* Nearest Undiscovered Landmark Card */}
         <AnimatePresence>
