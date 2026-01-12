@@ -34,6 +34,7 @@ interface UnifiedHUDProps {
 }
 
 export default function UnifiedHUD({
+  // Main HUD component consolidating various UI elements
   mode,
   recommendedLandmark,
   recommendationDistance,

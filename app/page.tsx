@@ -58,7 +58,7 @@ export default function Home() {
                   nearbyLandmarks={state.landmarksState.nearbyLandmarks}
                   visitedLandmarks={state.gameState.gameProgress.visitedLandmarks}
                   onNavigateToLandmark={state.handleNavigateToLandmark}
-                  landmarks={state.landmarksState.landmarks}
+                  landmarks={state.landmarksState.landmarksWithStatus}
                   showDiscovery={state.landmarksState.showDiscovery}
                   discoveryData={state.landmarksState.discoveryData}
                 />

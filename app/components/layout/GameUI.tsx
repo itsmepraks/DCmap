@@ -1,6 +1,7 @@
 'use client'
 
 import QuestPanel from '../game/QuestPanel'
+import LandmarkExplorer from '../game/LandmarkExplorer'
 import AchievementToast from '../game/AchievementToast'
 import CompletionNotification from '../game/CompletionNotification'
 import ProximityHint from '../ui/ProximityHint'
@@ -26,8 +27,8 @@ interface GameUIProps {
   nearbyLandmarks: any[]
   visitedLandmarks: Set<string>
   onNavigateToLandmark: (coordinates: [number, number]) => void
-  landmarks: Array<{ id: string; coordinates: [number, number] }>
-
+  landmarks: Array<{ id: string; name: string; icon: string; coordinates: [number, number]; visited: boolean }>
+  
   // Discovery animation
   showDiscovery: boolean
   discoveryData: any
@@ -59,12 +60,18 @@ export default function GameUI({
   }
   return (
     <>
-      {/* Quest Panel (Main) */}
-      <QuestPanel
+      {/* Landmark Explorer (Replaces Quest Panel) */}
+      <LandmarkExplorer
+        landmarks={landmarks}
+        onNavigate={onNavigateToLandmark}
+      />
+      
+      {/* Quest Panel (Hidden in favor of Landmark Explorer) */}
+      {/* <QuestPanel
         quests={quests}
         activeQuestIds={activeQuestIds}
         onStartQuest={onStartQuest}
-      />
+      /> */}
 
       {/* Completion Notifications */}
       {showCompletion && (
