@@ -67,8 +67,20 @@ export default function UnifiedHUD({
 
   return (
     <>
-      {/* Right Side Stack Container - Consolidated HUD */}
-      <div className="fixed top-20 right-4 sm:top-24 sm:right-6 z-40 flex flex-col gap-2 items-end pointer-events-none">
+      {/* Right Side Stack Container - Consolidated HUD - DRAGGABLE */}
+      <motion.div 
+        className="fixed z-40 flex flex-col gap-2 items-end pointer-events-auto cursor-move"
+        drag
+        dragMomentum={false}
+        initial={{ top: 80, right: 16 }}
+        style={{ top: 80, right: 16 }}
+      >
+        {/* Grip Handle */}
+        <div className="w-full flex justify-end mb-1 opacity-0 hover:opacity-100 transition-opacity">
+          <div className="px-2 py-0.5 rounded bg-black/20 text-[10px] font-bold text-white backdrop-blur-sm">
+            ⋮⋮ DRAG
+          </div>
+        </div>
         
         {/* Recommendation (Map Mode) */}
         <AnimatePresence>
@@ -79,9 +91,10 @@ export default function UnifiedHUD({
               exit={{ x: 100, opacity: 0 }}
               className="pointer-events-auto"
               style={{ maxWidth: '240px' }}
+              onPointerDown={(e) => e.stopPropagation()} // Allow clicking inside without dragging
             >
               <div
-                className="px-3 py-2 shadow-lg relative cursor-pointer group"
+                className="px-3 py-2 shadow-lg relative group"
                 onClick={() => onNavigateToRecommendation?.(recommendedLandmark.coordinates)}
                 style={{
                   background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
@@ -136,6 +149,7 @@ export default function UnifiedHUD({
               exit={{ opacity: 0, x: 20 }}
               className="flex flex-col gap-2 pointer-events-auto"
               style={{ maxWidth: '200px' }}
+              onPointerDown={(e) => e.stopPropagation()} // Allow clicking inside without dragging
             >
               {/* Speed/Position Card - Compact */}
               <div
@@ -202,9 +216,10 @@ export default function UnifiedHUD({
               exit={{ x: 100, opacity: 0 }}
               className="pointer-events-auto"
               style={{ maxWidth: '220px' }}
+              onPointerDown={(e) => e.stopPropagation()} // Allow clicking inside without dragging
             >
               <div
-                className="px-3 py-2 shadow-lg relative cursor-pointer group"
+                className="px-3 py-2 shadow-lg relative group"
                 onClick={() => currentObjective.coordinates && onNavigateToObjective?.(currentObjective.coordinates)}
                 style={{
                   background: `linear-gradient(145deg, #FFF8DC 0%, #FFE4B5 100%)`,
@@ -292,9 +307,10 @@ export default function UnifiedHUD({
               exit={{ x: 100, opacity: 0 }}
               className="pointer-events-auto"
               style={{ maxWidth: '200px' }}
+              onPointerDown={(e) => e.stopPropagation()} // Allow clicking inside without dragging
             >
               <div
-                className="px-2.5 py-1.5 shadow-lg relative cursor-pointer group"
+                className="px-2.5 py-1.5 shadow-lg relative group"
                 onClick={() => onNavigateToUndiscovered?.(nearestUndiscovered.coordinates)}
                 style={{
                   background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
@@ -339,7 +355,7 @@ export default function UnifiedHUD({
           )}
         </AnimatePresence>
 
-      </div>
+      </motion.div>
 
       {/* Fly Mode: Collapsible Bottom Controls */}
       <AnimatePresence>
@@ -348,12 +364,15 @@ export default function UnifiedHUD({
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30"
+            drag
+            dragMomentum={false}
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 cursor-move"
           >
             <motion.div
               animate={{ scale: showFlyControls ? 1 : 0.9, opacity: showFlyControls ? 1 : 0.7 }}
-              className="px-4 py-2 shadow-lg relative cursor-pointer"
+              className="px-4 py-2 shadow-lg relative"
               onClick={() => setShowFlyControls(!showFlyControls)}
+              onPointerDown={(e) => e.stopPropagation()} // Stop drag when clicking
               style={{
                 background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
                 border: `${minecraftTheme.minecraft.borderWidth} solid ${minecraftTheme.colors.terracotta.base}`,
