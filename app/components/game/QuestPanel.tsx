@@ -21,12 +21,12 @@ export default function QuestPanel({ quests, activeQuestIds, onStartQuest }: Que
 
   // Safe drag constraints that work with SSR
   const dragConstraints = typeof window !== 'undefined' 
-    ? { left: -window.innerWidth + 320, right: 0, top: 0, bottom: window.innerHeight - 200 }
-    : { left: -1000, right: 0, top: 0, bottom: 600 }
+    ? { left: 0, right: window.innerWidth - 320, top: 0, bottom: window.innerHeight - 200 }
+    : { left: 0, right: 1000, top: 0, bottom: 600 }
 
   return (
     <motion.div 
-      className="fixed top-4 right-4 z-20 cursor-move"
+      className="fixed top-20 left-4 z-45 cursor-move"
       drag
       dragMomentum={false}
       dragConstraints={dragConstraints}
