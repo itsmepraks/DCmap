@@ -5,6 +5,7 @@ import { useGameState } from '@/app/hooks/useGameState'
 import { useQuestSystem } from '@/app/hooks/useQuestSystem'
 import { useDailyChallenges } from '@/app/hooks/useDailyChallenges'
 import { useLandmarks } from '@/app/hooks/useLandmarks'
+import { useMuseums } from '@/app/hooks/useMuseums'
 import { useFlyController } from '@/app/hooks/useFlyController'
 import { useWaypointSystem } from '@/app/hooks/useWaypointSystem'
 import { useExperience } from '@/app/hooks/useExperience'
@@ -46,6 +47,7 @@ interface StateManagerReturn {
   questSystem: any
   dailyChallenges: any
   landmarksState: any
+  museumsState: any
   waypointSystem: any
   experience: any
 
@@ -110,6 +112,7 @@ export default function StateManager({ children }: StateManagerProps) {
   const questSystem = useQuestSystem()
   const dailyChallenges = useDailyChallenges()
   const landmarksState = useLandmarks(gameState.gameProgress.visitedLandmarks)
+  const museumsState = useMuseums(gameState.gameProgress.visitedLandmarks)
   const waypointSystem = useWaypointSystem()
   const experience = useExperience()
 
@@ -385,6 +388,7 @@ export default function StateManager({ children }: StateManagerProps) {
     questSystem,
     dailyChallenges,
     landmarksState,
+    museumsState,
     waypointSystem,
     experience,
 

@@ -103,16 +103,13 @@ export default function Home() {
                 <StatsModal
                   isOpen={state.gameState.showStatsModal}
                   onClose={state.gameState.closeStatsModal}
-                  landmarks={state.landmarksState.landmarksWithStatus}
-                  visitedCount={state.gameState.gameProgress.visitedLandmarks.size}
-                  totalCount={10}
+                  landmarks={state.landmarksState?.landmarksWithStatus || []}
+                  museums={state.museumsState?.museumsWithStatus || []}
+                  visitedLandmarksCount={state.gameState.gameProgress.visitedLandmarks.size}
+                  visitedMuseumsCount={state.museumsState?.visitedMuseumsCount || 0}
+                  totalLandmarks={state.landmarksState?.landmarks.length || 10}
+                  totalMuseums={state.museumsState?.totalMuseums || 36}
                   onReset={state.handleResetProgress}
-                  questStats={{
-                    totalPoints: state.questSystem.questProgress.totalPoints,
-                    completedQuestsCount: state.questSystem.questProgress.completedQuests.size,
-                    totalQuestsCount: state.questSystem.quests.length,
-                    unlockedBadges: state.questSystem.questProgress.unlockedBadges
-                  }}
                 />
 
                 {/* Global Overlays */}

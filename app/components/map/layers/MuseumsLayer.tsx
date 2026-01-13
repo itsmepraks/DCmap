@@ -47,8 +47,8 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
       const feature = e.features[0]
       const properties = feature.properties as MuseumProperties
       
-      // Handle cluster click (zoom in)
-      if (properties.cluster) {
+      // Skip if this is a cluster (shouldn't happen due to layer filter, but defensive check)
+      if ('point_count' in properties) {
         return // Handled by clusterClick
       }
 
