@@ -63,9 +63,9 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
               'recreation_ground'
             ],
             paint: {
-              'fill-color': '#A8E5A8', // Pastel green for cartoon style
-              'fill-opacity': 1,
-              'fill-outline-color': '#7BC47B'
+              'fill-color': '#3E7E3E', // Default lush green
+              'fill-opacity': 0.6, // Transparent to show terrain texture
+              'fill-outline-color': '#2D5A27'
             }
           }, beforeId) // Place BEFORE buildings
 
@@ -142,12 +142,12 @@ export default function ParksLayer({ visible, season = 'summer' }: ParksLayerPro
     function updateParkSeasonalColors() {
       if (!map) return
 
-      // Color mapping for seasons - matches tree colors
+      // Color mapping for seasons - matches tree colors but lighter
       const seasonColors = {
-        spring: { fill: '#FFC1E3', outline: '#FFA8D5' },  // Pastel PINK
-        summer: { fill: '#A8E5A8', outline: '#7BC47B' },  // Pastel GREEN
-        fall: { fill: '#FFB87A', outline: '#FF9955' },    // Pastel ORANGE
-        winter: { fill: '#D0D8E0', outline: '#B8C8D0' }   // Pastel GRAY
+        spring: { fill: '#7FB37F', outline: '#6DA06D' },  // Natural green
+        summer: { fill: '#3E7E3E', outline: '#2D5A27' },  // Lush green
+        fall: { fill: '#E6A66C', outline: '#D67229' },    // Faded orange
+        winter: { fill: '#94A3B8', outline: '#708090' }   // Cold grey
       }
 
       const colors = seasonColors[season]

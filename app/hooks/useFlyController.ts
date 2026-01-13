@@ -88,7 +88,7 @@ export function useFlyController({
   const [controllerState, setControllerState] = useState<FlyControllerState>({
     isMoving: false,
     speed: 0,
-    altitude: 6,
+    altitude: 40,
     position: undefined,
     bearing: undefined
   })
@@ -116,8 +116,8 @@ export function useFlyController({
     const center = map.getCenter()
     let position: [number, number] = [center.lng, center.lat]
     let bearing = map.getBearing()
-    let targetAltitude = 6 // Target altitude we want to reach
-    let currentAltitude = 6 // Current altitude (smoothly interpolated)
+    let targetAltitude = 40 // Target altitude we want to reach
+    let currentAltitude = 40 // Current altitude (smoothly interpolated)
     
     // Store original interaction state
     const originalState = {

@@ -158,6 +158,29 @@ export function useMapInitialization(
             console.warn('Terrain setup skipped:', terrainError)
           }
 
+          // Add hillshading for "topographical texture"
+          if (!mapInstance?.getLayer('hillshading')) {
+            try {
+              // Find index of water layer to place hillshade below/near it
+              const layers = mapInstance?.getStyle().layers || [];
+              const waterLayer = layers.find(l => l.id.includes('water'));
+              
+              mapInstance?.addLayer({
+                id: 'hillshading',
+                source: 'mapbox-dem',
+                type: 'hillshade',
+                paint: {
+                  'hillshade-shadow-color': '#473B24',
+                  'hillshade-highlight-color': '#FFFFFF',
+                  'hillshade-accent-color': '#000000',
+                  'hillshade-exaggeration': 0.5
+                }
+              }, waterLayer?.id) 
+            } catch (e) {
+              console.warn('Hillshade setup skipped:', e)
+            }
+          }
+
           if (!mapInstance?.getLayer('sky')) {
             try {
               mapInstance?.addLayer({
@@ -399,16 +422,17 @@ export function useMapInitialization(
                 'match',
                 ['get', 'class'],
                 'grass',
-                '#2F4426',
+                '#3A5A40', // Richer green
                 'forest',
-                '#24351E',
+                '#344E41', // Darker forest
                 'scrub',
-                '#3A4A2E',
+                '#588157',
                 'crop',
-                '#4A5C32',
-                '#2D2D2D'
+                '#A3B18A',
+                '#DAD7CD'
               ],
-              'fill-opacity': 0.35
+              'fill-opacity': 0.8, // Increased opacity for texture feel
+              'fill-antialias': true
             }
           })
 
@@ -556,6 +580,3 @@ export function useMapInitialization(
     }
   }, [containerRef, options.styleUrl, setMap])
 }
-
-
-

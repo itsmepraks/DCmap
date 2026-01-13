@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useCallback } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import mapboxgl from 'mapbox-gl'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
@@ -36,15 +36,15 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
   const seasonColors = useMemo(
     () => ({
-      spring: { base: '#FFB7C5', shadow: '#E08DA0', highlight: '#FFDEEB' }, // Cherry blossom pinks
-      summer: { base: '#4F8A4F', shadow: '#2F4F2F', highlight: '#7BC47B' },
-      fall: { base: '#E28D3D', shadow: '#8C4B10', highlight: '#FFC27D' },
-      winter: { base: '#CBD3DD', shadow: '#687078', highlight: '#E2E8F0' }
+      spring: { base: '#4E7A4E', shadow: '#2E4A2E', highlight: '#FFB7C5' }, // More natural green base with pink highlights
+      summer: { base: '#2D5A27', shadow: '#1A3317', highlight: '#4E8F44' }, // Deep realistic summer green
+      fall: { base: '#D67229', shadow: '#8B4513', highlight: '#FF8C00' }, // Rich fall orange
+      winter: { base: '#708090', shadow: '#4A5560', highlight: '#A9B7C6' } // Slate grey winter
     }),
     []
   )
 
-  const createSeasonIcons = () => {
+  const createSeasonIcons = useCallback(() => {
     if (!map) return
     Object.entries(seasonColors).forEach(([seasonName, palette]) => {
       const iconId = `tree-icon-${seasonName}`
@@ -95,7 +95,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
         data: imageData.data
       })
     })
-  }
+  }, [map, seasonColors])
 
   useEffect(() => {
     if (!map || isInitialized.current) return
@@ -163,19 +163,20 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
           minzoom: 10,
           paint: {
-            'fill-extrusion-color': colors.highlight,
+            'fill-extrusion-color': colors.base, // Use base color for volume to avoid glowing effect
             'fill-extrusion-base': 0,
             'fill-extrusion-height': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              10, 1.5,
-              13, 5,
-              15, 10
+              10, 2,
+              13, 6, // Reduced height for realism
+              15, 12 // Reduced height for realism
             ],
-            'fill-extrusion-opacity': 0.85,
+            'fill-extrusion-opacity': 0.8, // Slightly more transparent to see terrain
             'fill-extrusion-vertical-gradient': true,
-            'fill-extrusion-ambient-occlusion-intensity': 0.6
+            'fill-extrusion-ambient-occlusion-intensity': 0.6,
+            'fill-extrusion-ambient-occlusion-radius': 3
           }
         })
 
@@ -391,7 +392,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
     }
 
     initializeLayer()
-  }, [map, season, seasonColors, treeFilter])
+  }, [map, season, seasonColors, treeFilter, createSeasonIcons, onSelect])
 
   useEffect(() => {
     if (!map || !isInitialized.current) return
@@ -433,7 +434,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
       map.setLayoutProperty(TREE_POINT_LAYER_ID, 'icon-image', `tree-icon-${season}`)
     }
     console.log(`🍂 TreesLayer season updated to: ${season}`)
-  }, [map, season, seasonColors])
+  }, [map, season, seasonColors, createSeasonIcons])
 
   return null
 }

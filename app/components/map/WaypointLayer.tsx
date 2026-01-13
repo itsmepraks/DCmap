@@ -175,9 +175,11 @@ export default function WaypointLayer({
     // Update previous waypoint IDs for next comparison
     prevWaypointIdsRef.current = currentWaypointIds
 
+    const markers = markersRef.current
+
     return () => {
-      markersRef.current.forEach(marker => marker.remove())
-      markersRef.current.clear()
+      markers.forEach(marker => marker.remove())
+      markers.clear()
     }
   }, [map, waypoints, activeWaypointId, onWaypointClick])
 

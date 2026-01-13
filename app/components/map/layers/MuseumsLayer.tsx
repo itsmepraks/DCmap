@@ -124,7 +124,19 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
         // Load custom museum icon
         const iconImage = await loadImage('/icons/museum.svg')
         if (!map.hasImage('museum-icon')) {
-          map.addImage('museum-icon', iconImage)
+          // Rasterize SVG to canvas to avoid Mapbox "SVG not supported" errors
+          const canvas = document.createElement('canvas')
+          canvas.width = iconImage.width || 32
+          canvas.height = iconImage.height || 32
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(iconImage, 0, 0, canvas.width, canvas.height)
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            map.addImage('museum-icon', imageData)
+          } else {
+            // Fallback if canvas context fails
+            map.addImage('museum-icon', iconImage)
+          }
         }
 
         // Fetch museums GeoJSON data
@@ -306,22 +318,24 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
     initializeLayer()
 
+    const handlers = handlersRef.current
+
     return () => {
       if (map && layerInitialized.current) {
-        if (handlersRef.current.click) map.off('click', LAYER_ID, handlersRef.current.click)
-        if (handlersRef.current.clusterClick) map.off('click', CLUSTER_LAYER_ID, handlersRef.current.clusterClick)
+        if (handlers.click) map.off('click', LAYER_ID, handlers.click)
+        if (handlers.clusterClick) map.off('click', CLUSTER_LAYER_ID, handlers.clusterClick)
         
-        if (handlersRef.current.mouseEnter) {
-          map.off('mouseenter', LAYER_ID, handlersRef.current.mouseEnter)
-          map.off('mouseenter', CLUSTER_LAYER_ID, handlersRef.current.mouseEnter)
+        if (handlers.mouseEnter) {
+          map.off('mouseenter', LAYER_ID, handlers.mouseEnter)
+          map.off('mouseenter', CLUSTER_LAYER_ID, handlers.mouseEnter)
         }
-        if (handlersRef.current.mouseLeave) {
-          map.off('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
-          map.off('mouseleave', CLUSTER_LAYER_ID, handlersRef.current.mouseLeave)
+        if (handlers.mouseLeave) {
+          map.off('mouseleave', LAYER_ID, handlers.mouseLeave)
+          map.off('mouseleave', CLUSTER_LAYER_ID, handlers.mouseLeave)
         }
       }
     }
-  }, [map, visible, onSelect])
+  }, [map, visible, onSelect, onMuseumDiscovered])
 
   // Update visibility
   useEffect(() => {
