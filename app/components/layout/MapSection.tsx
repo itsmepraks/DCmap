@@ -107,31 +107,36 @@ export default function MapSection({
         }}
       />
 
-      {/* Progressive Quest Waypoints - Sequential objective display with distance-based reveal */}
-      <QuestWaypoints
-        activeQuests={activeQuestObjects}
-        landmarks={landmarks}
-        playerPosition={playerPosition}
-        onWaypointsUpdate={onProgressiveWaypointsUpdate}
-      />
-
-      {/* Waypoint Layer - Shows progressive waypoints on map */}
-      <WaypointLayer
-        map={map}
-        waypoints={progressiveWaypoints.map(wp => ({
-          id: wp.id,
-          name: wp.name,
-          coordinates: wp.coordinates,
-          color: wp.color,
-          icon: wp.icon,
-          isPrimary: wp.isPrimary,
-          opacity: wp.opacity,
-          isVisible: wp.isVisible,
-          createdAt: Date.now()
-        }))}
-        activeWaypointId={activeWaypointId}
-        onWaypointClick={(waypoint) => onNavigateToLandmark(waypoint.coordinates)}
-      />
+      {/* Progressive Quest Waypoints - Only render if there are active quests */}
+      {activeQuestObjects.length > 0 && (
+        <>
+          <QuestWaypoints
+            activeQuests={activeQuestObjects}
+            landmarks={landmarks}
+            playerPosition={playerPosition}
+            onWaypointsUpdate={onProgressiveWaypointsUpdate}
+          />
+          {/* Waypoint Layer - Shows progressive waypoints on map */}
+          {progressiveWaypoints.length > 0 && (
+            <WaypointLayer
+              map={map}
+              waypoints={progressiveWaypoints.map(wp => ({
+                id: wp.id,
+                name: wp.name,
+                coordinates: wp.coordinates,
+                color: wp.color,
+                icon: wp.icon,
+                isPrimary: wp.isPrimary,
+                opacity: wp.opacity,
+                isVisible: wp.isVisible,
+                createdAt: Date.now()
+              }))}
+              activeWaypointId={activeWaypointId}
+              onWaypointClick={(waypoint) => onNavigateToLandmark(waypoint.coordinates)}
+            />
+          )}
+        </>
+      )}
 
       {/* Legacy manual waypoints (if any) */}
       {waypoints.length > 0 && (

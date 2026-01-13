@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
-import { checkNearbyLandmarks, findNearestLandmark } from '@/app/lib/proximityDetector'
+import { checkNearbyLandmarks } from '@/app/lib/proximityDetector'
 import { usePlayerState } from '@/app/lib/playerState'
 
 interface UseFlyControllerOptions {
@@ -16,14 +16,14 @@ interface UseFlyControllerOptions {
 
 export interface FlyControllerState {
   isMoving: boolean
-  speed: number
+  speed: number // Speed in km/h for display
   altitude: number
   position?: { lng: number; lat: number }
   bearing?: number
 }
 
 const METERS_PER_DEG_LAT = 111132
-const MOVE_SPEED = 600 // meters per second - responsive, matches key presses
+const MOVE_SPEED = 15 // meters per second (54 km/h - realistic drone/bird speed)
 const CAMERA_PITCH = 75 // degrees - looking down at street level
 const CAMERA_ZOOM = 18.5 // close zoom for street view
 const MIN_ALTITUDE = 3 // minimum altitude in meters
@@ -44,9 +44,8 @@ function getBuildingHeightAtPosition(
 ): number {
   try {
     const point = map.project(position)
-    const pixels = radius * (map.getZoom() / 18) // Convert meters to pixels
+    const pixels = radius * (map.getZoom() / 18)
     
-    // Query buildings in a small area around the position
     const features = map.queryRenderedFeatures(
       [
         [point.x - pixels, point.y - pixels],
@@ -60,7 +59,6 @@ function getBuildingHeightAtPosition(
 
     if (features.length === 0) return 0
 
-    // Find the tallest building
     let maxHeight = 0
     features.forEach(feature => {
       const height = feature.properties?.height
@@ -116,8 +114,8 @@ export function useFlyController({
     const center = map.getCenter()
     let position: [number, number] = [center.lng, center.lat]
     let bearing = map.getBearing()
-    let targetAltitude = 40 // Target altitude we want to reach
-    let currentAltitude = 40 // Current altitude (smoothly interpolated)
+    let targetAltitude = 40
+    let currentAltitude = 40
     
     // Store original interaction state
     const originalState = {
@@ -150,18 +148,25 @@ export function useFlyController({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase()
+      
+      // Movement keys
       if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault()
         keys.add(key)
       }
-      // Altitude control
-      if (key === ' ' || key === 'space') {
+      
+      // Altitude UP - Space key (e.key is ' ' or 'Spacebar' depending on browser)
+      if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault()
-        targetAltitude = Math.min(targetAltitude + 10, MAX_ALTITUDE)
+        targetAltitude = Math.min(targetAltitude + 15, MAX_ALTITUDE)
+        console.log('🔼 Altitude UP:', targetAltitude)
       }
-      if (key === 'shift') {
+      
+      // Altitude DOWN - Shift key
+      if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
         e.preventDefault()
-        targetAltitude = Math.max(targetAltitude - 10, MIN_ALTITUDE)
+        targetAltitude = Math.max(targetAltitude - 15, MIN_ALTITUDE)
+        console.log('🔽 Altitude DOWN:', targetAltitude)
       }
     }
 
@@ -183,24 +188,23 @@ export function useFlyController({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isMouseDown) return
-      bearing += e.movementX * 0.5 // Smooth mouse look
+      bearing += e.movementX * 0.5
       const currentPitch = map.getPitch()
       const newPitch = Math.max(50, Math.min(85, currentPitch - e.movementY * 0.3))
       map.setBearing(bearing)
       map.setPitch(newPitch)
     }
 
-    // Animation loop with smooth interpolation
+    // Animation loop
     let lastTime = performance.now()
     let animationFrameId: number
     let lastLandmarkCheck = 0
-    let frameCount = 0 // For throttling state updates
+    let frameCount = 0
 
     const animate = (currentTime: number) => {
       if (!map || !isActive) return
 
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.016) // Cap at 60fps for smoothness
-      // Use actual delta time for more accurate movement matching key presses
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.05) // Cap delta time
       lastTime = currentTime
 
       // Calculate movement direction
@@ -215,19 +219,17 @@ export function useFlyController({
       const isMoving = forward !== 0 || right !== 0
 
       // Smooth altitude interpolation
-      const altitudeLerpFactor = Math.min(dt * 8, 1) // Smooth altitude changes
+      const altitudeLerpFactor = Math.min(dt * 5, 1)
       currentAltitude = lerp(currentAltitude, targetAltitude, altitudeLerpFactor)
 
-      // Check for building collisions and adjust altitude
-      if (currentTime - lastLandmarkCheck > 100) { // Check every 100ms
+      // Check for building collisions (throttled)
+      if (currentTime - lastLandmarkCheck > 200) {
         const buildingHeight = getBuildingHeightAtPosition(map, position, COLLISION_CHECK_RADIUS)
         const requiredAltitude = buildingHeight + SAFE_BUILDING_CLEARANCE
         
         if (requiredAltitude > targetAltitude) {
           targetAltitude = Math.min(requiredAltitude, MAX_ALTITUDE)
         }
-        
-        lastLandmarkCheck = currentTime
       }
 
       if (isMoving) {
@@ -249,24 +251,21 @@ export function useFlyController({
         position[0] += forwardLng + strafeLng
         position[1] += forwardLat + strafeLat
 
-        // Smooth camera update - use setCenter/setBearing for instant but smooth updates
-        // This avoids animation queue buildup that causes lag
+        // Update camera
         map.setCenter([position[0], position[1]])
         map.setBearing(bearing)
 
-        // Update camera altitude by adjusting pitch/zoom based on altitude
-        // Higher altitude = less pitch, more zoom out
-        const altitudeFactor = Math.max(0, Math.min(1, (currentAltitude - 3) / 50))
-        const dynamicPitch = CAMERA_PITCH - (altitudeFactor * 20) // Reduce pitch at higher altitudes
-        const dynamicZoom = CAMERA_ZOOM - (altitudeFactor * 2) // Zoom out at higher altitudes
+        // Update camera altitude by adjusting pitch/zoom
+        const altitudeFactor = Math.max(0, Math.min(1, (currentAltitude - MIN_ALTITUDE) / 100))
+        const dynamicPitch = CAMERA_PITCH - (altitudeFactor * 25)
+        const dynamicZoom = CAMERA_ZOOM - (altitudeFactor * 3)
         
-        // Only update pitch/zoom if they changed significantly to reduce overhead
         const currentPitch = map.getPitch()
         const currentZoom = map.getZoom()
-        if (Math.abs(currentPitch - dynamicPitch) > 0.5) {
+        if (Math.abs(currentPitch - dynamicPitch) > 1) {
           map.setPitch(dynamicPitch)
         }
-        if (Math.abs(currentZoom - dynamicZoom) > 0.1) {
+        if (Math.abs(currentZoom - dynamicZoom) > 0.2) {
           map.setZoom(dynamicZoom)
         }
 
@@ -280,56 +279,58 @@ export function useFlyController({
           }
         })
 
-        // Throttle state updates to reduce re-renders (update every 3 frames ~50ms)
+        // Throttle state updates (every 5 frames)
         frameCount++
-        if (frameCount % 3 === 0) {
+        if (frameCount % 5 === 0) {
+          // Convert m/s to km/h for display
+          const speedKmh = Math.round(MOVE_SPEED * 3.6)
           setControllerState({
             isMoving: true,
-            speed: MOVE_SPEED,
-            altitude: currentAltitude,
+            speed: speedKmh,
+            altitude: Math.round(currentAltitude),
             position: { lng: position[0], lat: position[1] },
             bearing: bearing
           })
         }
       } else {
-        // When stopped, instantly stop camera movement
+        // When stopped
         map.setCenter([position[0], position[1]])
         map.setBearing(bearing)
 
-        // Update state less frequently when stopped
         frameCount++
-        if (frameCount % 5 === 0) {
+        if (frameCount % 10 === 0) {
           setControllerState(prev => ({ 
             ...prev, 
             isMoving: false, 
             speed: 0,
-            altitude: currentAltitude,
+            altitude: Math.round(currentAltitude),
             position: { lng: position[0], lat: position[1] },
             bearing: bearing
           }))
         }
       }
 
-          // Update position callback (throttled to reduce overhead)
-          if (positionCallbackRef.current && frameCount % 3 === 0) {
-            positionCallbackRef.current({ 
-              lng: position[0], 
-              lat: position[1], 
-              bearing 
-            })
-          }
+      // Update position callback (throttled)
+      if (positionCallbackRef.current && frameCount % 5 === 0) {
+        positionCallbackRef.current({ 
+          lng: position[0], 
+          lat: position[1], 
+          bearing 
+        })
+      }
 
-          // Check landmarks (throttled)
-          if (currentTime - lastLandmarkCheck > 500) {
-            const playerPos = { lng: position[0], lat: position[1] }
-            const nearby = checkNearbyLandmarks(playerPos, landmarks, visitedLandmarks, 40)
-            nearby.forEach(hit => {
-              const landmarkData = landmarks.find(l => l.id === hit.id)
-              if (landmarkData) {
-                landmarkCallbackRef.current?.(hit.id, landmarkData)
-              }
-            })
+      // Check landmarks (throttled)
+      if (currentTime - lastLandmarkCheck > 500) {
+        lastLandmarkCheck = currentTime
+        const playerPos = { lng: position[0], lat: position[1] }
+        const nearby = checkNearbyLandmarks(playerPos, landmarks, visitedLandmarks, 40)
+        nearby.forEach(hit => {
+          const landmarkData = landmarks.find(l => l.id === hit.id)
+          if (landmarkData) {
+            landmarkCallbackRef.current?.(hit.id, landmarkData)
           }
+        })
+      }
 
       animationFrameId = requestAnimationFrame(animate)
     }

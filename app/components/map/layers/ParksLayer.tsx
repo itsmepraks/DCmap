@@ -33,6 +33,12 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
   const { map } = useMap()
   const isInitialized = useRef(false)
   
+  // Store visible prop in ref for use during initialization
+  const visibleRef = useRef(visible)
+  useEffect(() => {
+    visibleRef.current = visible
+  }, [visible])
+  
   // Store onSelect in a ref so click handlers always use the latest callback
   const onSelectRef = useRef(onSelect)
   useEffect(() => {
@@ -79,6 +85,9 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
         }
         const colors = seasonColors[season]
 
+        // Get initial visibility - HIDDEN by default unless explicitly visible
+        const initialVisibility = visibleRef.current ? 'visible' : 'none'
+        
         if (!map.getLayer('parks-seasonal')) {
           map.addLayer({
             id: 'parks-seasonal',
@@ -95,14 +104,17 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
               'cemetery',
               'recreation_ground'
             ],
+            layout: {
+              'visibility': initialVisibility
+            },
             paint: {
-              'fill-color': colors.fill, // Use current season color
-              'fill-opacity': 0.6, // Transparent to show terrain texture
+              'fill-color': colors.fill,
+              'fill-opacity': 0.6,
               'fill-outline-color': colors.outline
             }
           }, beforeId) // Place BEFORE buildings
 
-          console.log(`✅ Added parks-seasonal layer with ${season} colors (${colors.fill})`)
+          console.log(`✅ Added parks-seasonal layer with ${season} colors (visibility: ${initialVisibility})`)
         }
 
         // Add click handler for park info
@@ -148,12 +160,6 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
         map.on('mouseleave', 'parks-seasonal', () => {
           map.getCanvas().style.cursor = ''
         })
-
-        // Set initial visibility
-        const visibility = visible ? 'visible' : 'none'
-        if (map.getLayer('parks-seasonal')) {
-          map.setLayoutProperty('parks-seasonal', 'visibility', visibility)
-        }
 
         isInitialized.current = true
         console.log('✅ ParksLayer initialized successfully')

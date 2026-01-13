@@ -32,12 +32,10 @@ interface StatsModalProps {
   onReset: () => void
 }
 
-// Points system config
+// Points system config - simplified to just landmarks and museums
 const POINTS_CONFIG = {
   landmarkVisit: 100,
   museumVisit: 50,
-  questComplete: 200,
-  dailyChallenge: 150,
 }
 
 export default function StatsModal({
@@ -60,8 +58,9 @@ export default function StatsModal({
   const landmarkPercentage = totalLandmarks > 0 ? Math.round((visitedLandmarksCount / totalLandmarks) * 100) : 0
   const museumPercentage = totalMuseums > 0 ? Math.round((visitedMuseumsCount / totalMuseums) * 100) : 0
   
-  // Calculate estimated points
-  const estimatedPoints = (visitedLandmarksCount * POINTS_CONFIG.landmarkVisit) + (visitedMuseumsCount * POINTS_CONFIG.museumVisit)
+  // Calculate points
+  const totalPoints = (visitedLandmarksCount * POINTS_CONFIG.landmarkVisit) + (visitedMuseumsCount * POINTS_CONFIG.museumVisit)
+  const maxPoints = (totalLandmarks * POINTS_CONFIG.landmarkVisit) + (totalMuseums * POINTS_CONFIG.museumVisit)
   
   // Achievement tier calculation
   const currentTier = getCurrentTier(visitedLandmarksCount, visitedMuseumsCount)
@@ -175,7 +174,7 @@ export default function StatsModal({
                   <div 
                     className="rounded-xl p-4 border shadow-sm"
                     style={{
-                      background: `linear-gradient(135deg, ${currentTier.color}10 0%, white 100%)`,
+                      background: `linear-gradient(135deg, ${currentTier.color}15 0%, white 100%)`,
                       borderColor: currentTier.color
                     }}
                   >
@@ -189,48 +188,57 @@ export default function StatsModal({
                       </div>
                     </div>
 
-                    {/* Next Tier Progress */}
+                    {/* Next Tier Progress - Fixed visibility */}
                     {nextTier && tierProgress && (
-                      <div className="pt-3 border-t border-stone-200/50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs text-stone-500">Next:</span>
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-stone-100">
+                      <div className="bg-white/80 rounded-lg p-3 border border-stone-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-stone-600">Next Rank:</span>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-100 flex items-center gap-1">
                             {nextTier.icon} {nextTier.name}
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="space-y-2">
+                          {/* Landmarks needed */}
                           <div>
-                            <div className="flex justify-between text-stone-500 mb-0.5">
-                              <span>Landmarks</span>
-                              <span>{visitedLandmarksCount}/{nextTier.minLandmarks}</span>
+                            <div className="flex justify-between text-[10px] text-stone-500 mb-0.5">
+                              <span>🏛️ Landmarks</span>
+                              <span className="font-semibold">{visitedLandmarksCount} / {nextTier.minLandmarks}</span>
                             </div>
-                            <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-green-500 rounded-full"
-                                style={{ width: `${tierProgress.landmarkProgress}%` }}
+                                className="h-full bg-green-500 rounded-full transition-all"
+                                style={{ width: `${Math.min(100, tierProgress.landmarkProgress)}%` }}
                               />
                             </div>
+                            {tierProgress.landmarksNeeded > 0 && (
+                              <p className="text-[9px] text-stone-400 mt-0.5">Need {tierProgress.landmarksNeeded} more</p>
+                            )}
                           </div>
+                          
+                          {/* Museums needed */}
                           <div>
-                            <div className="flex justify-between text-stone-500 mb-0.5">
-                              <span>Museums</span>
-                              <span>{visitedMuseumsCount}/{nextTier.minMuseums}</span>
+                            <div className="flex justify-between text-[10px] text-stone-500 mb-0.5">
+                              <span>🎨 Museums</span>
+                              <span className="font-semibold">{visitedMuseumsCount} / {nextTier.minMuseums}</span>
                             </div>
-                            <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-blue-500 rounded-full"
-                                style={{ width: `${tierProgress.museumProgress}%` }}
+                                className="h-full bg-blue-500 rounded-full transition-all"
+                                style={{ width: `${Math.min(100, tierProgress.museumProgress)}%` }}
                               />
                             </div>
+                            {tierProgress.museumsNeeded > 0 && (
+                              <p className="text-[9px] text-stone-400 mt-0.5">Need {tierProgress.museumsNeeded} more</p>
+                            )}
                           </div>
                         </div>
                       </div>
                     )}
                     
                     {!nextTier && (
-                      <div className="pt-3 border-t border-stone-200/50 text-center">
-                        <span className="text-xs font-bold text-amber-600">🎉 Maximum Rank!</span>
+                      <div className="bg-amber-50 rounded-lg p-3 text-center border border-amber-200">
+                        <span className="text-sm font-bold text-amber-600">🎉 Maximum Rank Achieved!</span>
                       </div>
                     )}
                   </div>
@@ -255,8 +263,8 @@ export default function StatsModal({
                               <span className="font-medium">{tier.name}</span>
                               {isAchieved && !isCurrentTier && <span className="text-green-500">✓</span>}
                             </span>
-                            <span className="text-stone-400">
-                              {tier.minLandmarks} landmarks + {tier.minMuseums} museums
+                            <span className="text-stone-400 text-[9px]">
+                              {tier.minLandmarks}L + {tier.minMuseums}M
                             </span>
                           </div>
                         )
@@ -267,7 +275,7 @@ export default function StatsModal({
 
                 {/* Right Column: Location Gallery */}
                 <div className="lg:col-span-2 space-y-4">
-                  {/* Points Info Banner */}
+                  {/* Points Info Banner - Simplified */}
                   <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
                     <div className="flex items-center justify-between">
                       <div>
@@ -277,26 +285,18 @@ export default function StatsModal({
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-amber-600">{estimatedPoints.toLocaleString()}</div>
-                        <div className="text-[10px] text-amber-500">estimated points</div>
+                        <div className="text-2xl font-bold text-amber-600">{totalPoints.toLocaleString()}</div>
+                        <div className="text-[10px] text-amber-500">of {maxPoints.toLocaleString()} possible</div>
                       </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px]">
-                      <div className="bg-white/60 rounded-lg px-2 py-1.5 text-center">
-                        <div className="font-bold text-green-600">+{POINTS_CONFIG.landmarkVisit}</div>
-                        <div className="text-stone-500">per landmark</div>
+                    <div className="mt-3 flex gap-3">
+                      <div className="flex-1 bg-white/60 rounded-lg px-3 py-2 text-center">
+                        <div className="font-bold text-green-600 text-sm">+{POINTS_CONFIG.landmarkVisit}</div>
+                        <div className="text-stone-500 text-[10px]">per landmark</div>
                       </div>
-                      <div className="bg-white/60 rounded-lg px-2 py-1.5 text-center">
-                        <div className="font-bold text-blue-600">+{POINTS_CONFIG.museumVisit}</div>
-                        <div className="text-stone-500">per museum</div>
-                      </div>
-                      <div className="bg-white/60 rounded-lg px-2 py-1.5 text-center">
-                        <div className="font-bold text-purple-600">+{POINTS_CONFIG.questComplete}</div>
-                        <div className="text-stone-500">quest bonus</div>
-                      </div>
-                      <div className="bg-white/60 rounded-lg px-2 py-1.5 text-center">
-                        <div className="font-bold text-orange-600">+{POINTS_CONFIG.dailyChallenge}</div>
-                        <div className="text-stone-500">daily challenge</div>
+                      <div className="flex-1 bg-white/60 rounded-lg px-3 py-2 text-center">
+                        <div className="font-bold text-blue-600 text-sm">+{POINTS_CONFIG.museumVisit}</div>
+                        <div className="text-stone-500 text-[10px]">per museum</div>
                       </div>
                     </div>
                   </div>
@@ -351,11 +351,14 @@ export default function StatsModal({
                                     : 'bg-stone-50 border-stone-200'
                                 }`}
                               >
+                                {/* Icon */}
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl ${
                                   landmark.visited ? 'bg-green-100' : 'bg-stone-100'
                                 }`}>
                                   {landmark.visited ? landmark.icon : '❓'}
                                 </div>
+                                
+                                {/* Info */}
                                 <div className="flex-1 min-w-0">
                                   <h4 className={`font-semibold text-sm truncate ${
                                     landmark.visited ? 'text-stone-800' : 'text-stone-400'
@@ -366,11 +369,21 @@ export default function StatsModal({
                                     {landmark.visited ? landmark.category : 'Explore to discover'}
                                   </p>
                                 </div>
-                                {landmark.visited ? (
-                                  <span className="text-green-600 text-xs font-bold">✓</span>
-                                ) : (
-                                  <span className="text-stone-300 text-xs">—</span>
-                                )}
+                                
+                                {/* Status Badge */}
+                                <div className="flex items-center gap-1.5">
+                                  {landmark.visited ? (
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                      Visited
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1 text-[10px] font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
+                                      <span className="w-2 h-2 rounded-full bg-stone-300"></span>
+                                      Not Found
+                                    </span>
+                                  )}
+                                </div>
                               </motion.div>
                             ))
                           )}
@@ -400,11 +413,14 @@ export default function StatsModal({
                                     : 'bg-stone-50 border-stone-200'
                                 }`}
                               >
+                                {/* Icon */}
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl ${
                                   museum.visited ? 'bg-blue-100' : 'bg-stone-100'
                                 }`}>
                                   {museum.visited ? '🏛️' : '❓'}
                                 </div>
+                                
+                                {/* Info */}
                                 <div className="flex-1 min-w-0">
                                   <h4 className={`font-semibold text-sm truncate ${
                                     museum.visited ? 'text-stone-800' : 'text-stone-400'
@@ -415,11 +431,21 @@ export default function StatsModal({
                                     {museum.visited && museum.address ? museum.address : 'Explore to discover'}
                                   </p>
                                 </div>
-                                {museum.visited ? (
-                                  <span className="text-blue-600 text-xs font-bold">✓</span>
-                                ) : (
-                                  <span className="text-stone-300 text-xs">—</span>
-                                )}
+                                
+                                {/* Status Badge */}
+                                <div className="flex items-center gap-1.5">
+                                  {museum.visited ? (
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                      Visited
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1 text-[10px] font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
+                                      <span className="w-2 h-2 rounded-full bg-stone-300"></span>
+                                      Not Found
+                                    </span>
+                                  )}
+                                </div>
                               </motion.div>
                             ))
                           )}

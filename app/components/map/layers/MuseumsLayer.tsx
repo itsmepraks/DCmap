@@ -29,6 +29,12 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
   // Track selected feature ID locally
   const selectedIdRef = useRef<string | number | null>(null)
+  
+  // Store visible prop in ref for use during initialization
+  const visibleRef = useRef(visible)
+  useEffect(() => {
+    visibleRef.current = visible
+  }, [visible])
 
   useEffect(() => {
     if (!map) {
@@ -162,6 +168,9 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
           })
         }
 
+        // Get initial visibility - HIDDEN by default unless explicitly visible
+        const initialVisibility = visibleRef.current ? 'visible' : 'none'
+        
         // 1. Clusters Layer (Circles)
         if (!map.getLayer(CLUSTER_LAYER_ID)) {
           map.addLayer({
@@ -169,12 +178,10 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             type: 'circle',
             source: SOURCE_ID,
             filter: ['has', 'point_count'],
+            layout: {
+              'visibility': initialVisibility
+            },
             paint: {
-              // Use step expressions (https://docs.mapbox.com/style-spec/reference/expressions/#step)
-              // with three steps to implement three types of circles:
-              //   * Blue, 20px circles when point count is less than 5
-              //   * Yellow, 30px circles when point count is between 5 and 10
-              //   * Pink, 40px circles when point count is greater than or equal to 10
               'circle-color': [
                 'step',
                 ['get', 'point_count'],
@@ -207,6 +214,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             source: SOURCE_ID,
             filter: ['has', 'point_count'],
             layout: {
+              'visibility': initialVisibility,
               'text-field': '{point_count_abbreviated}',
               'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
               'text-size': 12
@@ -237,7 +245,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             'icon-allow-overlap': true, // Always show museums
             'icon-ignore-placement': true, // Make sure they are always visible
             'icon-pitch-alignment': 'viewport',
-            visibility: 'none'
+            'visibility': initialVisibility
           }
 
           const paint: SymbolPaint = {
@@ -315,7 +323,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
         map.on('mouseleave', CLUSTER_LAYER_ID, onMouseLeave)
 
         layerInitialized.current = true
-        console.log('✅ Museums layer initialized with clusters')
+        console.log(`✅ Museums layer initialized (visibility: ${initialVisibility})`)
 
       } catch (error) {
         console.error('❌ Error initializing museums layer:', error)

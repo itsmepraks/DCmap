@@ -107,7 +107,7 @@ export default function Home() {
                   onClose={state.gameState.closeStatsModal}
                   landmarks={state.landmarksState?.landmarksWithStatus || []}
                   museums={state.museumsState?.museumsWithStatus || []}
-                  visitedLandmarksCount={state.gameState.gameProgress.visitedLandmarks.size}
+                  visitedLandmarksCount={state.landmarksState?.landmarksWithStatus?.filter((l: any) => l.visited).length || 0}
                   visitedMuseumsCount={state.museumsState?.visitedMuseumsCount || 0}
                   totalLandmarks={state.landmarksState?.landmarks.length || 10}
                   totalMuseums={state.museumsState?.totalMuseums || 36}

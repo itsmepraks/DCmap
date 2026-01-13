@@ -45,7 +45,7 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
       dragMomentum={false}
       dragConstraints={dragConstraints}
       style={{
-        maxWidth: '280px',
+        maxWidth: '300px',
         maxHeight: 'calc(100vh - 200px)'
       }}
     >
@@ -108,7 +108,7 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {sortedLandmarks.map((landmark, index) => (
                   <motion.div
                     key={landmark.id}
@@ -116,65 +116,88 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.03 }}
                     className={`
-                      flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-200
+                      p-2.5 rounded-lg cursor-pointer transition-all duration-200
                       ${landmark.visited 
                         ? 'bg-green-50 hover:bg-green-100 border border-green-200' 
                         : 'bg-stone-50 hover:bg-stone-100 border border-stone-200'
                       }
                     `}
-                    onClick={() => {
-                      if (onSelect) {
-                        onSelect({
-                          id: landmark.id,
-                          type: 'landmark',
-                          name: landmark.name,
-                          description: landmark.description || `A famous landmark in Washington DC.`,
-                          coordinates: landmark.coordinates,
-                          visited: landmark.visited,
-                          metadata: {
-                            category: landmark.category,
-                            funFact: landmark.funFact
-                          }
-                        });
-                      }
-                    }}
                   >
-                    {/* Icon */}
-                    <div className={`
-                      w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-lg
-                      ${landmark.visited 
-                        ? 'bg-green-100' 
-                        : 'bg-stone-100'
-                      }
-                    `}>
-                      {landmark.icon}
-                    </div>
-
-                    {/* Name & Status */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`
-                        text-xs font-semibold truncate
-                        ${landmark.visited ? 'text-stone-800' : 'text-stone-500'}
+                    <div className="flex items-center gap-2">
+                      {/* Icon */}
+                      <div className={`
+                        w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-lg
+                        ${landmark.visited 
+                          ? 'bg-green-100' 
+                          : 'bg-stone-100'
+                        }
                       `}>
-                        {landmark.name}
-                      </h4>
-                      {landmark.visited && (
-                        <span className="text-[9px] text-green-600 font-medium">✓ Visited</span>
-                      )}
-                    </div>
+                        {landmark.icon}
+                      </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-1 flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(landmark.coordinates);
-                        }}
-                        className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
-                        title="Fly to location"
-                      >
-                        <span className="text-sm">✈️</span>
-                      </button>
+                      {/* Name & Category */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`
+                          text-xs font-semibold truncate
+                          ${landmark.visited ? 'text-stone-800' : 'text-stone-600'}
+                        `}>
+                          {landmark.name}
+                        </h4>
+                        <span className={`text-[10px] ${landmark.visited ? 'text-stone-500' : 'text-stone-400'}`}>
+                          {landmark.category || 'landmark'}
+                        </span>
+                      </div>
+
+                      {/* Status Indicator */}
+                      <div className={`
+                        flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold
+                        ${landmark.visited 
+                          ? 'bg-green-500 text-white' 
+                          : 'bg-stone-200 text-stone-500'
+                        }
+                      `}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${landmark.visited ? 'bg-white' : 'bg-stone-400'}`}></span>
+                        {landmark.visited ? '✓' : '—'}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-1 flex-shrink-0">
+                        {/* Info Button */}
+                        {onSelect && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelect({
+                                id: landmark.id,
+                                type: 'landmark',
+                                name: landmark.name,
+                                description: landmark.description || `A famous landmark in Washington DC.`,
+                                coordinates: landmark.coordinates,
+                                visited: landmark.visited,
+                                metadata: {
+                                  category: landmark.category,
+                                  funFact: landmark.funFact
+                                }
+                              });
+                            }}
+                            className="w-7 h-7 flex items-center justify-center rounded-md bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors border border-amber-200"
+                            title="View details"
+                          >
+                            <span className="text-xs">ℹ️</span>
+                          </button>
+                        )}
+                        {/* Fly Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate(landmark.coordinates);
+                          }}
+                          className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors border border-blue-200"
+                          title="Fly to location"
+                        >
+                          <span className="text-xs">✈️</span>
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -183,9 +206,12 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
               {/* Summary Footer */}
               <div className="mt-3 pt-2 border-t border-stone-200">
                 <div className="flex items-center justify-between text-[10px] text-stone-500">
-                  <span>{visitedCount} discovered</span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    {visitedCount} discovered
+                  </span>
                   <span className="font-semibold text-green-600">
-                    {Math.round((visitedCount / totalCount) * 100)}% complete
+                    {totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0}% complete
                   </span>
                 </div>
               </div>

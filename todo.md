@@ -478,3 +478,134 @@ return { opacity: 0, isVisible: false }
 🗺️ **Exploration Hub** - Comprehensive stats modal with all progress info
 🎨 **Streamlined Cards** - Cleaner, less cluttered explorer panels
 ✅ **Zero Linting Errors** - Clean TypeScript implementation
+
+---
+
+### Final UI Fixes & Math Corrections - January 13, 2026 ✅
+
+**User Feedback:**
+- "Landmark still shows 12/10"
+- "Remove quests/daily challenges - not using them"
+- "Silver rank not viewable properly in current rank card"
+- "Need info icon and clearer status signals in explorer cards"
+
+**Problems Identified:**
+1. StatsModal was still using `visitedLandmarks.size` (includes both) instead of correct landmark count
+2. Points system showed quest/daily challenge bonuses that weren't being used
+3. Next tier display in rank card was cramped and hard to read
+4. Explorer cards lacked info icons and clear visited/not-visited status
+
+**Solutions Implemented:**
+
+1. **Fixed 12/10 Bug - Root Cause** ✅
+   - Changed `page.tsx` StatsModal prop from `visitedLandmarks.size` to:
+     `landmarksWithStatus.filter(l => l.visited).length`
+   - Now correctly counts ONLY landmarks that are visited
+   - Museum count remains separate via `museumsState.visitedMuseumsCount`
+
+2. **Simplified Points System** ✅
+   - Removed quest bonus (+200) and daily challenge (+150) from display
+   - Now shows only: +100 per landmark, +50 per museum
+   - Shows "X of Y possible" points for clear max score
+   - Cleaner, focused points banner
+
+3. **Fixed Next Rank Card Display** ✅
+   - Added white background container for better visibility
+   - Clear "Next Rank:" label with badge showing icon + name
+   - Separate progress bars for landmarks and museums
+   - Shows "Need X more" text for each category
+   - Proper spacing and padding for readability
+
+4. **Enhanced Explorer Cards** ✅
+   - Added ℹ️ info button (amber) to view details
+   - Added ✈️ fly button (blue for landmarks, green for museums)
+   - Clear status badges with colored dots:
+     * Visited: Green/Blue pill with ✓
+     * Not Found: Gray pill with —
+   - Category/type label under each name
+   - Summary footer with discovery count and completion %
+
+5. **Verified 3D Rendering** ✅
+   - Fly controller: WASD/Arrow movement, Space/Shift altitude
+   - Camera pitch: 75° down, zoom 18.5 for street view
+   - Building collision detection with auto-altitude adjustment
+   - Trees: Seasonal icons, clustering, click for species info
+   - Parks: Seasonal colors (pink spring, green summer, etc.)
+   - Buildings properly occlude trees/parks
+
+**Files Modified:**
+- `app/page.tsx` - Fixed StatsModal visitedLandmarksCount prop
+- `app/components/ui/StatsModal.tsx` - Simplified points, fixed rank display
+- `app/components/game/LandmarkExplorer.tsx` - Added info icon, status badges
+- `app/components/game/MuseumExplorer.tsx` - Added info icon, status badges
+
+**Result:**
+✅ **Counts Now Correct** - Landmarks show X/10 (max 10)
+✅ **Points Simplified** - Only landmark + museum points shown
+✅ **Next Rank Visible** - Clear white card with progress bars
+✅ **Info Icons Added** - ℹ️ button on every item
+✅ **Status Clear** - Green/Blue "Visited" or Gray "Not Found" badges
+✅ **3D Working** - Fly mode, trees, parks all functional
+
+---
+
+### Fly Mode & Layer Visibility Fixes - January 13, 2026 ✅
+
+**User Feedback:**
+- "Space key in fly mode not doing anything, just lags more"
+- "Speed shows 2180 km/h when flying, way too fast"
+- "Trees rendered even when not toggled on"
+- "Yellow dots with numbering 1, 2, 3, 4 near landmarks"
+
+**Problems Identified:**
+1. Space key detection using `key.toLowerCase()` which fails for space character
+2. MOVE_SPEED = 600 m/s = 2160 km/h - unrealistically fast
+3. TreesLayer, MuseumsLayer, ParksLayer all add layers without initial visibility set
+4. Museum cluster markers and quest waypoints showing by default
+
+**Solutions Implemented:**
+
+1. **Fixed Fly Controller** ✅
+   - Changed Space key detection to use `e.key === ' ' || e.code === 'Space'`
+   - Changed Shift key detection to use `e.key === 'Shift' || e.code === 'ShiftLeft/Right'`
+   - Reduced MOVE_SPEED from 600 m/s to 15 m/s (54 km/h - realistic drone speed)
+   - Speed display now converts m/s to km/h (`MOVE_SPEED * 3.6`)
+   - Added console logs for altitude changes to verify working
+
+2. **Fixed TreesLayer Initial Visibility** ✅
+   - Added `visibleRef` to store `visible` prop
+   - Set `initialVisibility` based on `visibleRef.current` during layer creation
+   - All layers now added with `visibility: 'none'` when not toggled
+   - Includes: canopy-base, canopy-volume, canopy-shadow, clusters, cluster-count, points
+
+3. **Fixed MuseumsLayer Initial Visibility** ✅
+   - Added `visibleRef` to store `visible` prop
+   - Added `layout: { visibility: initialVisibility }` to cluster layer
+   - Added `visibility: initialVisibility` to cluster count layer
+   - Changed unclustered points layer from hardcoded `'none'` to dynamic `initialVisibility`
+
+4. **Fixed ParksLayer Initial Visibility** ✅
+   - Added `visibleRef` to store `visible` prop
+   - Added `layout: { visibility: initialVisibility }` during layer creation
+   - Removed redundant post-creation visibility setting
+
+5. **Fixed Quest Waypoints Showing Without Active Quests** ✅
+   - Wrapped `QuestWaypoints` and `WaypointLayer` in conditional rendering
+   - Only renders if `activeQuestObjects.length > 0`
+   - Prevents yellow numbered markers from appearing without active quests
+
+**Files Modified:**
+- `app/hooks/useFlyController.ts` - Fixed speed, space key, shift key
+- `app/components/map/layers/TreesLayer.tsx` - Added initial visibility
+- `app/components/map/layers/MuseumsLayer.tsx` - Added initial visibility
+- `app/components/map/layers/ParksLayer.tsx` - Added initial visibility
+- `app/components/layout/MapSection.tsx` - Conditional waypoint rendering
+
+**Result:**
+✅ **Space Key Works** - Altitude increases with console log "🔼 Altitude UP: X"
+✅ **Shift Key Works** - Altitude decreases with console log "🔽 Altitude DOWN: X"
+✅ **Realistic Speed** - Now shows ~54 km/h instead of 2180 km/h
+✅ **Trees Hidden by Default** - Only show when toggled in layer controls
+✅ **Museums Hidden by Default** - Clusters and icons hidden until toggled
+✅ **Parks Hidden by Default** - Green fill hidden until toggled
+✅ **No Yellow Dots** - Quest waypoints only show with active quests
