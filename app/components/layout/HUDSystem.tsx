@@ -22,8 +22,10 @@ interface HUDSystemProps {
   // Stats bar
   streak: number
   points: number
-  discovered: number
-  total: number
+  discoveredLandmarks: number
+  totalLandmarks: number
+  discoveredMuseums: number
+  totalMuseums: number
   activeQuests: number
   onOpenStats: () => void
 
@@ -62,8 +64,10 @@ export default function HUDSystem({
   isMapLoaded,
   streak,
   points,
-  discovered,
-  total,
+  discoveredLandmarks,
+  totalLandmarks,
+  discoveredMuseums,
+  totalMuseums,
   activeQuests,
   onOpenStats,
   is3D,
@@ -96,8 +100,10 @@ export default function HUDSystem({
       <MiniStatsBar
         streak={streak}
         points={points}
-        discovered={discovered}
-        total={total}
+        discoveredLandmarks={discoveredLandmarks}
+        totalLandmarks={totalLandmarks}
+        discoveredMuseums={discoveredMuseums}
+        totalMuseums={totalMuseums}
         activeQuests={activeQuests}
         onOpenStats={onOpenStats}
       />

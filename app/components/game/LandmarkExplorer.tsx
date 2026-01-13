@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { minecraftTheme } from '@/app/lib/theme'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface Landmark {
@@ -23,7 +22,7 @@ interface LandmarkExplorerProps {
 }
 
 export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: LandmarkExplorerProps) {
-  const [isExpanded, setIsExpanded] = useState(false) // Start collapsed
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Sort landmarks: Unvisited first, then visited
   const sortedLandmarks = [...landmarks].sort((a, b) => {
@@ -36,7 +35,7 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
 
   // Safe drag constraints
   const dragConstraints = typeof window !== 'undefined' 
-    ? { left: 0, right: window.innerWidth - 320, top: 0, bottom: window.innerHeight - 200 }
+    ? { left: 0, right: window.innerWidth - 300, top: 0, bottom: window.innerHeight - 200 }
     : { left: 0, right: 1000, top: 0, bottom: 600 }
 
   return (
@@ -46,140 +45,150 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
       dragMomentum={false}
       dragConstraints={dragConstraints}
       style={{
-        maxWidth: '320px',
+        maxWidth: '280px',
         maxHeight: 'calc(100vh - 200px)'
       }}
     >
-      {/* Toggle button */}
+      {/* Clean Toggle Header */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full mb-2 py-3 px-4 flex items-center justify-between"
+        className="w-full py-2.5 px-3 flex items-center justify-between rounded-xl"
         style={{
-          background: `linear-gradient(145deg, ${minecraftTheme.colors.terracotta.base} 0%, ${minecraftTheme.colors.terracotta.dark} 100%)`,
-          border: `3px solid ${minecraftTheme.colors.terracotta.dark}`,
-          borderRadius: minecraftTheme.minecraft.borderRadius,
-          boxShadow: `0 4px 0 ${minecraftTheme.colors.terracotta.dark}, 0 6px 12px rgba(0,0,0,0.4)`,
+          background: `linear-gradient(135deg, #C65D3B 0%, #A04830 100%)`,
+          border: `2px solid #8B3A24`,
+          boxShadow: `0 4px 12px rgba(0,0,0,0.25)`,
           color: '#FFF',
-          fontFamily: 'monospace',
-          fontWeight: 'bold',
-          fontSize: '14px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           cursor: 'grab',
-          textShadow: '1px 1px 0 rgba(0,0,0,0.5)',
-          imageRendering: minecraftTheme.minecraft.imageRendering
         }}
       >
-        <span className="flex items-center gap-2">
-          🧭 EXPLORER
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🧭</span>
+          <span className="font-semibold text-sm tracking-wide">LANDMARKS</span>
+        </div>
+        <div className="flex items-center gap-2">
           <span 
-            className="text-xs px-2 py-0.5 rounded-full"
+            className="text-xs font-bold px-2 py-0.5 rounded-full"
             style={{
-              background: '#FFD700',
-              color: '#2C1810'
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(4px)'
             }}
           >
             {visitedCount}/{totalCount}
           </span>
-        </span>
-        <span>{isExpanded ? '▼' : '▶'}</span>
+          <motion.span
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-sm opacity-70"
+          >
+            ▼
+          </motion.span>
+        </div>
       </motion.button>
 
       {/* Explorer Content */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-y-auto cursor-auto custom-scrollbar"
-            style={{
-              background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
-              border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
-              borderRadius: minecraftTheme.minecraft.borderRadius,
-              boxShadow: minecraftTheme.minecraft.shadowRaised,
-              padding: '16px',
-              maxHeight: 'calc(100vh - 280px)',
-              imageRendering: minecraftTheme.minecraft.imageRendering
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="overflow-hidden mt-2"
           >
-            {/* Pixelated corners */}
-            <div className="absolute top-0 left-0 w-2 h-2 bg-black/40" />
-            <div className="absolute top-0 right-0 w-2 h-2 bg-black/40" />
-            <div className="absolute bottom-0 left-0 w-2 h-2 bg-black/40" />
-            <div className="absolute bottom-0 right-0 w-2 h-2 bg-black/40" />
-
-            <div className="space-y-2">
-              {sortedLandmarks.map((landmark) => (
-                <motion.div
-                  key={landmark.id}
-                  whileHover={{ x: 2, backgroundColor: 'rgba(212, 80, 30, 0.1)' }}
-                  className="p-3 rounded-lg border group"
-                  style={{
-                    background: landmark.visited 
-                      ? 'rgba(126, 217, 87, 0.15)' 
-                      : 'rgba(255, 255, 255, 0.5)',
-                    border: `2px solid ${landmark.visited ? minecraftTheme.colors.accent.green : '#E5E7EB'}`,
-                    borderRadius: '8px'
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <h4 className="text-xs font-bold leading-tight text-[#2C1810] group-hover:text-[#D4501E] transition-colors">
-                        {landmark.icon} {landmark.name}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span 
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                          style={{
-                            background: landmark.visited ? minecraftTheme.colors.accent.green : '#9CA3AF',
-                            color: 'white'
-                          }}
-                        >
-                          {landmark.visited ? 'VISITED' : 'UNVISITED'}
-                        </span>
-                      </div>
+            <div
+              className="overflow-y-auto cursor-auto rounded-xl p-3"
+              style={{
+                background: 'rgba(255, 252, 248, 0.98)',
+                border: `2px solid #C65D3B`,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                maxHeight: 'calc(100vh - 280px)',
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-1.5">
+                {sortedLandmarks.map((landmark, index) => (
+                  <motion.div
+                    key={landmark.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    className={`
+                      flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-200
+                      ${landmark.visited 
+                        ? 'bg-green-50 hover:bg-green-100 border border-green-200' 
+                        : 'bg-stone-50 hover:bg-stone-100 border border-stone-200'
+                      }
+                    `}
+                    onClick={() => {
+                      if (onSelect) {
+                        onSelect({
+                          id: landmark.id,
+                          type: 'landmark',
+                          name: landmark.name,
+                          description: landmark.description || `A famous landmark in Washington DC.`,
+                          coordinates: landmark.coordinates,
+                          visited: landmark.visited,
+                          metadata: {
+                            category: landmark.category,
+                            funFact: landmark.funFact
+                          }
+                        });
+                      }
+                    }}
+                  >
+                    {/* Icon */}
+                    <div className={`
+                      w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-lg
+                      ${landmark.visited 
+                        ? 'bg-green-100' 
+                        : 'bg-stone-100'
+                      }
+                    `}>
+                      {landmark.icon}
                     </div>
-                    <div className="flex flex-col gap-1">
-                      {onSelect && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelect({
-                              id: landmark.id,
-                              type: 'landmark',
-                              name: landmark.name,
-                              description: landmark.description || `A famous landmark in Washington DC.`,
-                              coordinates: landmark.coordinates,
-                              visited: landmark.visited,
-                              metadata: {
-                                category: landmark.category,
-                                funFact: landmark.funFact
-                              }
-                            });
-                          }}
-                          className="w-8 h-8 flex items-center justify-center bg-blue-100 hover:bg-blue-200 rounded-full transition-colors"
-                          title="View Info"
-                        >
-                          ℹ️
-                        </button>
+
+                    {/* Name & Status */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`
+                        text-xs font-semibold truncate
+                        ${landmark.visited ? 'text-stone-800' : 'text-stone-500'}
+                      `}>
+                        {landmark.name}
+                      </h4>
+                      {landmark.visited && (
+                        <span className="text-[9px] text-green-600 font-medium">✓ Visited</span>
                       )}
-                      <button 
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onNavigate(landmark.coordinates);
                         }}
-                        className="w-8 h-8 flex items-center justify-center bg-green-100 hover:bg-green-200 rounded-full transition-colors opacity-50 group-hover:opacity-100"
-                        title="Fly to Location"
+                        className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+                        title="Fly to location"
                       >
-                        ✈️
+                        <span className="text-sm">✈️</span>
                       </button>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Summary Footer */}
+              <div className="mt-3 pt-2 border-t border-stone-200">
+                <div className="flex items-center justify-between text-[10px] text-stone-500">
+                  <span>{visitedCount} discovered</span>
+                  <span className="font-semibold text-green-600">
+                    {Math.round((visitedCount / totalCount) * 100)}% complete
+                  </span>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

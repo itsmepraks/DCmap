@@ -20,18 +20,18 @@ export const ACHIEVEMENT_TIERS: AchievementTier[] = [
     minMuseums: 0,
     color: '#CD7F32',
     icon: '🥉',
-    perks: ['Basic explorer status', 'Access to map features'],
-    description: 'Just starting your DC adventure!'
+    perks: ['Basic explorer', 'Map access'],
+    description: 'Start your DC adventure!'
   },
   {
     level: 'silver',
     name: 'Silver Navigator',
     minLandmarks: 3,
     minMuseums: 5,
-    color: '#C0C0C0',
+    color: '#A0A0A0',
     icon: '🥈',
-    perks: ['Silver badge unlocked', 'Intermediate explorer'],
-    description: 'Visit 3 landmarks + 5 museums'
+    perks: ['Silver badge', 'Growing explorer'],
+    description: 'Discover 3 landmarks and 5 museums'
   },
   {
     level: 'gold',
@@ -40,8 +40,8 @@ export const ACHIEVEMENT_TIERS: AchievementTier[] = [
     minMuseums: 12,
     color: '#FFD700',
     icon: '🥇',
-    perks: ['Gold badge unlocked', 'Seasoned explorer'],
-    description: 'Visit 5 landmarks + 12 museums'
+    perks: ['Gold badge', 'Seasoned traveler'],
+    description: 'Discover 5 landmarks and 12 museums'
   },
   {
     level: 'platinum',
@@ -51,7 +51,7 @@ export const ACHIEVEMENT_TIERS: AchievementTier[] = [
     color: '#E5E4E2',
     icon: '💎',
     perks: ['Platinum status', 'Expert explorer'],
-    description: 'Visit 8 landmarks + 24 museums'
+    description: 'Discover 8 landmarks and 24 museums'
   },
   {
     level: 'diamond',
@@ -60,8 +60,8 @@ export const ACHIEVEMENT_TIERS: AchievementTier[] = [
     minMuseums: 36,
     color: '#B9F2FF',
     icon: '👑',
-    perks: ['Legendary status', 'DC Master!'],
-    description: 'Visit ALL 10 landmarks + ALL 36 museums'
+    perks: ['Legendary status', 'DC Master'],
+    description: 'Discover ALL 10 landmarks and ALL 36 museums!'
   }
 ]
 
@@ -105,4 +105,9 @@ export function getProgressToNextTier(
     landmarksNeeded: Math.max(0, nextTier.minLandmarks - landmarksVisited),
     museumsNeeded: Math.max(0, nextTier.minMuseums - museumsVisited)
   }
+}
+
+// Calculate total possible points for completion
+export function getTotalPossiblePoints(): number {
+  return (10 * 100) + (36 * 50) // 10 landmarks * 100 + 36 museums * 50
 }

@@ -398,3 +398,83 @@ return { opacity: 0, isVisible: false }
 📍 **Better Tree Visibility** - Larger icons, less aggressive clustering
 ✅ **Season Changes Working** - Trees update color properly when season changes
 🖱️ **Tree Info on Click** - Shows Common Name, Species, Diameter, Condition
+
+---
+
+### UI Streamlining & Stats Hub Overhaul - January 13, 2026 ✅
+
+**User Feedback:**
+- "Museum card and explorer card not streamlined, not easy on eye"
+- "Landmark shows 12/10 which is incorrect"
+- "What does 3L+5M mean in rank requirements?"
+- "Museum data not shown in exploration stats"
+- "Need a proper hub to track landmarks, museums, points, ranking"
+
+**Problems Identified:**
+1. `visitedLandmarks` set was storing BOTH landmarks AND museums, causing incorrect counts (12/10 bug)
+2. HUD displayed combined count against landmark-only total
+3. Rank requirements used cryptic "3L+5M" format
+4. Explorer cards were cluttered with too much visual noise
+5. StatsModal lacked clear points/scoring explanation
+
+**Solutions Implemented:**
+
+1. **Fixed Count Separation** ✅
+   - Updated `page.tsx` to pass separate landmark/museum counts to HUD
+   - `discoveredLandmarks` now counts only actual landmarks visited
+   - `discoveredMuseums` counts only museum visits
+   - HUD no longer shows inflated 12/10 type bugs
+
+2. **Redesigned MiniStatsBar** ✅
+   - Shows separate 🏛️ Landmarks and 🎨 Museums counts
+   - Green color for landmarks, blue for museums
+   - Hover tooltip shows detailed breakdown
+   - Progress bar shows overall completion percentage
+   - Cleaner, less cluttered appearance
+
+3. **Redesigned LandmarkExplorer Card** ✅
+   - Modern, streamlined header with gradient
+   - Compact item rows with icon, name, status
+   - Single fly-to button per item
+   - Summary footer with completion percentage
+   - Smooth animations on expand/collapse
+
+4. **Redesigned MuseumExplorer Card** ✅
+   - Matching design language with LandmarkExplorer
+   - Blue color scheme to differentiate from landmarks
+   - Same compact, streamlined layout
+   - Sorted: unvisited first, then visited
+
+5. **Overhauled StatsModal as Exploration Hub** ✅
+   - **Points System Banner**: Clear explanation of how points are earned
+     * +100 per landmark, +50 per museum
+     * +200 quest bonus, +150 daily challenge
+   - **Progress Section**: Overall + separate landmark/museum progress bars
+   - **Current Rank Card**: Shows current tier with icon, next tier progress
+   - **All Ranks Guide**: Clear table showing requirements
+     * "3 landmarks + 5 museums" instead of cryptic "3L+5M"
+   - **Tabbed Gallery**: Browse discovered/undiscovered locations
+   - Museum data now properly displayed in stats
+
+6. **Updated Achievement Tiers** ✅
+   - Clearer descriptions: "Discover 3 landmarks and 5 museums"
+   - Simplified perks text
+   - Added `getTotalPossiblePoints()` helper
+
+**Files Modified:**
+- `app/page.tsx` - Pass separate landmark/museum counts
+- `app/components/layout/HUDSystem.tsx` - New props interface
+- `app/components/ui/hud/MiniStatsBar.tsx` - Complete redesign
+- `app/components/game/LandmarkExplorer.tsx` - Streamlined UI
+- `app/components/game/MuseumExplorer.tsx` - Streamlined UI
+- `app/components/ui/StatsModal.tsx` - Exploration Hub redesign
+- `app/lib/achievementTiers.ts` - Clearer descriptions
+
+**Result:**
+🎯 **Fixed 12/10 Bug** - Landmark and museum counts now displayed separately
+📊 **Clear Stats** - HUD shows distinct landmark (green) and museum (blue) counts
+🏆 **Ranking Clarity** - "3 landmarks + 5 museums" instead of "3L+5M"
+⭐ **Points Explained** - Users know how to earn points
+🗺️ **Exploration Hub** - Comprehensive stats modal with all progress info
+🎨 **Streamlined Cards** - Cleaner, less cluttered explorer panels
+✅ **Zero Linting Errors** - Clean TypeScript implementation

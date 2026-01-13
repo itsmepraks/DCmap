@@ -73,8 +73,10 @@ export default function Home() {
                   isMapLoaded={state.isMapLoaded}
                   streak={state.dailyChallenges.currentStreak.current}
                   points={state.questSystem.questProgress.totalPoints + state.experience.experience.totalXP}
-                  discovered={state.gameState.gameProgress.visitedLandmarks.size}
-                  total={state.landmarksState.landmarks.length || 10}
+                  discoveredLandmarks={state.landmarksState.landmarksWithStatus.filter((l: any) => l.visited).length}
+                  totalLandmarks={state.landmarksState.landmarks.length || 10}
+                  discoveredMuseums={state.museumsState?.visitedMuseumsCount || 0}
+                  totalMuseums={state.museumsState?.totalMuseums || 36}
                   activeQuests={state.questSystem.questProgress.activeQuests.length}
                   onOpenStats={state.gameState.openStatsModal}
                   is3D={state.is3DView}

@@ -7,8 +7,10 @@ import { minecraftTheme } from '@/app/lib/theme'
 interface MiniStatsBarProps {
   streak: number
   points: number
-  discovered: number
-  total: number
+  discoveredLandmarks: number
+  totalLandmarks: number
+  discoveredMuseums: number
+  totalMuseums: number
   activeQuests: number
   onOpenStats: () => void
 }
@@ -16,8 +18,10 @@ interface MiniStatsBarProps {
 export default function MiniStatsBar({
   streak,
   points,
-  discovered,
-  total,
+  discoveredLandmarks,
+  totalLandmarks,
+  discoveredMuseums,
+  totalMuseums,
   activeQuests,
   onOpenStats
 }: MiniStatsBarProps) {
@@ -28,6 +32,11 @@ export default function MiniStatsBar({
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Calculate totals
+  const totalDiscovered = discoveredLandmarks + discoveredMuseums
+  const total = totalLandmarks + totalMuseums
+  const progressPercent = total > 0 ? Math.round((totalDiscovered / total) * 100) : 0
 
   if (!mounted) {
     // Return skeleton during SSR to match initial render
@@ -59,11 +68,11 @@ export default function MiniStatsBar({
       onMouseLeave={() => setIsHovered(false)}
       onClick={onOpenStats}
       className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 cursor-pointer"
-      whileHover={{ scale: 1.05, x: 2 }}
+      whileHover={{ scale: 1.02, x: 2 }}
       whileTap={{ scale: 0.98 }}
     >
       <div
-        className="px-2 py-1.5 sm:px-5 sm:py-2.5 flex items-center gap-1.5 sm:gap-3 relative"
+        className="px-2 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 sm:gap-2.5 relative"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}F8, ${minecraftTheme.colors.beige.light}F5)`,
           border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -76,10 +85,10 @@ export default function MiniStatsBar({
         {/* Streak */}
         {streak > 0 && (
           <>
-            <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(255, 69, 0, 0.15)' }}>
-              <span className="text-sm sm:text-lg">🔥</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(255, 69, 0, 0.15)' }}>
+              <span className="text-sm">🔥</span>
               <span
-                className="text-xs sm:text-base font-bold"
+                className="text-xs font-bold"
                 style={{
                   color: '#FF4500',
                   fontFamily: 'monospace',
@@ -89,63 +98,66 @@ export default function MiniStatsBar({
                 {streak}
               </span>
             </div>
-            <div className="w-px h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
+            <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
           </>
         )}
 
         {/* Points */}
-        <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(255, 215, 0, 0.15)' }}>
-          <span className="text-sm sm:text-lg">⭐</span>
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(255, 215, 0, 0.15)' }}>
+          <span className="text-sm">⭐</span>
           <span
-            className="text-xs sm:text-base font-bold"
+            className="text-xs font-bold"
             style={{
-              color: '#FFD700',
+              color: '#D4A000',
               fontFamily: 'monospace',
               textShadow: '0 1px 2px rgba(0,0,0,0.2)'
             }}
           >
-            {points}
+            {points.toLocaleString()}
           </span>
         </div>
 
         {/* Divider */}
-        <div className="w-px h-4 sm:h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
+        <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
 
-        {/* Discovered */}
-        <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(46, 125, 50, 0.15)' }}>
-          <span className="text-sm sm:text-lg">🗺️</span>
-          <div className="flex flex-col">
-            <span
-              className="text-[10px] sm:text-xs font-bold leading-tight"
-              style={{
-                color: minecraftTheme.colors.text.primary,
-                fontFamily: 'monospace'
-              }}
-            >
-              {discovered}/{total}
-            </span>
-            <span
-              className="text-[8px] sm:text-[9px] font-bold leading-tight"
-              style={{
-                color: minecraftTheme.colors.text.secondary,
-                fontFamily: 'monospace'
-              }}
-            >
-              {((discovered / total) * 100).toFixed(0)}%
-            </span>
-          </div>
+        {/* Landmarks - Green */}
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(46, 125, 50, 0.12)' }}>
+          <span className="text-sm">🏛️</span>
+          <span
+            className="text-xs font-bold"
+            style={{
+              color: '#2E7D32',
+              fontFamily: 'monospace'
+            }}
+          >
+            {discoveredLandmarks}/{totalLandmarks}
+          </span>
+        </div>
+
+        {/* Museums - Blue */}
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(25, 118, 210, 0.12)' }}>
+          <span className="text-sm">🎨</span>
+          <span
+            className="text-xs font-bold"
+            style={{
+              color: '#1976D2',
+              fontFamily: 'monospace'
+            }}
+          >
+            {discoveredMuseums}/{totalMuseums}
+          </span>
         </div>
 
         {/* Active Quests (if any) */}
         {activeQuests > 0 && (
           <>
-            <div className="w-px h-4 sm:h-5" style={{ background: minecraftTheme.colors.terracotta.light }} />
-            <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md" style={{ background: 'rgba(212, 80, 30, 0.15)' }}>
-              <span className="text-sm sm:text-lg">📜</span>
+            <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(212, 80, 30, 0.15)' }}>
+              <span className="text-sm">📜</span>
               <motion.span
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
-                className="text-xs sm:text-base font-bold"
+                className="text-xs font-bold"
                 style={{
                   color: minecraftTheme.colors.terracotta.base,
                   fontFamily: 'monospace'
@@ -172,26 +184,59 @@ export default function MiniStatsBar({
         />
       </div>
 
-      {/* Tooltip */}
+      {/* Expanded Tooltip on hover */}
       {isHovered && (
         <motion.div
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-full mt-3 left-0 px-4 py-2 text-xs shadow-xl"
+          className="absolute top-full mt-2 left-0 px-4 py-3 shadow-xl min-w-[220px]"
           style={{
-            background: `linear-gradient(135deg, ${minecraftTheme.colors.terracotta.dark}, ${minecraftTheme.colors.terracotta.base})`,
-            color: 'white',
-            borderRadius: '8px',
+            background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}, ${minecraftTheme.colors.beige.light})`,
+            borderRadius: '12px',
             fontFamily: 'monospace',
-            whiteSpace: 'nowrap',
-            border: '2px solid rgba(255,255,255,0.2)',
-            fontWeight: 'bold'
+            border: `2px solid ${minecraftTheme.colors.terracotta.base}`,
           }}
         >
-          ✨ Click to view full stats & achievements
+          {/* Progress Overview */}
+          <div className="mb-3">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-bold text-stone-600">Overall Progress</span>
+              <span className="text-xs font-bold text-stone-800">{progressPercent}%</span>
+            </div>
+            <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-amber-400 to-amber-600"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
+
+          {/* Detailed breakdown */}
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-stone-600">🏛️ Landmarks</span>
+              <span className="font-bold text-green-700">{discoveredLandmarks} / {totalLandmarks}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-stone-600">🎨 Museums</span>
+              <span className="font-bold text-blue-700">{discoveredMuseums} / {totalMuseums}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-stone-600">⭐ Total Points</span>
+              <span className="font-bold text-amber-700">{points.toLocaleString()}</span>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-3 pt-2 border-t border-stone-200 text-center">
+            <span className="text-[10px] font-bold text-stone-500">
+              Click for full exploration stats
+            </span>
+          </div>
         </motion.div>
       )}
     </motion.div>
   )
 }
-
