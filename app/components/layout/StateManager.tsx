@@ -325,15 +325,32 @@ export default function StateManager({ children }: StateManagerProps) {
 
   const handleNavigateToLandmark = useCallback((coordinates: [number, number]) => {
     if (!map) return
-    map.flyTo({
-      center: coordinates,
-      zoom: 17,
-      pitch: 60,
-      bearing: 0,
-      duration: 2000,
-      essential: true
-    })
-  }, [map])
+    
+    // Exit fly mode first - fly mode animation loop will override map.flyTo()
+    if (isFlyMode) {
+      setIsFlyMode(false)
+      // Give fly mode a moment to cleanup before flying to location
+      setTimeout(() => {
+        map.flyTo({
+          center: coordinates,
+          zoom: 17,
+          pitch: 60,
+          bearing: 0,
+          duration: 2000,
+          essential: true
+        })
+      }, 100)
+    } else {
+      map.flyTo({
+        center: coordinates,
+        zoom: 17,
+        pitch: 60,
+        bearing: 0,
+        duration: 2000,
+        essential: true
+      })
+    }
+  }, [map, isFlyMode])
 
   // Handle game reset - reset ALL systems
   const handleResetProgress = useCallback(() => {

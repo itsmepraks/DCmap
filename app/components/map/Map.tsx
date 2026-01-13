@@ -59,7 +59,7 @@ export default function Map({
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       // If clicking on nothing interactive, close panel
       // Only query layers that exist in the map
-      const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer'].filter(
+      const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer', 'parks-seasonal'].filter(
         layerId => map.getLayer(layerId)
       )
       

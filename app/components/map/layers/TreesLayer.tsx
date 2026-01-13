@@ -29,6 +29,12 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
   
   // Track selected tree/cluster
   const selectedIdRef = useRef<string | number | null>(null)
+  
+  // Store onSelect in a ref so click handlers always use the latest callback
+  const onSelectRef = useRef(onSelect)
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
 
   const treeFilter = useMemo(() => {
     return ['in', ['get', 'class'], 'forest', 'wood', 'scrub', 'grass', 'crop']
@@ -36,7 +42,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
   const seasonColors = useMemo(
     () => ({
-      spring: { base: '#4E7A4E', shadow: '#2E4A2E', highlight: '#FFB7C5' }, // More natural green base with pink highlights
+      spring: { base: '#FFB7C5', shadow: '#E08DA0', highlight: '#FFDEEB' }, // Cherry blossom PINK for spring
       summer: { base: '#2D5A27', shadow: '#1A3317', highlight: '#4E8F44' }, // Deep realistic summer green
       fall: { base: '#D67229', shadow: '#8B4513', highlight: '#FF8C00' }, // Rich fall orange
       winter: { base: '#708090', shadow: '#4A5560', highlight: '#A9B7C6' } // Slate grey winter
@@ -103,10 +109,10 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
     const initializeLayer = async () => {
       if (!map) return
       
-      // If style isn't loaded, wait for it
+      // If style isn't loaded, wait for it - use 'idle' as fallback since 'style.load' may have already fired
       if (!map.isStyleLoaded()) {
-        console.log('🌲 Style not loaded yet, waiting for style.load...')
-        map.once('style.load', initializeLayer)
+        console.log('🌲 Style not loaded yet, waiting for map idle...')
+        map.once('idle', initializeLayer)
         return
       }
 
@@ -200,19 +206,21 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           }
         })
 
-        const treeResponse = await fetch('/data/dmv_trees.geojson')
+        // Load DC tree data with individual tree info (COMMON_NAME, SPECIES, CONDITION)
+        const treeResponse = await fetch('/data/dc_trees.geojson')
         if (!treeResponse.ok) {
-          throw new Error('Failed to load DMV tree data')
+          throw new Error('Failed to load DC tree data')
         }
         const treeData = await treeResponse.json()
+        console.log(`🌲 Loaded ${treeData.features?.length || 0} trees from dc_trees.geojson`)
 
         if (!map.getSource(TREE_POINT_SOURCE_ID)) {
           map.addSource(TREE_POINT_SOURCE_ID, {
             type: 'geojson',
             data: treeData,
             cluster: true,
-            clusterMaxZoom: 15, // Cluster until zoom 15 for better performance
-            clusterRadius: 60, // Larger radius = fewer clusters = better performance
+            clusterMaxZoom: 13, // Only cluster until zoom 13 - show individual trees sooner
+            clusterRadius: 40, // Smaller radius = more visible clusters
             generateId: true // Needed for feature-state
           })
         }
@@ -270,16 +278,18 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                10, 0.7,
-                14, 1.1,
-                18, 1.8
+                10, 1.0,  // Larger at low zoom
+                14, 1.5,
+                16, 2.0,
+                18, 2.5
               ],
               'icon-allow-overlap': true,
+              'icon-ignore-placement': true, // Make sure they always show
               'icon-pitch-alignment': 'viewport',
               'icon-rotation-alignment': 'viewport'
             },
             paint: {
-              'icon-opacity': 0.95,
+              'icon-opacity': 1,
               'icon-halo-color': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
@@ -289,10 +299,10 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
               'icon-halo-width': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
-                4,
-                2
+                6,
+                3
               ],
-              'icon-halo-blur': 1
+              'icon-halo-blur': 2
             }
           })
         }
@@ -325,8 +335,8 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
           const coordinates = (feature.geometry as any).coordinates.slice()
 
-          if (onSelect) {
-            onSelect({
+          if (onSelectRef.current) {
+            onSelectRef.current({
               id: String(feature.id || Math.random()),
               type: 'tree',
               name: properties.COMMON_NAME || 'Unknown Tree',
@@ -392,7 +402,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
     }
 
     initializeLayer()
-  }, [map, season, seasonColors, treeFilter, createSeasonIcons, onSelect])
+  }, [map, season, seasonColors, treeFilter, createSeasonIcons])
 
   useEffect(() => {
     if (!map || !isInitialized.current) return

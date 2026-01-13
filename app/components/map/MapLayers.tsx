@@ -32,7 +32,7 @@ export const MapLayers = memo(function MapLayers({
 
   return (
     <>
-      <ParksLayer visible={layersVisible.trees} season={currentSeason} />
+      <ParksLayer visible={layersVisible.parks} season={currentSeason} onSelect={onSelectEntity} />
       <TreesLayer 
         visible={layersVisible.trees} 
         season={currentSeason} 

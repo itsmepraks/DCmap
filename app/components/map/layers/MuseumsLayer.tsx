@@ -121,18 +121,22 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
     const initializeLayer = async () => {
       try {
-        // Load custom museum icon
-        const iconImage = await loadImage('/icons/museum.svg')
+        // Load custom museum icon - create a larger, more visible icon
         if (!map.hasImage('museum-icon')) {
-          // Rasterize SVG to canvas to avoid Mapbox "SVG not supported" errors
+          const iconImage = await loadImage('/icons/museum.svg')
+          // Rasterize SVG to canvas at a larger size for better visibility
           const canvas = document.createElement('canvas')
-          canvas.width = iconImage.width || 32
-          canvas.height = iconImage.height || 32
+          const iconSize = 64 // Larger size for visibility from far
+          canvas.width = iconSize
+          canvas.height = iconSize
           const ctx = canvas.getContext('2d')
           if (ctx) {
-            ctx.drawImage(iconImage, 0, 0, canvas.width, canvas.height)
+            ctx.imageSmoothingEnabled = true
+            ctx.imageSmoothingQuality = 'high'
+            ctx.drawImage(iconImage, 0, 0, iconSize, iconSize)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-            map.addImage('museum-icon', imageData)
+            map.addImage('museum-icon', imageData, { sdf: false })
+            console.log('✅ Museum icon loaded at 64x64 size')
           } else {
             // Fallback if canvas context fails
             map.addImage('museum-icon', iconImage)
@@ -223,13 +227,15 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 0.4,
-              12, 0.6,
-              16, 0.8, // Reduced max size for cleaner look
-              20, 1.0
+              8, 0.8,   // Much larger at low zoom - visible from far
+              10, 1.0,
+              12, 1.2,
+              14, 1.4,
+              16, 1.6,
+              18, 1.8
             ],
-            'icon-allow-overlap': true, // Allow overlap to ensure they show up
-            'icon-ignore-placement': false, // Respect other icons to reduce clutter
+            'icon-allow-overlap': true, // Always show museums
+            'icon-ignore-placement': true, // Make sure they are always visible
             'icon-pitch-alignment': 'viewport',
             visibility: 'none'
           }

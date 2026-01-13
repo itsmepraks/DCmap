@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
+import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface Landmark {
   id: string
@@ -11,14 +12,17 @@ interface Landmark {
   visited: boolean
   coordinates: [number, number]
   category?: string
+  description?: string
+  funFact?: string
 }
 
 interface LandmarkExplorerProps {
   landmarks: Landmark[]
   onNavigate: (coordinates: [number, number]) => void
+  onSelect?: (entity: SelectedEntity) => void
 }
 
-export default function LandmarkExplorer({ landmarks, onNavigate }: LandmarkExplorerProps) {
+export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: LandmarkExplorerProps) {
   const [isExpanded, setIsExpanded] = useState(false) // Start collapsed
 
   // Sort landmarks: Unvisited first, then visited
@@ -107,12 +111,12 @@ export default function LandmarkExplorer({ landmarks, onNavigate }: LandmarkExpl
             <div className="absolute bottom-0 left-0 w-2 h-2 bg-black/40" />
             <div className="absolute bottom-0 right-0 w-2 h-2 bg-black/40" />
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {sortedLandmarks.map((landmark) => (
                 <motion.div
                   key={landmark.id}
-                  whileHover={{ x: 2 }}
-                  className="p-3 rounded-lg relative overflow-hidden group"
+                  whileHover={{ x: 2, backgroundColor: 'rgba(212, 80, 30, 0.1)' }}
+                  className="p-3 rounded-lg border group"
                   style={{
                     background: landmark.visited 
                       ? 'rgba(126, 217, 87, 0.15)' 
@@ -122,40 +126,57 @@ export default function LandmarkExplorer({ landmarks, onNavigate }: LandmarkExpl
                   }}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                      <span className="text-xl filter drop-shadow-sm">{landmark.icon}</span>
-                      <div>
-                        <h4 className="text-sm font-bold leading-tight" style={{ color: minecraftTheme.colors.text.primary }}>
-                          {landmark.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span 
-                            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                            style={{
-                              background: landmark.visited ? minecraftTheme.colors.accent.green : '#9CA3AF',
-                              color: 'white'
-                            }}
-                          >
-                            {landmark.visited ? 'VISITED' : 'UNVISITED'}
-                          </span>
-                        </div>
+                    <div className="flex-1">
+                      <h4 className="text-xs font-bold leading-tight text-[#2C1810] group-hover:text-[#D4501E] transition-colors">
+                        {landmark.icon} {landmark.name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span 
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                          style={{
+                            background: landmark.visited ? minecraftTheme.colors.accent.green : '#9CA3AF',
+                            color: 'white'
+                          }}
+                        >
+                          {landmark.visited ? 'VISITED' : 'UNVISITED'}
+                        </span>
                       </div>
                     </div>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => onNavigate(landmark.coordinates)}
-                      className="p-2 rounded-lg"
-                      style={{
-                        background: minecraftTheme.colors.terracotta.base,
-                        color: 'white',
-                        boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
-                      }}
-                      title="Fly to location"
-                    >
-                      ✈️
-                    </motion.button>
+                    <div className="flex flex-col gap-1">
+                      {onSelect && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect({
+                              id: landmark.id,
+                              type: 'landmark',
+                              name: landmark.name,
+                              description: landmark.description || `A famous landmark in Washington DC.`,
+                              coordinates: landmark.coordinates,
+                              visited: landmark.visited,
+                              metadata: {
+                                category: landmark.category,
+                                funFact: landmark.funFact
+                              }
+                            });
+                          }}
+                          className="w-8 h-8 flex items-center justify-center bg-blue-100 hover:bg-blue-200 rounded-full transition-colors"
+                          title="View Info"
+                        >
+                          ℹ️
+                        </button>
+                      )}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate(landmark.coordinates);
+                        }}
+                        className="w-8 h-8 flex items-center justify-center bg-green-100 hover:bg-green-200 rounded-full transition-colors opacity-50 group-hover:opacity-100"
+                        title="Fly to Location"
+                      >
+                        ✈️
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}

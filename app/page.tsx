@@ -42,6 +42,7 @@ export default function Home() {
                   playerPosition={state.playerPosition}
                   progressiveWaypoints={state.progressiveWaypoints}
                   onProgressiveWaypointsUpdate={state.handleProgressiveWaypointsUpdate}
+                  onSelectEntity={state.gameState.setSelectedEntity}
                 />
 
                 {/* Game UI Elements */}

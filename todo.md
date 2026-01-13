@@ -331,3 +331,70 @@ return { opacity: 0, isVisible: false }
 🧭 **Nearest landmark HUD** - Always shows closest undiscovered landmark
 ✨ **Smooth animations** - Pulsing primary, fade-in secondary
 🔧 **Zero linting errors** - Clean TypeScript implementation
+
+---
+
+### Season, Trees, Parks, and Museum Fixes - January 12, 2026 ✅
+
+**User Feedback:**
+- "Trees and parks not rendering properly according to live data"
+- "When we change season, it doesn't show properly"
+- "Clicking on tree or park, we could gain info - not happening"
+- "Live trees in DC not populating like before"
+- "Museum should have visible icon from far apart"
+
+**Problems Identified:**
+1. TreesLayer was loading from `dmv_trees.geojson` (few generic entries) instead of `dc_trees.geojson` (47 trees with COMMON_NAME, SPECIES, etc.)
+2. Spring season colors were GREEN instead of PINK (cherry blossom theme)
+3. Tree icons too small and clustered too aggressively
+4. Museum icons too small at lower zoom levels, not distinctive
+5. TreesLayer and ParksLayer waiting for `style.load` event that had already fired
+
+**Solutions Implemented:**
+
+1. **Fixed TreesLayer Data Source** ✅
+   - Changed from `/data/dmv_trees.geojson` to `/data/dc_trees.geojson`
+   - Now loads 47 trees with proper properties (COMMON_NAME, SPECIES, DBH, CONDITION)
+   - Reduced cluster radius (40 vs 60) for better visibility
+   - Reduced clusterMaxZoom (13 vs 15) to show individual trees sooner
+
+2. **Fixed Spring Season Colors** ✅
+   - Trees: Changed spring base color from `#4E7A4E` (green) to `#FFB7C5` (cherry blossom pink)
+   - Parks: Changed spring fill color from `#7FB37F` (green) to `#FFCDD2` (light pink)
+   - Now properly shows cherry blossom theme for DC's famous spring cherry blossoms
+
+3. **Increased Tree Icon Sizes** ✅
+   - At zoom 10: 1.0 (was 0.7)
+   - At zoom 14: 1.5 (was 1.1)
+   - At zoom 16: 2.0 (new)
+   - At zoom 18: 2.5 (was 1.8)
+   - Added `icon-ignore-placement: true` to ensure icons always show
+
+4. **Improved Museum Icon Visibility** ✅
+   - Created new 64x64 museum SVG icon with prominent blue circle and Greek temple design
+   - Icon sizes significantly increased at all zoom levels:
+     * Zoom 8: 0.8 (was 0.4)
+     * Zoom 10: 1.0 (new)
+     * Zoom 12: 1.2 (was 0.6)
+     * Zoom 14: 1.4 (new)
+     * Zoom 16: 1.6 (was 0.8)
+     * Zoom 18: 1.8 (was 1.0)
+   - Added `icon-ignore-placement: true` for visibility
+
+5. **Fixed Map Initialization Race Condition** ✅
+   - Changed from `map.once('style.load', ...)` to `map.once('idle', ...)`
+   - This ensures layers initialize even when style has already loaded
+
+**Files Modified:**
+- `app/components/map/layers/TreesLayer.tsx` - Data source, colors, icon sizes, init fix
+- `app/components/map/layers/ParksLayer.tsx` - Season colors, init fix
+- `app/components/map/layers/MuseumsLayer.tsx` - Icon sizes, loading
+- `public/icons/museum.svg` - New 64x64 distinctive icon
+
+**Result:**
+🌸 **Cherry Blossom Spring** - Pink trees and parks for DC's famous spring season
+🌳 **47 Real Trees** - Loading from proper DC tree dataset with species info
+🏛️ **Distinctive Museums** - Large blue icons visible from far away
+📍 **Better Tree Visibility** - Larger icons, less aggressive clustering
+✅ **Season Changes Working** - Trees update color properly when season changes
+🖱️ **Tree Info on Click** - Shows Common Name, Species, Diameter, Condition

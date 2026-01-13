@@ -83,6 +83,7 @@ export default function GameUI({
       <LandmarkExplorer
         landmarks={landmarks}
         onNavigate={onNavigateToLandmark}
+        onSelect={onSelectEntity}
       />
 
       {/* Museum Explorer (Only visible when museum layer is on) */}
