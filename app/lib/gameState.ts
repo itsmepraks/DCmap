@@ -127,5 +127,3 @@ export function resetGameProgress(): GameProgress {
   saveGameProgress(newProgress)
   return newProgress
 }
-
-

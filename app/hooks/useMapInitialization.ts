@@ -22,8 +22,6 @@ export function useMapInitialization(
     }
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-    console.log('🗺️ Initializing map...')
-
 
     if (!token || token.includes('placeholder')) {
       console.error(
@@ -39,8 +37,6 @@ export function useMapInitialization(
     let mapInstance: mapboxgl.Map | null = null
 
     try {
-      console.log('🎮 Creating cartoonish/Minecraft-style map')
-      
       // Load custom cartoonish style JSON
       const loadCartoonStyle = async () => {
         // Store container in local variable for type narrowing
@@ -86,7 +82,6 @@ export function useMapInitialization(
           
           // Ensure cartoonish style is visible immediately
           mapInstance.once('style.load', () => {
-            console.log('✅ Cartoonish map style loaded with bright colors!')
             // Force a repaint to ensure style is visible
             mapInstance?.triggerRepaint()
           })
@@ -137,8 +132,6 @@ export function useMapInitialization(
         mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
       mapInstance.on('load', () => {
-        console.log('✅ Map loaded successfully!')
-
         try {
           if (!mapInstance?.getSource('mapbox-dem')) {
             mapInstance?.addSource('mapbox-dem', {
@@ -158,6 +151,29 @@ export function useMapInitialization(
             console.warn('Terrain setup skipped:', terrainError)
           }
 
+          // Add hillshading for "topographical texture"
+          if (!mapInstance?.getLayer('hillshading')) {
+            try {
+              // Find index of water layer to place hillshade below/near it
+              const layers = mapInstance?.getStyle().layers || [];
+              const waterLayer = layers.find(l => l.id.includes('water'));
+              
+              mapInstance?.addLayer({
+                id: 'hillshading',
+                source: 'mapbox-dem',
+                type: 'hillshade',
+                paint: {
+                  'hillshade-shadow-color': '#473B24',
+                  'hillshade-highlight-color': '#FFFFFF',
+                  'hillshade-accent-color': '#000000',
+                  'hillshade-exaggeration': 0.5
+                }
+              }, waterLayer?.id) 
+            } catch (e) {
+              console.warn('Hillshade setup skipped:', e)
+            }
+          }
+
           if (!mapInstance?.getLayer('sky')) {
             try {
               mapInstance?.addLayer({
@@ -171,7 +187,6 @@ export function useMapInitialization(
                   'sky-atmosphere-halo-color': '#FFD700'
                 }
               })
-              console.log('✅ Added realistic atmospheric sky')
             } catch (skyError) {
               console.warn('Sky layer setup skipped:', skyError)
             }
@@ -399,16 +414,17 @@ export function useMapInitialization(
                 'match',
                 ['get', 'class'],
                 'grass',
-                '#2F4426',
+                '#3A5A40', // Richer green
                 'forest',
-                '#24351E',
+                '#344E41', // Darker forest
                 'scrub',
-                '#3A4A2E',
+                '#588157',
                 'crop',
-                '#4A5C32',
-                '#2D2D2D'
+                '#A3B18A',
+                '#DAD7CD'
               ],
-              'fill-opacity': 0.35
+              'fill-opacity': 0.8, // Increased opacity for texture feel
+              'fill-antialias': true
             }
           })
 
@@ -521,12 +537,9 @@ export function useMapInitialization(
 
         try {
           applyOpenWorldVisuals()
-          console.log('🌆 Applied GTA open-world ambience')
         } catch (visualError) {
           console.warn('Open-world styling skipped:', visualError)
         }
-
-        console.log('🏗️ 3D buildings and terrain enabled!')
 
         try {
           setMap(mapInstance)
@@ -549,13 +562,9 @@ export function useMapInitialization(
 
     return () => {
       if (mapInstance) {
-        console.log('🧹 Cleaning up map instance on unmount')
         mapInstance.remove()
       }
       isInitialized.current = false
     }
   }, [containerRef, options.styleUrl, setMap])
 }
-
-
-

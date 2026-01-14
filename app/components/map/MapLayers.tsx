@@ -3,7 +3,6 @@ import type mapboxgl from 'mapbox-gl'
 import type { LayerVisibility } from '@/app/types/map'
 import MuseumsLayer from './layers/MuseumsLayer'
 import RoadDetailsLayer from './layers/RoadDetailsLayer'
-import Museum3DMarkers from './layers/Museum3DMarkers'
 import TreesLayer from './layers/TreesLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
 import ParksLayer from './layers/ParksLayer'
@@ -15,7 +14,7 @@ interface MapLayersProps {
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  onSelectEntity: (entity: SelectedEntity | null) => void
+  onSelectEntity?: (entity: SelectedEntity | null) => void
 }
 
 export const MapLayers = memo(function MapLayers({
@@ -33,7 +32,7 @@ export const MapLayers = memo(function MapLayers({
 
   return (
     <>
-      <ParksLayer visible={layersVisible.trees} season={currentSeason} />
+      <ParksLayer visible={layersVisible.parks} season={currentSeason} onSelect={onSelectEntity} />
       <TreesLayer 
         visible={layersVisible.trees} 
         season={currentSeason} 
@@ -43,8 +42,8 @@ export const MapLayers = memo(function MapLayers({
       <MuseumsLayer 
         visible={layersVisible.museums} 
         onSelect={onSelectEntity}
+        onMuseumDiscovered={onLandmarkDiscovered}
       />
-      <Museum3DMarkers visible={layersVisible.museums} />
       <LandmarksLayer 
         map={map} 
         visible={layersVisible.landmarks} 

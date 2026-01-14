@@ -10,7 +10,7 @@ const tutorialSteps = [
   {
     title: 'Welcome to DC Explorer!',
     icon: '🗺️',
-    description: 'Discover Washington DC in a fun, gamified way. Explore landmarks, complete quests, and earn achievements!',
+    description: 'Discover Washington DC in a fun, gamified way. Explore landmarks and earn achievements!',
     image: '🏛️',
   },
   {
@@ -18,12 +18,6 @@ const tutorialSteps = [
     icon: '🎯',
     description: 'Click on landmark markers to discover iconic sites. Each discovery earns you points and reveals fun facts!',
     image: '⭐',
-  },
-  {
-    title: 'Complete Quests',
-    icon: '📜',
-    description: 'Take on quests to guide your exploration. Visit specific landmarks to complete objectives and earn rewards!',
-    image: '🏆',
   },
   {
     title: 'Explore in 3D',

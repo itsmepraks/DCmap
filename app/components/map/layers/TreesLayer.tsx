@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useCallback } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import mapboxgl from 'mapbox-gl'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
@@ -16,6 +16,16 @@ const TREE_POINT_LAYER_ID = 'dmv-tree-points-layer'
 const TREE_CLUSTER_LAYER_ID = 'dmv-tree-clusters'
 const TREE_CLUSTER_COUNT_LAYER_ID = 'dmv-tree-cluster-count'
 
+// All layer IDs for this component
+const ALL_TREE_LAYERS = [
+  'dmv-tree-canopy-base',
+  'dmv-tree-canopy-volume',
+  'dmv-tree-canopy-shadow',
+  TREE_CLUSTER_LAYER_ID,
+  TREE_CLUSTER_COUNT_LAYER_ID,
+  TREE_POINT_LAYER_ID
+]
+
 /**
  * TreesLayer - Mixes DMV landcover shading with real tree/park data
  *
@@ -27,8 +37,20 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
   const { map } = useMap()
   const isInitialized = useRef(false)
   
+  // Store visible prop in ref so it's accessible during initialization
+  const visibleRef = useRef(visible)
+  useEffect(() => {
+    visibleRef.current = visible
+  }, [visible])
+  
   // Track selected tree/cluster
   const selectedIdRef = useRef<string | number | null>(null)
+  
+  // Store onSelect in a ref so click handlers always use the latest callback
+  const onSelectRef = useRef(onSelect)
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
 
   const treeFilter = useMemo(() => {
     return ['in', ['get', 'class'], 'forest', 'wood', 'scrub', 'grass', 'crop']
@@ -36,15 +58,15 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
   const seasonColors = useMemo(
     () => ({
-      spring: { base: '#FFB7C5', shadow: '#E08DA0', highlight: '#FFDEEB' }, // Cherry blossom pinks
-      summer: { base: '#4F8A4F', shadow: '#2F4F2F', highlight: '#7BC47B' },
-      fall: { base: '#E28D3D', shadow: '#8C4B10', highlight: '#FFC27D' },
-      winter: { base: '#CBD3DD', shadow: '#687078', highlight: '#E2E8F0' }
+      spring: { base: '#FFB7C5', shadow: '#E08DA0', highlight: '#FFDEEB' }, // Cherry blossom PINK for spring
+      summer: { base: '#2D5A27', shadow: '#1A3317', highlight: '#4E8F44' }, // Deep realistic summer green
+      fall: { base: '#D67229', shadow: '#8B4513', highlight: '#FF8C00' }, // Rich fall orange
+      winter: { base: '#708090', shadow: '#4A5560', highlight: '#A9B7C6' } // Slate grey winter
     }),
     []
   )
 
-  const createSeasonIcons = () => {
+  const createSeasonIcons = useCallback(() => {
     if (!map) return
     Object.entries(seasonColors).forEach(([seasonName, palette]) => {
       const iconId = `tree-icon-${seasonName}`
@@ -95,7 +117,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
         data: imageData.data
       })
     })
-  }
+  }, [map, seasonColors])
 
   useEffect(() => {
     if (!map || isInitialized.current) return
@@ -105,8 +127,8 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
       
       // If style isn't loaded, wait for it
       if (!map.isStyleLoaded()) {
-        console.log('🌲 Style not loaded yet, waiting for style.load...')
-        map.once('style.load', initializeLayer)
+        console.log('🌲 Style not loaded yet, waiting for map idle...')
+        map.once('idle', initializeLayer)
         return
       }
 
@@ -116,21 +138,22 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
         const layers = map.getStyle().layers ?? []
         // Find building layer to place trees BEFORE buildings (for proper occlusion)
-        // Buildings should render on top of trees to occlude them
         const buildingLayerId = layers.find((layer) => 
           layer.id === 'realistic-buildings' || 
           (layer.type === 'fill-extrusion' && layer['source-layer'] === 'building')
         )?.id
         
-        // If building layer exists, place trees BEFORE it
-        // Otherwise, find first symbol layer (which comes after most base layers)
         const firstSymbolId = layers.find((layer) => layer.type === 'symbol')?.id
         const beforeId = buildingLayerId || firstSymbolId
         
+        // Get initial visibility - HIDDEN by default unless explicitly visible
+        const initialVisibility = visibleRef.current ? 'visible' : 'none'
+        
         const addLayer = (layer: mapboxgl.AnyLayer) => {
           if (!map.getLayer(layer.id)) {
-            // Place trees BEFORE buildings so buildings render on top and occlude trees
             map.addLayer(layer, beforeId)
+            // Immediately set visibility after adding
+            map.setLayoutProperty(layer.id, 'visibility', initialVisibility)
           }
         }
 
@@ -163,19 +186,20 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
           minzoom: 10,
           paint: {
-            'fill-extrusion-color': colors.highlight,
+            'fill-extrusion-color': colors.base,
             'fill-extrusion-base': 0,
             'fill-extrusion-height': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              10, 1.5,
-              13, 5,
-              15, 10
+              10, 2,
+              13, 6,
+              15, 12
             ],
-            'fill-extrusion-opacity': 0.85,
+            'fill-extrusion-opacity': 0.8,
             'fill-extrusion-vertical-gradient': true,
-            'fill-extrusion-ambient-occlusion-intensity': 0.6
+            'fill-extrusion-ambient-occlusion-intensity': 0.6,
+            'fill-extrusion-ambient-occlusion-radius': 3
           }
         })
 
@@ -199,20 +223,22 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           }
         })
 
-        const treeResponse = await fetch('/data/dmv_trees.geojson')
+        // Load DC tree data
+        const treeResponse = await fetch('/data/dc_trees.geojson')
         if (!treeResponse.ok) {
-          throw new Error('Failed to load DMV tree data')
+          throw new Error('Failed to load DC tree data')
         }
         const treeData = await treeResponse.json()
+        console.log(`🌲 Loaded ${treeData.features?.length || 0} trees from dc_trees.geojson`)
 
         if (!map.getSource(TREE_POINT_SOURCE_ID)) {
           map.addSource(TREE_POINT_SOURCE_ID, {
             type: 'geojson',
             data: treeData,
             cluster: true,
-            clusterMaxZoom: 15, // Cluster until zoom 15 for better performance
-            clusterRadius: 60, // Larger radius = fewer clusters = better performance
-            generateId: true // Needed for feature-state
+            clusterMaxZoom: 13,
+            clusterRadius: 40,
+            generateId: true
           })
         }
 
@@ -222,6 +248,9 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
             type: 'circle',
             source: TREE_POINT_SOURCE_ID,
             filter: ['has', 'point_count'],
+            layout: {
+              'visibility': initialVisibility
+            },
             paint: {
               'circle-color': colors.highlight,
               'circle-radius': [
@@ -245,6 +274,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
             source: TREE_POINT_SOURCE_ID,
             filter: ['has', 'point_count'],
             layout: {
+              'visibility': initialVisibility,
               'text-field': '{point_count_abbreviated}',
               'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
               'text-size': 12
@@ -264,34 +294,37 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
             source: TREE_POINT_SOURCE_ID,
             filter: ['!', ['has', 'point_count']],
             layout: {
+              'visibility': initialVisibility,
               'icon-image': `tree-icon-${season}`,
               'icon-size': [
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                10, 0.7,
-                14, 1.1,
-                18, 1.8
+                10, 1.0,
+                14, 1.5,
+                16, 2.0,
+                18, 2.5
               ],
               'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
               'icon-pitch-alignment': 'viewport',
               'icon-rotation-alignment': 'viewport'
             },
             paint: {
-              'icon-opacity': 0.95,
+              'icon-opacity': 1,
               'icon-halo-color': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
-                '#FFD700', // Gold glow
+                '#FFD700',
                 '#ffffff'
               ],
               'icon-halo-width': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
-                4,
-                2
+                6,
+                3
               ],
-              'icon-halo-blur': 1
+              'icon-halo-blur': 2
             }
           })
         }
@@ -324,8 +357,8 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
           const coordinates = (feature.geometry as any).coordinates.slice()
 
-          if (onSelect) {
-            onSelect({
+          if (onSelectRef.current) {
+            onSelectRef.current({
               id: String(feature.id || Math.random()),
               type: 'tree',
               name: properties.COMMON_NAME || 'Unknown Tree',
@@ -384,34 +417,28 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
         })
 
         isInitialized.current = true
-        console.log('✅ DMV tree layers ready')
+        console.log(`✅ DMV tree layers ready (visibility: ${initialVisibility})`)
       } catch (error) {
         console.error('❌ Failed to initialize TreesLayer:', error)
       }
     }
 
     initializeLayer()
-  }, [map, season, seasonColors, treeFilter])
+  }, [map, season, seasonColors, treeFilter, createSeasonIcons])
 
+  // Handle visibility changes
   useEffect(() => {
     if (!map || !isInitialized.current) return
     const visibility = visible ? 'visible' : 'none'
-    // #region agent log
-    // #endregion
-    ;[
-      'dmv-tree-canopy-base',
-      'dmv-tree-canopy-volume',
-      'dmv-tree-canopy-shadow',
-      TREE_CLUSTER_LAYER_ID,
-      TREE_CLUSTER_COUNT_LAYER_ID,
-      TREE_POINT_LAYER_ID
-    ].forEach((layerId) => {
+    
+    ALL_TREE_LAYERS.forEach((layerId) => {
       if (map.getLayer(layerId)) {
         map.setLayoutProperty(layerId, 'visibility', visibility)
       }
     })
   }, [map, visible])
 
+  // Handle season changes
   useEffect(() => {
     if (!map || !isInitialized.current) return
     createSeasonIcons()
@@ -421,7 +448,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
       map.setPaintProperty('dmv-tree-canopy-base', 'fill-color', colors.base)
     }
     if (map.getLayer('dmv-tree-canopy-volume')) {
-      map.setPaintProperty('dmv-tree-canopy-volume', 'fill-extrusion-color', colors.highlight)
+      map.setPaintProperty('dmv-tree-canopy-volume', 'fill-extrusion-color', colors.base)
     }
     if (map.getLayer('dmv-tree-canopy-shadow')) {
       map.setPaintProperty('dmv-tree-canopy-shadow', 'line-color', colors.shadow)
@@ -433,7 +460,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
       map.setLayoutProperty(TREE_POINT_LAYER_ID, 'icon-image', `tree-icon-${season}`)
     }
     console.log(`🍂 TreesLayer season updated to: ${season}`)
-  }, [map, season, seasonColors])
+  }, [map, season, seasonColors, createSeasonIcons])
 
   return null
 }

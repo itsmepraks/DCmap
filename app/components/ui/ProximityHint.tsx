@@ -50,11 +50,22 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
         exit={{ y: 50, opacity: 0 }}
         whileHover={{ opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="fixed bottom-20 left-2 right-2 sm:bottom-24 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 z-40 pointer-events-auto max-w-sm sm:max-w-none mx-auto"
+        drag
+        dragMomentum={false}
+        className="fixed z-40 pointer-events-auto max-w-sm sm:max-w-none mx-auto cursor-move"
+        style={{ bottom: '5rem', left: '50%', x: '-50%' }}
       >
+        {/* Grip Handle */}
+        <div className="w-full flex justify-center mb-1 opacity-0 hover:opacity-100 transition-opacity">
+          <div className="px-2 py-0.5 rounded bg-black/20 text-[10px] font-bold text-white backdrop-blur-sm">
+            ⋮⋮ DRAG
+          </div>
+        </div>
+
         {/* Main Nearest Landmark - Always Visible */}
         <motion.button
           onClick={() => onNavigate?.(nearestLandmark.id)}
+          onPointerDown={(e) => e.stopPropagation()} // Stop drag when clicking button
           whileHover={{ scale: 1.08, y: -2 }}
           whileTap={{ scale: 0.96 }}
           className="flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl shadow-xl transition-all relative overflow-hidden w-full sm:w-auto mb-2"

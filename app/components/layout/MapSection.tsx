@@ -6,11 +6,12 @@ import ParticleEffect from '../map/effects/ParticleEffect'
 import DiscoveryRadius from '../map/effects/DiscoveryRadius'
 import BreadcrumbTrail from '../map/effects/BreadcrumbTrail'
 import WaypointLayer from '../map/WaypointLayer'
-import QuestWaypoints, { type ProgressiveWaypointData } from '../game/QuestWaypoints'
 import { useMap } from '@/app/lib/MapContext'
 
 import type { Landmark } from '@/app/hooks/useLandmarks'
-import type { Coordinates } from '@/app/lib/proximityDetector'
+import type { Coordinates } from '@/app/lib/proximity'
+
+import { type SelectedEntity } from '../ui/EntityInfoPanel'
 
 interface MapSectionProps {
   // Map configuration
@@ -27,12 +28,12 @@ interface MapSectionProps {
   // Game state
   landmarks: Landmark[]
   visitedLandmarks: Set<string>
-  activeQuestObjects: any[]
 
   // Callbacks
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
   onNavigateToLandmark: (coordinates: [number, number]) => void
-
+  onSelectEntity?: (entity: SelectedEntity | null) => void
+  
   // Waypoint system (legacy)
   waypoints: any[]
   activeWaypointId: string | null
@@ -45,8 +46,6 @@ interface MapSectionProps {
 
   // Progressive Waypoint System (NEW)
   playerPosition: Coordinates | null
-  progressiveWaypoints: ProgressiveWaypointData[]
-  onProgressiveWaypointsUpdate: (waypoints: ProgressiveWaypointData[]) => void
 }
 
 export default function MapSection({
@@ -56,7 +55,6 @@ export default function MapSection({
   isFlying,
   landmarks,
   visitedLandmarks,
-  activeQuestObjects,
   onLandmarkDiscovered,
   onNavigateToLandmark,
   waypoints,
@@ -66,8 +64,7 @@ export default function MapSection({
   gameProgress,
   landmarksState,
   playerPosition,
-  progressiveWaypoints,
-  onProgressiveWaypointsUpdate
+  onSelectEntity
 }: MapSectionProps) {
   const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
   const { map } = useMap()
@@ -89,6 +86,7 @@ export default function MapSection({
         isFlying={isFlying}
         landmarks={landmarks}
         visitedLandmarks={visitedLandmarks}
+        onSelect={onSelectEntity}
         onLandmarkDiscovered={(landmarkId, landmarkData) => {
           onLandmarkDiscovered(landmarkId, landmarkData)
           // Trigger particle effect for new discoveries
@@ -100,32 +98,6 @@ export default function MapSection({
             })
           }
         }}
-      />
-
-      {/* Progressive Quest Waypoints - Sequential objective display with distance-based reveal */}
-      <QuestWaypoints
-        activeQuests={activeQuestObjects}
-        landmarks={landmarks}
-        playerPosition={playerPosition}
-        onWaypointsUpdate={onProgressiveWaypointsUpdate}
-      />
-
-      {/* Waypoint Layer - Shows progressive waypoints on map */}
-      <WaypointLayer
-        map={map}
-        waypoints={progressiveWaypoints.map(wp => ({
-          id: wp.id,
-          name: wp.name,
-          coordinates: wp.coordinates,
-          color: wp.color,
-          icon: wp.icon,
-          isPrimary: wp.isPrimary,
-          opacity: wp.opacity,
-          isVisible: wp.isVisible,
-          createdAt: Date.now()
-        }))}
-        activeWaypointId={activeWaypointId}
-        onWaypointClick={(waypoint) => onNavigateToLandmark(waypoint.coordinates)}
       />
 
       {/* Legacy manual waypoints (if any) */}

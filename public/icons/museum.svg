@@ -1,11 +1,21 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="16" cy="16" r="14" fill="#3B82F6" opacity="0.2"/>
-  <path d="M16 6L6 12V14H26V12L16 6Z" fill="#3B82F6"/>
-  <rect x="8" y="14" width="2" height="8" fill="#3B82F6"/>
-  <rect x="12" y="14" width="2" height="8" fill="#3B82F6"/>
-  <rect x="16" y="14" width="2" height="8" fill="#3B82F6"/>
-  <rect x="20" y="14" width="2" height="8" fill="#3B82F6"/>
-  <rect x="6" y="22" width="20" height="2" fill="#3B82F6"/>
-  <circle cx="16" cy="16" r="15" stroke="#3B82F6" stroke-width="2" fill="none"/>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer glow circle -->
+  <circle cx="32" cy="32" r="30" fill="#4A90E2" opacity="0.3"/>
+  <!-- Main circle background -->
+  <circle cx="32" cy="32" r="26" fill="#4A90E2"/>
+  <!-- Inner white circle -->
+  <circle cx="32" cy="32" r="22" fill="white"/>
+  <!-- Museum building -->
+  <!-- Roof/Pediment -->
+  <path d="M32 12L14 24H50L32 12Z" fill="#4A90E2"/>
+  <!-- Columns -->
+  <rect x="17" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
+  <rect x="24" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
+  <rect x="30" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
+  <rect x="36" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
+  <rect x="43" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
+  <!-- Base -->
+  <rect x="14" y="42" width="36" height="6" rx="1" fill="#4A90E2"/>
+  <!-- Outer ring -->
+  <circle cx="32" cy="32" r="29" stroke="#4A90E2" stroke-width="3" fill="none"/>
 </svg>
-

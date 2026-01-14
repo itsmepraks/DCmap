@@ -2,17 +2,16 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useGameState } from '@/app/hooks/useGameState'
-import { useQuestSystem } from '@/app/hooks/useQuestSystem'
-import { useDailyChallenges } from '@/app/hooks/useDailyChallenges'
 import { useLandmarks } from '@/app/hooks/useLandmarks'
+import { useMuseums } from '@/app/hooks/useMuseums'
 import { useFlyController } from '@/app/hooks/useFlyController'
 import { useWaypointSystem } from '@/app/hooks/useWaypointSystem'
 import { useExperience } from '@/app/hooks/useExperience'
 import { useMap } from '@/app/lib/MapContext'
 import { usePlayerState } from '@/app/lib/playerState'
-import { calculateDistance, type Coordinates } from '@/app/lib/proximityDetector'
-import type { CurrentObjectiveInfo } from '@/app/lib/progressiveWaypointSystem'
-import type { ProgressiveWaypointData } from '@/app/components/game/QuestWaypoints'
+import { calculateDistance, type Coordinates } from '@/app/lib/proximity'
+
+import { type SelectedEntity } from '../ui/EntityInfoPanel'
 
 interface StateManagerProps {
   children: (props: StateManagerReturn) => React.ReactNode
@@ -41,9 +40,8 @@ interface StateManagerReturn {
 
   // Game Systems
   gameState: any
-  questSystem: any
-  dailyChallenges: any
   landmarksState: any
+  museumsState: any
   waypointSystem: any
   experience: any
 
@@ -61,16 +59,17 @@ interface StateManagerReturn {
 
   // Completion status
   allLandmarksVisited: boolean
-  hasCompletedQuest: boolean
   showCompletion: boolean
   setShowCompletion: (show: boolean) => void
 
   // Progressive Waypoint System (NEW)
   playerPosition: Coordinates | null
-  currentObjective: CurrentObjectiveInfo | null
   nearestUndiscovered: { id: string; name: string; distance: number; coordinates: [number, number] } | null
-  progressiveWaypoints: ProgressiveWaypointData[]
-  handleProgressiveWaypointsUpdate: (waypoints: ProgressiveWaypointData[]) => void
+  
+  // Entity Selection (New)
+  selectedEntity: SelectedEntity | null
+  setSelectedEntity: (entity: SelectedEntity | null) => void
+  clearSelectedEntity: () => void
 }
 
 export default function StateManager({ children }: StateManagerProps) {
@@ -88,16 +87,18 @@ export default function StateManager({ children }: StateManagerProps) {
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const [showCompletion, setShowCompletion] = useState(false)
   const [lastCompletionState, setLastCompletionState] = useState({
-    landmarks: false,
-    quest: false
+    landmarks: false
   })
-  const [progressiveWaypoints, setProgressiveWaypoints] = useState<ProgressiveWaypointData[]>([])
+  
+  // Entity Selection State
+  const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
+  const clearSelectedEntity = useCallback(() => setSelectedEntity(null), [])
 
   // Custom Hooks
+
   const gameState = useGameState()
-  const questSystem = useQuestSystem()
-  const dailyChallenges = useDailyChallenges()
   const landmarksState = useLandmarks(gameState.gameProgress.visitedLandmarks)
+  const museumsState = useMuseums(gameState.gameProgress.visitedLandmarks)
   const waypointSystem = useWaypointSystem()
   const experience = useExperience()
 
@@ -171,41 +172,14 @@ export default function StateManager({ children }: StateManagerProps) {
     // Check if already visited
     const isNewVisit = gameState.handleVisitLandmark(landmarkId)
 
-    // IMPORTANT: Always check quest progress, even if landmark was already visited
-    // This ensures quest objectives update even if user visited landmark before starting quest
-    const questResult = questSystem.handleLandmarkVisit(landmarkId)
-
     // Only award XP and show animations for NEW visits
     if (!isNewVisit) {
-      // Still log quest progress updates for already-visited landmarks
-      if (questResult.updatedQuests.length > 0 || questResult.completedQuests.length > 0) {
-        console.log('🎯 Quest progress updated for already-visited landmark:', landmarkId)
-      }
       return
     }
 
     // Award XP for landmark discovery
     const xpGained = experience.awardLandmarkXP()
     console.log(`✨ +${xpGained} XP from landmark discovery!`)
-
-    // Award XP for quest completion if any
-    if (questResult.completedQuests.length > 0) {
-      questResult.completedQuests.forEach(() => {
-        const questXP = experience.awardQuestXP()
-        console.log(`🎯 +${questXP} XP from quest completion!`)
-      })
-    }
-
-    // Update daily challenges
-    const challengeResult = dailyChallenges.handleLandmarkVisit()
-
-    // Award XP for daily challenge completion if any
-    if (challengeResult.completedChallenges.length > 0) {
-      challengeResult.completedChallenges.forEach(() => {
-        const challengeXP = experience.awardDailyChallengeXP()
-        console.log(`🔥 +${challengeXP} XP from daily challenge!`)
-      })
-    }
 
     // Show discovery animation
     const landmark = landmarksState.getLandmarkById(landmarkId)
@@ -223,7 +197,7 @@ export default function StateManager({ children }: StateManagerProps) {
     }
 
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
-  }, [gameState, questSystem, dailyChallenges, landmarksState, experience])
+  }, [gameState, landmarksState, experience])
 
   // Fly mode controller
   const flyControllerState = useFlyController({
@@ -251,11 +225,6 @@ export default function StateManager({ children }: StateManagerProps) {
     }
     return null
   }, [flyControllerState.position, map])
-
-  // Compute current objective info for HUD
-  const currentObjective = useMemo((): CurrentObjectiveInfo | null => {
-    return questSystem.getObjectiveInfo(landmarksState.landmarks, playerPosition)
-  }, [questSystem, landmarksState.landmarks, playerPosition])
 
   // Compute nearest undiscovered landmark for HUD
   const nearestUndiscovered = useMemo(() => {
@@ -289,15 +258,9 @@ export default function StateManager({ children }: StateManagerProps) {
     return nearest
   }, [playerPosition, landmarksState.landmarks, gameState.gameProgress.visitedLandmarks])
 
-  // Handler for progressive waypoints update from QuestWaypoints
-  const handleProgressiveWaypointsUpdate = useCallback((waypoints: ProgressiveWaypointData[]) => {
-    setProgressiveWaypoints(waypoints)
-  }, [])
-
   // Check completion status
   const allLandmarksVisited = landmarksState.landmarks.length > 0 &&
     gameState.gameProgress.visitedLandmarks.size >= landmarksState.landmarks.length
-  const hasCompletedQuest = questSystem.questCompletion !== null
 
   // Show completion notification when status changes
   useEffect(() => {
@@ -305,32 +268,43 @@ export default function StateManager({ children }: StateManagerProps) {
       setShowCompletion(true)
       setLastCompletionState(prev => ({ ...prev, landmarks: true }))
     }
-    if (hasCompletedQuest && !lastCompletionState.quest) {
-      setShowCompletion(true)
-      setLastCompletionState(prev => ({ ...prev, quest: true }))
-    }
-  }, [allLandmarksVisited, hasCompletedQuest, lastCompletionState])
+  }, [allLandmarksVisited, lastCompletionState])
 
   const handleNavigateToLandmark = useCallback((coordinates: [number, number]) => {
     if (!map) return
-    map.flyTo({
-      center: coordinates,
-      zoom: 17,
-      pitch: 60,
-      bearing: 0,
-      duration: 2000,
-      essential: true
-    })
-  }, [map])
+    
+    // Exit fly mode first - fly mode animation loop will override map.flyTo()
+    if (isFlyMode) {
+      setIsFlyMode(false)
+      // Give fly mode a moment to cleanup before flying to location
+      setTimeout(() => {
+        map.flyTo({
+          center: coordinates,
+          zoom: 17,
+          pitch: 60,
+          bearing: 0,
+          duration: 2000,
+          essential: true
+        })
+      }, 100)
+    } else {
+      map.flyTo({
+        center: coordinates,
+        zoom: 17,
+        pitch: 60,
+        bearing: 0,
+        duration: 2000,
+        essential: true
+      })
+    }
+  }, [map, isFlyMode])
 
   // Handle game reset - reset ALL systems
   const handleResetProgress = useCallback(() => {
     gameState.handleResetProgress()        // Reset visited landmarks
-    questSystem.resetProgress()            // Reset quest progress and reload quests
     experience.reset()                      // Reset XP and levels
     waypointSystem.clearAllWaypoints()     // Clear all waypoints
-    dailyChallenges.resetChallenges()      // Reset daily challenges and streak
-  }, [gameState, questSystem, experience, waypointSystem, dailyChallenges])
+  }, [gameState, experience, waypointSystem])
 
   const props: StateManagerReturn = {
     // UI State
@@ -347,10 +321,14 @@ export default function StateManager({ children }: StateManagerProps) {
     isMapLoaded,
 
     // Game Systems
-    gameState,
-    questSystem,
-    dailyChallenges,
+    gameState: {
+      ...gameState,
+      selectedEntity,
+      setSelectedEntity,
+      clearSelectedEntity
+    },
     landmarksState,
+    museumsState,
     waypointSystem,
     experience,
 
@@ -368,16 +346,17 @@ export default function StateManager({ children }: StateManagerProps) {
 
     // Completion status
     allLandmarksVisited,
-    hasCompletedQuest,
     showCompletion,
     setShowCompletion,
 
     // Progressive Waypoint System (NEW)
     playerPosition,
-    currentObjective,
     nearestUndiscovered,
-    progressiveWaypoints,
-    handleProgressiveWaypointsUpdate
+    
+    // Entity Selection
+    selectedEntity,
+    setSelectedEntity,
+    clearSelectedEntity
   }
 
   return <>{children(props)}</>

@@ -3,10 +3,9 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import type { Waypoint } from '@/app/lib/waypointSystem'
-import {
-  PRIMARY_WAYPOINT_SIZE,
-  SECONDARY_WAYPOINT_SIZE
-} from '@/app/lib/progressiveWaypointSystem'
+
+const PRIMARY_WAYPOINT_SIZE = 40
+const SECONDARY_WAYPOINT_SIZE = 28
 
 export interface ProgressiveWaypointMarker extends Waypoint {
   isPrimary?: boolean
@@ -175,9 +174,11 @@ export default function WaypointLayer({
     // Update previous waypoint IDs for next comparison
     prevWaypointIdsRef.current = currentWaypointIds
 
+    const markers = markersRef.current
+
     return () => {
-      markersRef.current.forEach(marker => marker.remove())
-      markersRef.current.clear()
+      markers.forEach(marker => marker.remove())
+      markers.clear()
     }
   }, [map, waypoints, activeWaypointId, onWaypointClick])
 

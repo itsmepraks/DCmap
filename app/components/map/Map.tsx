@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { useMap } from '@/app/lib/MapContext'
 import type { LayerVisibility } from '@/app/types/map'
 import { useMapInitialization } from '@/app/hooks/useMapInitialization'
 import { MapLayers } from './MapLayers'
-import EntityInfoPanel, { type SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
+import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MapProps {
   layersVisible: LayerVisibility
@@ -16,6 +16,7 @@ interface MapProps {
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
+  onSelect?: (entity: SelectedEntity | null) => void
 }
 
 export default function Map({
@@ -25,13 +26,12 @@ export default function Map({
   isFlying,
   landmarks,
   visitedLandmarks,
-  onLandmarkDiscovered
+  onLandmarkDiscovered,
+  onSelect
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const { map } = useMap()
   useMapInitialization(mapContainer)
-  
-  const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
 
   // Handle 3D view toggle with smooth animation (disabled while flying)
   useEffect(() => {
@@ -54,17 +54,17 @@ export default function Map({
 
   // Close panel on map click if not clicking a feature
   useEffect(() => {
-    if (!map) return
+    if (!map || !onSelect) return
 
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       // If clicking on nothing interactive, close panel
       // Only query layers that exist in the map
-      const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer'].filter(
+      const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer', 'parks-seasonal'].filter(
         layerId => map.getLayer(layerId)
       )
       
       if (availableLayers.length === 0) {
-        setSelectedEntity(null)
+        onSelect(null)
         return
       }
       
@@ -72,26 +72,14 @@ export default function Map({
         layers: availableLayers
       })
       if (features.length === 0) {
-        setSelectedEntity(null)
+        onSelect(null)
       }
     }
     map.on('click', handleMapClick)
     return () => {
       map.off('click', handleMapClick)
     }
-  }, [map])
-
-  const handleNavigate = (coordinates: [number, number]) => {
-    if (!map) return
-    map.flyTo({
-      center: coordinates,
-      zoom: 17,
-      pitch: 60,
-      bearing: 0,
-      duration: 2000,
-      essential: true
-    })
-  }
+  }, [map, onSelect])
 
   return (
     <>
@@ -106,21 +94,14 @@ export default function Map({
         }
       `}</style>
       {map && (
-        <>
-          <MapLayers
-            map={map}
-            layersVisible={layersVisible}
-            currentSeason={currentSeason}
-            visitedLandmarks={visitedLandmarks}
-            onLandmarkDiscovered={onLandmarkDiscovered}
-            onSelectEntity={setSelectedEntity}
-          />
-          <EntityInfoPanel 
-            entity={selectedEntity}
-            onClose={() => setSelectedEntity(null)}
-            onNavigate={handleNavigate}
-          />
-        </>
+        <MapLayers
+          map={map}
+          layersVisible={layersVisible}
+          currentSeason={currentSeason}
+          visitedLandmarks={visitedLandmarks}
+          onLandmarkDiscovered={onLandmarkDiscovered}
+          onSelectEntity={onSelect}
+        />
       )}
     </>
   )

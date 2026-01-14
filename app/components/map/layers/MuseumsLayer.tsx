@@ -2,49 +2,62 @@
 
 import { useEffect, useRef } from 'react'
 import { useMap } from '@/app/lib/MapContext'
-import mapboxgl, { type SymbolLayout, type SymbolPaint } from 'mapbox-gl'
+import mapboxgl, { type SymbolLayout, type SymbolPaint, type CirclePaint } from 'mapbox-gl'
 import type { MuseumProperties } from '@/app/types/map'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MuseumsLayerProps {
   visible: boolean
   onSelect?: (entity: SelectedEntity | null) => void
+  onMuseumDiscovered?: (id: string, data: any) => void
 }
 
 const LAYER_ID = 'museums-layer'
+const CLUSTER_LAYER_ID = 'museums-clusters'
+const CLUSTER_COUNT_LAYER_ID = 'museums-cluster-count'
 const SOURCE_ID = 'museums-source'
 
-export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
+export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: MuseumsLayerProps) {
   const { map } = useMap()
   const layerInitialized = useRef(false)
   const handlersRef = useRef<{
     click?: (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => void
+    clusterClick?: (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => void
     mouseEnter?: () => void
     mouseLeave?: () => void
   }>({})
 
-  // Track selected feature ID locally to handle deselect logic if needed, 
-  // though mapbox feature-state is the source of truth for visual rendering.
+  // Track selected feature ID locally
   const selectedIdRef = useRef<string | number | null>(null)
+  
+  // Store visible prop in ref for use during initialization
+  const visibleRef = useRef(visible)
+  useEffect(() => {
+    visibleRef.current = visible
+  }, [visible])
 
   useEffect(() => {
     if (!map) {
-      console.log('🏛️ Museums layer waiting for map...')
       return
     }
     
     if (layerInitialized.current) {
-      console.log('🏛️ Museums layer already initialized')
       return
     }
 
-    console.log('🏛️ Initializing museums layer...')
+    console.log('🏛️ Initializing museums layer with clustering...')
 
     const handleClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
       if (!e.features || e.features.length === 0) return
 
       const feature = e.features[0]
       const properties = feature.properties as MuseumProperties
+      
+      // Skip if this is a cluster (shouldn't happen due to layer filter, but defensive check)
+      if ('point_count' in properties) {
+        return // Handled by clusterClick
+      }
+
       const coordinates = (feature.geometry as GeoJSON.Point).coordinates.slice() as [number, number]
 
       e.originalEvent.stopPropagation()
@@ -65,10 +78,13 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
         )
       }
 
+      // Use name as ID for consistency with MuseumExplorer which loads from GeoJSON directly
+      const museumId = properties.NAME ? String(properties.NAME) : String(feature.id);
+
       // Notify parent
       if (onSelect) {
         onSelect({
-          id: String(feature.id || properties.NAME),
+          id: museumId,
           type: 'museum',
           name: properties.NAME,
           description: properties.DESCRIPTION,
@@ -80,38 +96,136 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
           }
         })
       }
+
+      // Mark as discovered/visited
+      if (onMuseumDiscovered) {
+        onMuseumDiscovered(museumId, {
+          name: properties.NAME,
+          type: 'museum'
+        })
+      }
+    }
+
+    const handleClusterClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
+      if (!e.features || e.features.length === 0) return
+      
+      const feature = e.features[0]
+      const clusterId = feature.properties?.cluster_id
+      
+      if (!clusterId) return
+      
+      const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource
+      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err || !zoom) return
+
+        map.easeTo({
+          center: (feature.geometry as any).coordinates,
+          zoom: zoom + 1 // Zoom in slightly past the expansion zoom
+        })
+      })
     }
 
     const initializeLayer = async () => {
       try {
-        console.log('🏛️ Loading museum icon...')
-        // Load custom museum icon
-        const iconImage = await loadImage('/icons/museum.svg')
+        // Load custom museum icon - create a larger, more visible icon
         if (!map.hasImage('museum-icon')) {
-          map.addImage('museum-icon', iconImage)
-          console.log('✅ Museum icon loaded')
+          const iconImage = await loadImage('/icons/museum.svg')
+          // Rasterize SVG to canvas at a larger size for better visibility
+          const canvas = document.createElement('canvas')
+          const iconSize = 64 // Larger size for visibility from far
+          canvas.width = iconSize
+          canvas.height = iconSize
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true
+            ctx.imageSmoothingQuality = 'high'
+            ctx.drawImage(iconImage, 0, 0, iconSize, iconSize)
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            map.addImage('museum-icon', imageData, { sdf: false })
+            console.log('✅ Museum icon loaded at 64x64 size')
+          } else {
+            // Fallback if canvas context fails
+            map.addImage('museum-icon', iconImage)
+          }
         }
 
-        console.log('🏛️ Fetching museums GeoJSON...')
         // Fetch museums GeoJSON data
         const response = await fetch('/data/museums.geojson')
         if (!response.ok) {
           throw new Error(`Failed to fetch museums.geojson: ${response.status}`)
         }
         const data = await response.json()
-        console.log('✅ Museums data loaded:', data.features?.length, 'features')
 
-        // Add source
+        // Add source with clustering
         if (!map.getSource(SOURCE_ID)) {
           map.addSource(SOURCE_ID, {
             type: 'geojson',
             data: data,
-            generateId: true // Critical for feature-state
+            generateId: true, // Critical for feature-state
+            cluster: true,
+            clusterMaxZoom: 15, // Max zoom to cluster points on
+            clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
           })
-          console.log('✅ Museums source added')
         }
 
-        // Add layer with enhanced 3D visibility
+        // Get initial visibility - HIDDEN by default unless explicitly visible
+        const initialVisibility = visibleRef.current ? 'visible' : 'none'
+        
+        // 1. Clusters Layer (Circles)
+        if (!map.getLayer(CLUSTER_LAYER_ID)) {
+          map.addLayer({
+            id: CLUSTER_LAYER_ID,
+            type: 'circle',
+            source: SOURCE_ID,
+            filter: ['has', 'point_count'],
+            layout: {
+              'visibility': initialVisibility
+            },
+            paint: {
+              'circle-color': [
+                'step',
+                ['get', 'point_count'],
+                '#B4A088', // Beige/Brown for small clusters
+                5,
+                '#A0522D', // Sienna for medium
+                10,
+                '#8B4513'  // SaddleBrown for large
+              ],
+              'circle-radius': [
+                'step',
+                ['get', 'point_count'],
+                15, // radius
+                5,
+                20,
+                10,
+                25
+              ],
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#FFF'
+            }
+          })
+        }
+
+        // 2. Cluster Count Layer (Text)
+        if (!map.getLayer(CLUSTER_COUNT_LAYER_ID)) {
+          map.addLayer({
+            id: CLUSTER_COUNT_LAYER_ID,
+            type: 'symbol',
+            source: SOURCE_ID,
+            filter: ['has', 'point_count'],
+            layout: {
+              'visibility': initialVisibility,
+              'text-field': '{point_count_abbreviated}',
+              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 12
+            },
+            paint: {
+              'text-color': '#FFF'
+            }
+          })
+        }
+
+        // 3. Unclustered Point Layer (Museum Icons)
         if (!map.getLayer(LAYER_ID)) {
           const styleHasGlyphs = Boolean(map.getStyle()?.glyphs)
 
@@ -121,17 +235,17 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 0.4,   // Much smaller at low zoom
-              10, 0.6,  // Smaller than before
-              12, 0.8,  // Medium size
-              14, 1.2,  // Slightly larger
-              16, 1.6,  // Large when close
-              18, 2.0   // Maximum size (reduced from 2.5)
+              8, 0.8,   // Much larger at low zoom - visible from far
+              10, 1.0,
+              12, 1.2,
+              14, 1.4,
+              16, 1.6,
+              18, 1.8
             ],
-            'icon-allow-overlap': true,
-            'icon-ignore-placement': true,
+            'icon-allow-overlap': true, // Always show museums
+            'icon-ignore-placement': true, // Make sure they are always visible
             'icon-pitch-alignment': 'viewport',
-            visibility: 'none'
+            'visibility': initialVisibility
           }
 
           const paint: SymbolPaint = {
@@ -140,80 +254,77 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
               'case',
               ['boolean', ['feature-state', 'selected'], false],
               '#FFD700', // Gold select halo
-              '#5DA5DB'  // Default blue halo
+              'rgba(255, 255, 255, 0.8)'  // White halo for separation
             ],
             'icon-halo-width': [
               'case',
               ['boolean', ['feature-state', 'selected'], false],
-              6, // Thicker select halo
-              3
+              6,
+              2
             ],
-            'icon-halo-blur': 2
+            'icon-halo-blur': 1
           }
 
           if (styleHasGlyphs) {
             layout['text-field'] = ['get', 'NAME']
             layout['text-font'] = ['Open Sans Bold', 'Arial Unicode MS Bold']
-            layout['text-size'] = [
+            layout['text-size'] = 11
+            layout['text-offset'] = [0, 2]
+            layout['text-anchor'] = 'top'
+            
+            // HIDE labels at lower zoom levels entirely to reduce clutter
+            // Only show labels when zoomed in significantly
+            layout['text-variable-anchor'] = ['top', 'bottom', 'left', 'right']
+            layout['text-radial-offset'] = 0.5
+            layout['text-justify'] = 'auto'
+            
+            // Use an expression to hide text based on zoom
+            paint['text-opacity'] = [
               'interpolate',
               ['linear'],
               ['zoom'],
-              10, 0,    // Hide text at low zoom
-              12, 0,    // Still hidden
-              14, 10,   // Smaller text
-              16, 14,   // Medium text
-              18, 16    // Maximum text size
+              13, 0,    // Fully transparent below zoom 13
+              14, 0,
+              15, 1     // Visible at zoom 15+
             ]
-            layout['text-offset'] = [0, 2]
-            layout['text-anchor'] = 'top'
-            layout['text-optional'] = true
 
-            paint['text-color'] = '#2C1810'
+            paint['text-color'] = '#4A3728' // Darker brown for text
             paint['text-halo-color'] = '#FFFFFF'
-            paint['text-halo-width'] = 3
-            paint['text-halo-blur'] = 1
+            paint['text-halo-width'] = 2
           }
 
           map.addLayer({
             id: LAYER_ID,
             type: 'symbol',
             source: SOURCE_ID,
+            filter: ['!', ['has', 'point_count']], // Only show unclustered points
             layout,
             paint
           })
-          console.log('✅ Museums layer added with Selection System')
         }
 
-        // Add click handler for popups
+        // Handlers
         handlersRef.current.click = handleClick
+        handlersRef.current.clusterClick = handleClusterClick
+        
         map.on('click', LAYER_ID, handlersRef.current.click)
+        map.on('click', CLUSTER_LAYER_ID, handlersRef.current.clusterClick)
 
-        // Deselect on map background click
-        map.on('click', (e) => {
-          const features = map.queryRenderedFeatures(e.point, { layers: [LAYER_ID] })
-          if (features.length === 0 && selectedIdRef.current !== null) {
-            map.setFeatureState(
-              { source: SOURCE_ID, id: selectedIdRef.current },
-              { selected: false }
-            )
-            selectedIdRef.current = null
-            // We rely on the page/parent to handle null selection via its own map click handler 
-            // or we can call onSelect(null) here if we want this layer to drive deselection explicitly
-            // but usually it's better if one central handler does the "nothing clicked" logic.
-          }
-        })
+        // Cursor logic
+        const onMouseEnter = () => { map.getCanvas().style.cursor = 'pointer' }
+        const onMouseLeave = () => { map.getCanvas().style.cursor = '' }
+        
+        handlersRef.current.mouseEnter = onMouseEnter
+        handlersRef.current.mouseLeave = onMouseLeave
 
-        // Change cursor on hover
-        handlersRef.current.mouseEnter = () => {
-          map.getCanvas().style.cursor = 'pointer'
-        }
-        handlersRef.current.mouseLeave = () => {
-          map.getCanvas().style.cursor = ''
-        }
-        map.on('mouseenter', LAYER_ID, handlersRef.current.mouseEnter)
-        map.on('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
+        map.on('mouseenter', LAYER_ID, onMouseEnter)
+        map.on('mouseleave', LAYER_ID, onMouseLeave)
+        map.on('mouseenter', CLUSTER_LAYER_ID, onMouseEnter)
+        map.on('mouseleave', CLUSTER_LAYER_ID, onMouseLeave)
 
         layerInitialized.current = true
+        console.log(`✅ Museums layer initialized (visibility: ${initialVisibility})`)
+
       } catch (error) {
         console.error('❌ Error initializing museums layer:', error)
       }
@@ -221,35 +332,37 @@ export default function MuseumsLayer({ visible, onSelect }: MuseumsLayerProps) {
 
     initializeLayer()
 
+    const handlers = handlersRef.current
+
     return () => {
       if (map && layerInitialized.current) {
-        if (handlersRef.current.click) {
-          map.off('click', LAYER_ID, handlersRef.current.click)
+        if (handlers.click) map.off('click', LAYER_ID, handlers.click)
+        if (handlers.clusterClick) map.off('click', CLUSTER_LAYER_ID, handlers.clusterClick)
+        
+        if (handlers.mouseEnter) {
+          map.off('mouseenter', LAYER_ID, handlers.mouseEnter)
+          map.off('mouseenter', CLUSTER_LAYER_ID, handlers.mouseEnter)
         }
-        if (handlersRef.current.mouseEnter) {
-          map.off('mouseenter', LAYER_ID, handlersRef.current.mouseEnter)
-        }
-        if (handlersRef.current.mouseLeave) {
-          map.off('mouseleave', LAYER_ID, handlersRef.current.mouseLeave)
+        if (handlers.mouseLeave) {
+          map.off('mouseleave', LAYER_ID, handlers.mouseLeave)
+          map.off('mouseleave', CLUSTER_LAYER_ID, handlers.mouseLeave)
         }
       }
     }
-  }, [map, visible])
+  }, [map, visible, onSelect, onMuseumDiscovered])
 
-  // Update visibility when prop changes
+  // Update visibility
   useEffect(() => {
     if (!map || !layerInitialized.current) return
 
-    if (map.getLayer(LAYER_ID)) {
-      const visibility = visible ? 'visible' : 'none'
-      // #region agent log
-      // #endregion
-      map.setLayoutProperty(
-        LAYER_ID,
-        'visibility',
-        visibility
-      )
-    }
+    const visibility = visible ? 'visible' : 'none'
+    const layers = [LAYER_ID, CLUSTER_LAYER_ID, CLUSTER_COUNT_LAYER_ID]
+    
+    layers.forEach(layer => {
+      if (map.getLayer(layer)) {
+        map.setLayoutProperty(layer, 'visibility', visibility)
+      }
+    })
   }, [map, visible])
 
   return null

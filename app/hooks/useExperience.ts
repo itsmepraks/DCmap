@@ -6,8 +6,6 @@ import {
   addXP,
   resetExperience,
   getXPFromLandmark,
-  getXPFromQuest,
-  getXPFromDailyChallenge,
   type ExperienceData
 } from '@/app/lib/experienceSystem'
 
@@ -17,18 +15,6 @@ export function useExperience() {
   const awardLandmarkXP = () => {
     const xp = getXPFromLandmark()
     setExperience(prev => addXP(xp, 'landmark', prev))
-    return xp
-  }
-
-  const awardQuestXP = () => {
-    const xp = getXPFromQuest()
-    setExperience(prev => addXP(xp, 'quest', prev))
-    return xp
-  }
-
-  const awardDailyChallengeXP = () => {
-    const xp = getXPFromDailyChallenge()
-    setExperience(prev => addXP(xp, 'daily_challenge', prev))
     return xp
   }
 
@@ -44,8 +30,6 @@ export function useExperience() {
   return {
     experience,
     awardLandmarkXP,
-    awardQuestXP,
-    awardDailyChallengeXP,
     awardCustomXP,
     reset
   }
