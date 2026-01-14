@@ -2,9 +2,20 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Project Anima DC - Interactive D.C. Map',
-  description: 'An interactive, animated digital portrait of Washington, D.C. showcasing dynamic data layers through elegant visualizations.',
-  keywords: ['Washington DC', 'data visualization', 'interactive map', 'Mapbox'],
+  title: 'DC Map - Interactive Washington D.C. Explorer',
+  description: 'An interactive, game-like map application for exploring Washington, D.C. with beautiful visualizations, immersive fly mode, and landmark discovery.',
+  keywords: ['Washington DC', 'DC Map', 'interactive map', 'Mapbox', 'landmarks', 'museums', 'exploration', '3D map'],
+  openGraph: {
+    title: 'DC Map - Interactive Washington D.C. Explorer',
+    description: 'An interactive, game-like map application for exploring Washington, D.C. with beautiful visualizations, immersive fly mode, and landmark discovery.',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DC Map - Interactive Washington D.C. Explorer',
+    description: 'An interactive, game-like map application for exploring Washington, D.C. with beautiful visualizations, immersive fly mode, and landmark discovery.',
+  },
 }
 
 export default function RootLayout({

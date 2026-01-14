@@ -1,4 +1,4 @@
-# DCmap - Interactive Washington D.C. Explorer
+# DC Map - Interactive Washington D.C. Explorer
 
 An interactive, game-like map application for exploring Washington, D.C. with beautiful visualizations and immersive fly mode.
 

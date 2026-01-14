@@ -1,4 +1,4 @@
-# DCmap Tasks
+# DC Map Tasks
 
 ## Known Issues / Bugs
 - [ ] Walk controller state re-renders the entire `Map` tree every animation frame
