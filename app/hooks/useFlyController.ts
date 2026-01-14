@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
-import { checkNearbyLandmarks } from '@/app/lib/proximityDetector'
+import { checkNearbyLandmarks } from '@/app/lib/proximity'
 import { usePlayerState } from '@/app/lib/playerState'
 
 interface UseFlyControllerOptions {

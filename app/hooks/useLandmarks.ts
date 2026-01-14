@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useMap } from '@/app/lib/MapContext'
-import { getNearbyLandmarks, type NearbyLandmark } from '@/app/lib/proximityCalculator'
+import { getNearbyLandmarks, type NearbyLandmark } from '@/app/lib/proximity'
 import { isNearBorder, getBorderDirection } from '@/app/lib/worldBorder'
 
 export interface Landmark {

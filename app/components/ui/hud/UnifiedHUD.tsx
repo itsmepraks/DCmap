@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
-import { formatDistance } from '@/app/lib/proximityDetector'
-import type { CurrentObjectiveInfo } from '@/app/lib/progressiveWaypointSystem'
+import { formatDistance } from '@/app/lib/proximity'
 
 interface Landmark {
   id: string
@@ -25,16 +24,13 @@ interface UnifiedHUDProps {
   flyPosition?: { lng: number; lat: number }
   flyBearing?: number
   nearestLandmark?: { name: string; distance: number }
-  // Quest Progress (NEW)
-  currentObjective?: CurrentObjectiveInfo | null
-  onNavigateToObjective?: (coordinates: [number, number]) => void
   // Nearest undiscovered landmark (NEW)
   nearestUndiscovered?: { id: string; name: string; distance: number; coordinates: [number, number] } | null
   onNavigateToUndiscovered?: (coordinates: [number, number]) => void
 }
 
 export default function UnifiedHUD({
-  // Main HUD component consolidating various UI elements
+  // Main HUD component consolidating various UI elements (Recommendation, Fly Controls, Nearest Landmark)
   mode,
   recommendedLandmark,
   recommendationDistance,
@@ -44,8 +40,6 @@ export default function UnifiedHUD({
   flyPosition,
   flyBearing = 0,
   nearestLandmark,
-  currentObjective,
-  onNavigateToObjective,
   nearestUndiscovered,
   onNavigateToUndiscovered
 }: UnifiedHUDProps) {

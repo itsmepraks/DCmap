@@ -1,6 +1,5 @@
 'use client'
 
-import QuestPanel from '../game/QuestPanel'
 import LandmarkExplorer from '../game/LandmarkExplorer'
 import MuseumExplorer from '../game/MuseumExplorer'
 import AchievementToast from '../game/AchievementToast'
@@ -10,11 +9,6 @@ import DiscoveryAnimation from '../ui/DiscoveryAnimation'
 import EntityInfoPanel, { type SelectedEntity } from '../ui/EntityInfoPanel'
 
 interface GameUIProps {
-  // Quest system
-  quests: any[]
-  activeQuestIds: string[]
-  onStartQuest: (questId: string) => void
-
   // Achievement system
   achievement: any
   onDismissAchievement: () => void
@@ -22,7 +16,6 @@ interface GameUIProps {
   // Completion status
   showCompletion: boolean
   allLandmarksVisited: boolean
-  hasCompletedQuest: boolean
   onCloseCompletion: () => void
 
   // Proximity system
@@ -50,14 +43,10 @@ interface GameUIProps {
 }
 
 export default function GameUI({
-  quests,
-  activeQuestIds,
-  onStartQuest,
   achievement,
   onDismissAchievement,
   showCompletion,
   allLandmarksVisited,
-  hasCompletedQuest,
   onCloseCompletion,
   nearbyLandmarks,
   visitedLandmarks,
@@ -94,18 +83,10 @@ export default function GameUI({
         onSelect={onSelectEntity}
       />
       
-      {/* Quest Panel (Hidden in favor of Landmark Explorer) */}
-      {/* <QuestPanel
-        quests={quests}
-        activeQuestIds={activeQuestIds}
-        onStartQuest={onStartQuest}
-      /> */}
-
       {/* Completion Notifications */}
       {showCompletion && (
         <CompletionNotification
           allLandmarksVisited={allLandmarksVisited}
-          questCompleted={hasCompletedQuest}
           onClose={onCloseCompletion}
         />
       )}

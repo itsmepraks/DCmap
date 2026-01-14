@@ -15,8 +15,6 @@ export interface ExperienceData {
 
 const XP_PER_LEVEL = 100
 const XP_FROM_LANDMARK = 50
-const XP_FROM_QUEST = 100
-const XP_FROM_DAILY_CHALLENGE = 25
 
 export function loadExperience(): ExperienceData {
   if (typeof window === 'undefined') {
@@ -95,14 +93,6 @@ export function addXP(
 
 export function getXPFromLandmark(): number {
   return XP_FROM_LANDMARK
-}
-
-export function getXPFromQuest(): number {
-  return XP_FROM_QUEST
-}
-
-export function getXPFromDailyChallenge(): number {
-  return XP_FROM_DAILY_CHALLENGE
 }
 
 export function resetExperience(): ExperienceData {

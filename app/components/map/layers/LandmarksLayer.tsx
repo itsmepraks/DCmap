@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
-import { calculateDistance } from '@/app/lib/proximityCalculator'
+import { calculateDistance } from '@/app/lib/proximity'
 
 interface LandmarksLayerProps {
   map: mapboxgl.Map | null

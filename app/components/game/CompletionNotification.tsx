@@ -6,13 +6,11 @@ import { minecraftTheme } from '@/app/lib/theme'
 
 interface CompletionNotificationProps {
   allLandmarksVisited: boolean
-  questCompleted: boolean
   onClose: () => void
 }
 
 export default function CompletionNotification({
   allLandmarksVisited,
-  questCompleted,
   onClose
 }: CompletionNotificationProps) {
   const [show, setShow] = useState(false)
@@ -27,16 +25,8 @@ export default function CompletionNotification({
         onClose()
       }, 5000)
       return () => clearTimeout(timer)
-    } else if (questCompleted) {
-      setMessage('✅ Quest Completed! Great job exploring!')
-      setShow(true)
-      const timer = setTimeout(() => {
-        setShow(false)
-        onClose()
-      }, 4000)
-      return () => clearTimeout(timer)
     }
-  }, [allLandmarksVisited, questCompleted, onClose])
+  }, [allLandmarksVisited, onClose])
 
   if (!show) return null
 

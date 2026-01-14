@@ -11,7 +11,6 @@ interface MiniStatsBarProps {
   totalLandmarks: number
   discoveredMuseums: number
   totalMuseums: number
-  activeQuests: number
   onOpenStats: () => void
 }
 
@@ -22,7 +21,6 @@ export default function MiniStatsBar({
   totalLandmarks,
   discoveredMuseums,
   totalMuseums,
-  activeQuests,
   onOpenStats
 }: MiniStatsBarProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -147,27 +145,6 @@ export default function MiniStatsBar({
             {discoveredMuseums}/{totalMuseums}
           </span>
         </div>
-
-        {/* Active Quests (if any) */}
-        {activeQuests > 0 && (
-          <>
-            <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(212, 80, 30, 0.15)' }}>
-              <span className="text-sm">📜</span>
-              <motion.span
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="text-xs font-bold"
-                style={{
-                  color: minecraftTheme.colors.terracotta.base,
-                  fontFamily: 'monospace'
-                }}
-              >
-                {activeQuests}
-              </motion.span>
-            </div>
-          </>
-        )}
 
         {/* Corner accents */}
         <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-black/30 rounded-tl-sm" />

@@ -22,8 +22,6 @@ export function useMapInitialization(
     }
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-    console.log('🗺️ Initializing map...')
-
 
     if (!token || token.includes('placeholder')) {
       console.error(
@@ -39,8 +37,6 @@ export function useMapInitialization(
     let mapInstance: mapboxgl.Map | null = null
 
     try {
-      console.log('🎮 Creating cartoonish/Minecraft-style map')
-      
       // Load custom cartoonish style JSON
       const loadCartoonStyle = async () => {
         // Store container in local variable for type narrowing
@@ -86,7 +82,6 @@ export function useMapInitialization(
           
           // Ensure cartoonish style is visible immediately
           mapInstance.once('style.load', () => {
-            console.log('✅ Cartoonish map style loaded with bright colors!')
             // Force a repaint to ensure style is visible
             mapInstance?.triggerRepaint()
           })
@@ -137,8 +132,6 @@ export function useMapInitialization(
         mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
       mapInstance.on('load', () => {
-        console.log('✅ Map loaded successfully!')
-
         try {
           if (!mapInstance?.getSource('mapbox-dem')) {
             mapInstance?.addSource('mapbox-dem', {
@@ -194,7 +187,6 @@ export function useMapInitialization(
                   'sky-atmosphere-halo-color': '#FFD700'
                 }
               })
-              console.log('✅ Added realistic atmospheric sky')
             } catch (skyError) {
               console.warn('Sky layer setup skipped:', skyError)
             }
@@ -545,12 +537,9 @@ export function useMapInitialization(
 
         try {
           applyOpenWorldVisuals()
-          console.log('🌆 Applied GTA open-world ambience')
         } catch (visualError) {
           console.warn('Open-world styling skipped:', visualError)
         }
-
-        console.log('🏗️ 3D buildings and terrain enabled!')
 
         try {
           setMap(mapInstance)
@@ -573,7 +562,6 @@ export function useMapInitialization(
 
     return () => {
       if (mapInstance) {
-        console.log('🧹 Cleaning up map instance on unmount')
         mapInstance.remove()
       }
       isInitialized.current = false

@@ -3,10 +3,9 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import type { Waypoint } from '@/app/lib/waypointSystem'
-import {
-  PRIMARY_WAYPOINT_SIZE,
-  SECONDARY_WAYPOINT_SIZE
-} from '@/app/lib/progressiveWaypointSystem'
+
+const PRIMARY_WAYPOINT_SIZE = 40
+const SECONDARY_WAYPOINT_SIZE = 28
 
 export interface ProgressiveWaypointMarker extends Waypoint {
   isPrimary?: boolean
