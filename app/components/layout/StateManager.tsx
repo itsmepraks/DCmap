@@ -65,7 +65,7 @@ interface StateManagerReturn {
   // Progressive Waypoint System (NEW)
   playerPosition: Coordinates | null
   nearestUndiscovered: { id: string; name: string; distance: number; coordinates: [number, number] } | null
-  
+
   // Entity Selection (New)
   selectedEntity: SelectedEntity | null
   setSelectedEntity: (entity: SelectedEntity | null) => void
@@ -89,7 +89,7 @@ export default function StateManager({ children }: StateManagerProps) {
   const [lastCompletionState, setLastCompletionState] = useState({
     landmarks: false
   })
-  
+
   // Entity Selection State
   const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null)
   const clearSelectedEntity = useCallback(() => setSelectedEntity(null), [])
@@ -164,8 +164,15 @@ export default function StateManager({ children }: StateManagerProps) {
   }, [])
 
   const handleToggleFly = useCallback(() => {
-    setIsFlyMode(prev => !prev)
-  }, [])
+    setIsFlyMode(prev => {
+      const newFlyMode = !prev
+      // When activating fly mode, ensure 3D view is enabled
+      if (newFlyMode && !is3DView) {
+        setIs3DView(true)
+      }
+      return newFlyMode
+    })
+  }, [is3DView])
 
   // Handle landmark discovery
   const handleLandmarkDiscovered = useCallback((landmarkId: string, landmarkData: any) => {
@@ -272,7 +279,7 @@ export default function StateManager({ children }: StateManagerProps) {
 
   const handleNavigateToLandmark = useCallback((coordinates: [number, number]) => {
     if (!map) return
-    
+
     // Exit fly mode first - fly mode animation loop will override map.flyTo()
     if (isFlyMode) {
       setIsFlyMode(false)
@@ -352,7 +359,7 @@ export default function StateManager({ children }: StateManagerProps) {
     // Progressive Waypoint System (NEW)
     playerPosition,
     nearestUndiscovered,
-    
+
     // Entity Selection
     selectedEntity,
     setSelectedEntity,
