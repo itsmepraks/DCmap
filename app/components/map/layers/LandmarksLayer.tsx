@@ -11,176 +11,243 @@ interface LandmarksLayerProps {
   visitedLandmarks: Set<string>
   onLandmarkDiscovered?: (landmarkId: string, landmarkData: any) => void
   onSelect?: (entity: SelectedEntity | null) => void
+  playerPosition?: { lng: number; lat: number } | null
 }
 
-export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandmarkDiscovered, onSelect }: LandmarksLayerProps) {
+// Clean Google Maps-style colors
+const COLORS = {
+  unvisited: '#EA4335',      // Google Red
+  visited: '#34A853',        // Google Green
+  nearby: '#FBBC04',         // Google Yellow (for proximity highlight)
+  cluster: '#4285F4',        // Google Blue
+  white: '#FFFFFF',
+  textDark: '#202124'
+}
+
+export default function LandmarksLayer({
+  map,
+  visible,
+  visitedLandmarks,
+  onLandmarkDiscovered,
+  onSelect,
+  playerPosition
+}: LandmarksLayerProps) {
   const isInitialized = useRef(false)
-  // Use refs to store latest callbacks to avoid stale closures
   const onLandmarkDiscoveredRef = useRef(onLandmarkDiscovered)
   const onSelectRef = useRef(onSelect)
   const visitedLandmarksRef = useRef(visitedLandmarks)
+  const playerPositionRef = useRef(playerPosition)
 
-  // Update refs when props change
   useEffect(() => {
     onLandmarkDiscoveredRef.current = onLandmarkDiscovered
     onSelectRef.current = onSelect
     visitedLandmarksRef.current = visitedLandmarks
-  }, [onLandmarkDiscovered, onSelect, visitedLandmarks])
+    playerPositionRef.current = playerPosition
+  }, [onLandmarkDiscovered, onSelect, visitedLandmarks, playerPosition])
 
   useEffect(() => {
     if (!map || isInitialized.current) return
 
     const initializeLayer = async () => {
       try {
-        // Wait for map style to load
         if (!map.isStyleLoaded()) {
           map.once('idle', () => initializeLayer())
           return
         }
 
-        // Create eye-catching solid landmark icons
-        const createLandmarkIcon = (color: string, isVisited: boolean) => {
-          const canvas = document.createElement('canvas')
-          canvas.width = 60
-          canvas.height = 70
-          const ctx = canvas.getContext('2d')
-          if (!ctx) return null
-
-          // Add glow effect
-          ctx.shadowColor = color
-          ctx.shadowBlur = isVisited ? 20 : 10
-          ctx.shadowOffsetX = 0
-          ctx.shadowOffsetY = 0
-
-          // Draw solid pin base
-          ctx.fillStyle = color
-          ctx.beginPath()
-          ctx.arc(30, 22, 18, 0, Math.PI * 2)
-          ctx.fill()
-
-          // Draw pin point
-          ctx.beginPath()
-          ctx.moveTo(30, 40)
-          ctx.lineTo(20, 55)
-          ctx.lineTo(40, 55)
-          ctx.closePath()
-          ctx.fill()
-
-          // Add glossy highlight
-          ctx.shadowBlur = 0
-          const gradient = ctx.createRadialGradient(25, 18, 5, 30, 22, 18)
-          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)')
-          gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)')
-          gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-          ctx.fillStyle = gradient
-          ctx.beginPath()
-          ctx.arc(30, 22, 18, 0, Math.PI * 2)
-          ctx.fill()
-
-          // Draw center dot
-          ctx.fillStyle = '#FFF'
-          ctx.beginPath()
-          ctx.arc(30, 22, 6, 0, Math.PI * 2)
-          ctx.fill()
-
-          // Add white border for definition
-          ctx.strokeStyle = '#FFF'
-          ctx.lineWidth = 3
-          ctx.beginPath()
-          ctx.arc(30, 22, 18, 0, Math.PI * 2)
-          ctx.stroke()
-
-          // Add star icon if visited
-          if (isVisited) {
-            ctx.font = 'bold 16px Arial'
-            ctx.fillStyle = color
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'middle'
-            ctx.fillText('★', 30, 22)
-          }
-
-          return canvas
+        // Create clean SVG pin icons
+        const createPinIcon = (color: string, hasCheckmark: boolean = false): HTMLImageElement => {
+          const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">
+              <defs>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.3"/>
+                </filter>
+              </defs>
+              <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.27 21.73 0 14 0z" 
+                    fill="${color}" filter="url(#shadow)"/>
+              <circle cx="14" cy="14" r="5" fill="${COLORS.white}"/>
+              ${hasCheckmark ? `<text x="14" y="17" text-anchor="middle" font-size="8" font-weight="bold" fill="${color}">✓</text>` : ''}
+            </svg>
+          `
+          const img = new Image(28, 40)
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+          return img
         }
 
-        // Add images to map
-        const unvisitedCanvas = createLandmarkIcon('#FF6347', false) // Tomato red
-        const visitedCanvas = createLandmarkIcon('#FFD700', true) // Gold
+        // Create small dot icon for low zoom
+        const createDotIcon = (color: string): HTMLImageElement => {
+          const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+              <circle cx="6" cy="6" r="5" fill="${color}" stroke="${COLORS.white}" stroke-width="2"/>
+            </svg>
+          `
+          const img = new Image(12, 12)
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+          return img
+        }
 
-        if (unvisitedCanvas && !map.hasImage('landmark-unvisited')) {
-          const ctx = unvisitedCanvas.getContext('2d')!
-          const imageData = ctx.getImageData(0, 0, unvisitedCanvas.width, unvisitedCanvas.height)
-          map.addImage('landmark-unvisited', {
-            width: unvisitedCanvas.width,
-            height: unvisitedCanvas.height,
-            data: imageData.data
+        // Create cluster icon
+        const createClusterIcon = (count: number): HTMLImageElement => {
+          const size = Math.min(50, 30 + count * 2)
+          const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+              <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="${COLORS.cluster}" stroke="${COLORS.white}" stroke-width="3"/>
+              <text x="${size / 2}" y="${size / 2 + 4}" text-anchor="middle" font-size="14" font-weight="bold" fill="${COLORS.white}">${count}</text>
+            </svg>
+          `
+          const img = new Image(size, size)
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+          return img
+        }
+
+        // Load icons into map
+        const loadIcon = (name: string, img: HTMLImageElement): Promise<void> => {
+          return new Promise((resolve) => {
+            if (map.hasImage(name)) {
+              resolve()
+              return
+            }
+            img.onload = () => {
+              if (!map.hasImage(name)) {
+                map.addImage(name, img)
+              }
+              resolve()
+            }
+            img.onerror = () => resolve()
           })
         }
-        if (visitedCanvas && !map.hasImage('landmark-visited')) {
-          const ctx = visitedCanvas.getContext('2d')!
-          const imageData = ctx.getImageData(0, 0, visitedCanvas.width, visitedCanvas.height)
-          map.addImage('landmark-visited', {
-            width: visitedCanvas.width,
-            height: visitedCanvas.height,
-            data: imageData.data
-          })
-        }
+
+        await Promise.all([
+          loadIcon('pin-unvisited', createPinIcon(COLORS.unvisited, false)),
+          loadIcon('pin-visited', createPinIcon(COLORS.visited, true)),
+          loadIcon('pin-nearby', createPinIcon(COLORS.nearby, false)),
+          loadIcon('dot-unvisited', createDotIcon(COLORS.unvisited)),
+          loadIcon('dot-visited', createDotIcon(COLORS.visited))
+        ])
 
         // Load landmarks data
         const response = await fetch('/data/landmarks.geojson')
         const landmarksData = await response.json()
 
-        // Add source
+        // Add source with clustering enabled
         if (!map.getSource('landmarks')) {
           map.addSource('landmarks', {
             type: 'geojson',
             data: landmarksData,
-            // Add generateId to ensure each feature has a unique ID for feature state
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 50,
             generateId: true
           })
         }
 
-        // Add layer
+        // Layer 1: Clusters (only visible at low zoom)
+        if (!map.getLayer('landmarks-clusters')) {
+          map.addLayer({
+            id: 'landmarks-clusters',
+            type: 'circle',
+            source: 'landmarks',
+            filter: ['has', 'point_count'],
+            paint: {
+              'circle-color': COLORS.cluster,
+              'circle-radius': [
+                'step', ['get', 'point_count'],
+                18,   // 18px for clusters with < 10 points
+                10, 22,  // 22px for clusters with 10+ points
+                30, 28   // 28px for clusters with 30+ points
+              ],
+              'circle-stroke-width': 3,
+              'circle-stroke-color': COLORS.white
+            }
+          })
+        }
+
+        // Layer 2: Cluster count labels
+        if (!map.getLayer('landmarks-cluster-count')) {
+          map.addLayer({
+            id: 'landmarks-cluster-count',
+            type: 'symbol',
+            source: 'landmarks',
+            filter: ['has', 'point_count'],
+            layout: {
+              'text-field': '{point_count_abbreviated}',
+              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+              'text-size': 13,
+              'text-allow-overlap': true
+            },
+            paint: {
+              'text-color': COLORS.white
+            }
+          })
+        }
+
+        // Layer 3: Individual landmarks (unclustered points)
         if (!map.getLayer('landmarks-layer')) {
           map.addLayer({
             id: 'landmarks-layer',
             type: 'symbol',
             source: 'landmarks',
+            filter: ['!', ['has', 'point_count']],
             layout: {
-              'icon-image': 'landmark-unvisited',
-              'icon-size': 1, // Fixed size (feature-state not allowed in layout)
+              'icon-image': 'pin-unvisited',
+              'icon-size': [
+                'interpolate', ['linear'], ['zoom'],
+                10, 0.4,   // Small at far zoom
+                14, 0.7,   // Medium
+                18, 1.0    // Full size when close
+              ],
               'icon-allow-overlap': true,
-              'text-field': ['get', 'name'],
-              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-              'text-size': 12,
-              'text-offset': [0, 2],
-              'text-anchor': 'top'
+              'icon-anchor': 'bottom',
+              // Show text only at higher zoom levels
+              'text-field': [
+                'step', ['zoom'],
+                '',      // No text below zoom 15
+                15, ['get', 'name']  // Show name at zoom 15+
+              ],
+              'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+              'text-size': [
+                'interpolate', ['linear'], ['zoom'],
+                15, 10,
+                18, 12
+              ],
+              'text-offset': [0, 0.8],
+              'text-anchor': 'top',
+              'text-max-width': 10,
+              'text-optional': true
             },
             paint: {
-              'text-color': '#2C1810',
-              'text-halo-color': '#FFF',
-              'text-halo-width': 2,
-              // Add selection halo/glow
-              'icon-halo-color': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                '#FFD700', // Gold glow when selected
-                'rgba(0,0,0,0)'
-              ],
-              'icon-halo-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                4,
-                0
-              ],
-              'icon-halo-blur': 2
+              'text-color': COLORS.textDark,
+              'text-halo-color': COLORS.white,
+              'text-halo-width': 1.5,
+              'icon-opacity': 1
             }
           })
         }
 
-        // Global selected ID tracking
-        let selectedFeatureId: string | number | null = null;
+        // Click handler for clusters - zoom in
+        map.on('click', 'landmarks-clusters', (e) => {
+          const features = map.queryRenderedFeatures(e.point, {
+            layers: ['landmarks-clusters']
+          })
+          if (!features.length) return
 
-        // Add click handler
+          const clusterId = features[0].properties?.cluster_id
+          const source = map.getSource('landmarks') as mapboxgl.GeoJSONSource
+
+          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+            if (err || zoom === null || zoom === undefined) return
+            map.easeTo({
+              center: (features[0].geometry as any).coordinates,
+              zoom: zoom
+            })
+          })
+        })
+
+        // Global selected ID tracking
+        let selectedFeatureId: string | number | null = null
+
+        // Click handler for individual landmarks
         map.on('click', 'landmarks-layer', (e) => {
           if (!e.features || e.features.length === 0) return
 
@@ -205,14 +272,12 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
             )
           }
 
-          // Prevent map click propagation (which might close the panel)
           e.originalEvent.stopPropagation()
 
-          // GeoJSON coordinates are [longitude, latitude]
           const coordinates = (feature.geometry as any).coordinates.slice()
           const [lng, lat] = coordinates
           const isVisited = visitedLandmarksRef.current.has(properties.id)
-          
+
           // Check discovery
           if (!isVisited && onLandmarkDiscoveredRef.current) {
             const center = map.getCenter()
@@ -220,15 +285,14 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
               [center.lng, center.lat],
               [lng, lat]
             )
-            
+
             if (distance <= 50) {
               onLandmarkDiscoveredRef.current(properties.id, properties)
             }
           }
-          
+
           console.log(`📍 Selected landmark: ${properties.name}`)
 
-          // Call onSelect instead of creating a popup
           if (onSelectRef.current) {
             onSelectRef.current({
               id: properties.id,
@@ -246,29 +310,18 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
           }
         })
 
-        // Add map click listener to deselect when clicking empty space
+        // Deselect on map click
         map.on('click', (e) => {
-          // If clicking on nothing interactive
-          // Only query layers that exist in the map
-          const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer'].filter(
+          const availableLayers = ['landmarks-layer', 'landmarks-clusters', 'museums-layer'].filter(
             layerId => map.getLayer(layerId)
           )
-          
-          if (availableLayers.length === 0) {
-            if (selectedFeatureId !== null) {
-              map.setFeatureState(
-                { source: 'landmarks', id: selectedFeatureId },
-                { selected: false }
-              )
-              selectedFeatureId = null
-            }
-            return
-          }
-          
+
+          if (availableLayers.length === 0) return
+
           const features = map.queryRenderedFeatures(e.point, {
             layers: availableLayers
           })
-          
+
           if (features.length === 0 && selectedFeatureId !== null) {
             map.setFeatureState(
               { source: 'landmarks', id: selectedFeatureId },
@@ -279,15 +332,21 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
           }
         })
 
-        // Change cursor on hover
+        // Cursor changes
         map.on('mouseenter', 'landmarks-layer', () => {
           map.getCanvas().style.cursor = 'pointer'
         })
         map.on('mouseleave', 'landmarks-layer', () => {
           map.getCanvas().style.cursor = ''
         })
+        map.on('mouseenter', 'landmarks-clusters', () => {
+          map.getCanvas().style.cursor = 'pointer'
+        })
+        map.on('mouseleave', 'landmarks-clusters', () => {
+          map.getCanvas().style.cursor = ''
+        })
 
-        console.log('✅ Landmarks layer initialized with Selection System')
+        console.log('✅ Dynamic landmarks layer initialized')
         isInitialized.current = true
       } catch (error) {
         console.error('❌ Error initializing LandmarksLayer:', error)
@@ -297,18 +356,30 @@ export default function LandmarksLayer({ map, visible, visitedLandmarks, onLandm
     initializeLayer()
   }, [map])
 
-  // Update icon visibility based on visited status logic can remain similar...
-  // (Omitted for brevity, but can be enhanced to update icon-image via style expression)
+  // Update icon images based on visited status
+  useEffect(() => {
+    if (!map || !isInitialized.current) return
+
+    // Update layer to use different icons based on visited status
+    // This would require re-filtering the data or using data-driven styling
+    // For now, we'll use a simpler approach with feature-state
+
+  }, [map, visitedLandmarks])
 
   // Toggle visibility
   useEffect(() => {
     if (!map || !isInitialized.current) return
 
     const visibility = visible ? 'visible' : 'none'
-    if (map.getLayer('landmarks-layer')) {
-      map.setLayoutProperty('landmarks-layer', 'visibility', visibility)
-    }
+    const layers = ['landmarks-layer', 'landmarks-clusters', 'landmarks-cluster-count']
+
+    layers.forEach(layerId => {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', visibility)
+      }
+    })
   }, [map, visible])
 
   return null
 }
+

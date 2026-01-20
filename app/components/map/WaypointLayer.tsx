@@ -4,8 +4,12 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import type { Waypoint } from '@/app/lib/waypointSystem'
 
-const PRIMARY_WAYPOINT_SIZE = 40
-const SECONDARY_WAYPOINT_SIZE = 28
+// Clean Google Maps-style colors (matching LandmarksLayer)
+const COLORS = {
+  primary: '#FBBC04',      // Google Yellow for primary waypoint
+  secondary: '#4285F4',    // Google Blue for secondary
+  white: '#FFFFFF'
+}
 
 export interface ProgressiveWaypointMarker extends Waypoint {
   isPrimary?: boolean
@@ -20,59 +24,57 @@ interface WaypointLayerProps {
   onWaypointClick?: (waypoint: ProgressiveWaypointMarker) => void
 }
 
-// CSS for pulsing animation (injected once)
+// Minimal CSS for subtle animations
 const PULSE_ANIMATION_ID = 'waypoint-pulse-animation'
 
 function injectPulseAnimation() {
   if (document.getElementById(PULSE_ANIMATION_ID)) return
-  
+
   const style = document.createElement('style')
   style.id = PULSE_ANIMATION_ID
   style.textContent = `
-    @keyframes waypoint-pulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
-      }
-      50% {
-        transform: scale(1.15);
-        box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.3);
-      }
+    @keyframes waypoint-subtle-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
     }
     
-    @keyframes waypoint-glow {
-      0%, 100% {
-        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
-      }
-      50% {
-        filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1));
-      }
+    .waypoint-marker {
+      transition: transform 0.2s ease-out, opacity 0.3s ease;
+      cursor: pointer;
     }
     
-    .waypoint-primary {
-      animation: waypoint-pulse 2s ease-in-out infinite, waypoint-glow 2s ease-in-out infinite;
+    .waypoint-marker:hover {
+      transform: scale(1.15);
     }
     
-    .waypoint-secondary {
-      transition: opacity 0.5s ease-in-out, transform 0.3s ease-out;
-    }
-    
-    .waypoint-fade-in {
-      animation: fadeIn 0.5s ease-out forwards;
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: scale(0.5);
-      }
-      to {
-        opacity: var(--waypoint-opacity, 0.5);
-        transform: scale(1);
-      }
+    .waypoint-primary-marker {
+      animation: waypoint-subtle-pulse 2s ease-in-out infinite;
     }
   `
   document.head.appendChild(style)
+}
+
+// Create clean pin SVG element
+function createPinElement(color: string, isPrimary: boolean, size: number = 28): HTMLDivElement {
+  const container = document.createElement('div')
+  container.className = `waypoint-marker ${isPrimary ? 'waypoint-primary-marker' : ''}`
+  container.style.width = `${size}px`
+  container.style.height = `${Math.round(size * 1.43)}px`
+
+  container.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 1.43)}" viewBox="0 0 28 40">
+      <defs>
+        <filter id="shadow-${isPrimary ? 'p' : 's'}" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.27 21.73 0 14 0z" 
+            fill="${color}" stroke="${COLORS.white}" stroke-width="2" filter="url(#shadow-${isPrimary ? 'p' : 's'})"/>
+      <circle cx="14" cy="14" r="4" fill="${COLORS.white}"/>
+    </svg>
+  `
+
+  return container
 }
 
 export default function WaypointLayer({
@@ -91,7 +93,7 @@ export default function WaypointLayer({
     injectPulseAnimation()
 
     const currentWaypointIds = new Set(waypoints.map(w => w.id))
-    
+
     // Remove markers that are no longer in the list
     markersRef.current.forEach((marker, id) => {
       if (!currentWaypointIds.has(id)) {
@@ -114,45 +116,26 @@ export default function WaypointLayer({
 
       const isPrimary = waypoint.isPrimary ?? false
       const opacity = waypoint.opacity ?? 1.0
-      const isNew = !prevWaypointIdsRef.current.has(waypoint.id)
       const isActive = waypoint.id === activeWaypointId
-      
-      // Determine size based on type
-      const size = isPrimary ? PRIMARY_WAYPOINT_SIZE : SECONDARY_WAYPOINT_SIZE
-      const fontSize = isPrimary ? 28 : 20
+
+      // Size based on type
+      const size = isPrimary ? 32 : 24
+      const color = isPrimary ? COLORS.primary : COLORS.secondary
 
       // Check if marker already exists
       let marker = markersRef.current.get(waypoint.id)
-      
+
       if (marker) {
-        // Update existing marker
+        // Update existing marker position and opacity
         const el = marker.getElement()
         el.style.opacity = String(opacity)
-        el.className = isPrimary ? 'waypoint-primary' : 'waypoint-secondary'
-        el.style.setProperty('--waypoint-opacity', String(opacity))
         marker.setLngLat(waypoint.coordinates)
       } else {
         // Create new marker element
-        const el = document.createElement('div')
-        el.style.width = `${size}px`
-        el.style.height = `${size}px`
-        el.style.fontSize = `${fontSize}px`
-        el.style.textAlign = 'center'
-        el.style.lineHeight = `${size}px`
-        el.style.cursor = 'pointer'
+        const el = createPinElement(color, isPrimary, size)
         el.style.opacity = String(opacity)
-        el.style.setProperty('--waypoint-opacity', String(opacity))
         el.style.zIndex = isPrimary ? '1000' : (isActive ? '900' : '100')
-        
-        // Apply appropriate class for animation
-        if (isPrimary) {
-          el.className = 'waypoint-primary'
-        } else {
-          el.className = isNew ? 'waypoint-secondary waypoint-fade-in' : 'waypoint-secondary'
-        }
-        
-        el.innerHTML = waypoint.icon || '📍'
-        
+
         if (onWaypointClick) {
           el.addEventListener('click', (e) => {
             e.stopPropagation()
@@ -162,7 +145,7 @@ export default function WaypointLayer({
 
         marker = new mapboxgl.Marker({
           element: el,
-          anchor: 'center'
+          anchor: 'bottom'
         })
           .setLngLat(waypoint.coordinates)
           .addTo(map)
@@ -184,4 +167,3 @@ export default function WaypointLayer({
 
   return null
 }
-
