@@ -25,23 +25,39 @@ export default function BreadcrumbTrail({ map, visitedLandmarks }: BreadcrumbTra
     addBreadcrumbTrail()
 
     function addBreadcrumbTrail() {
-      if (!map || !map.getStyle()) return
+      if (!map) return
 
-      // Remove existing layers and sources if they exist
-      if (map.getLayer('breadcrumb-trail-line')) {
-        map.removeLayer('breadcrumb-trail-line')
+      // Check if style is available
+      try {
+        const style = map.getStyle()
+        if (!style) return
+      } catch {
+        return // Style not ready
       }
-      if (map.getLayer('breadcrumb-trail-glow')) {
-        map.removeLayer('breadcrumb-trail-glow')
-      }
-      if (map.getLayer('breadcrumb-points')) {
-        map.removeLayer('breadcrumb-points')
-      }
-      if (map.getSource('breadcrumb-trail')) {
-        map.removeSource('breadcrumb-trail')
-      }
-      if (map.getSource('breadcrumb-points')) {
-        map.removeSource('breadcrumb-points')
+
+      // Remove existing layers and sources if they exist (with safety checks)
+      try {
+        if (map.getLayer('breadcrumb-trail-line')) {
+          map.removeLayer('breadcrumb-trail-line')
+        }
+        if (map.getLayer('breadcrumb-trail-glow')) {
+          map.removeLayer('breadcrumb-trail-glow')
+        }
+        if (map.getLayer('breadcrumb-points')) {
+          map.removeLayer('breadcrumb-points')
+        }
+        if (map.getLayer('breadcrumb-labels')) {
+          map.removeLayer('breadcrumb-labels')
+        }
+        if (map.getSource('breadcrumb-trail')) {
+          map.removeSource('breadcrumb-trail')
+        }
+        if (map.getSource('breadcrumb-points')) {
+          map.removeSource('breadcrumb-points')
+        }
+      } catch (error) {
+        console.warn('BreadcrumbTrail: Error cleaning up layers', error)
+        return
       }
 
       // Sort landmarks by visit time
