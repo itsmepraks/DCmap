@@ -1,21 +1,43 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Outer glow circle -->
-  <circle cx="32" cy="32" r="30" fill="#4A90E2" opacity="0.3"/>
-  <!-- Main circle background -->
-  <circle cx="32" cy="32" r="26" fill="#4A90E2"/>
-  <!-- Inner white circle -->
-  <circle cx="32" cy="32" r="22" fill="white"/>
-  <!-- Museum building -->
+  <defs>
+    <!-- Bronze gradient -->
+    <linearGradient id="bronzeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A574"/>
+      <stop offset="30%" style="stop-color:#CD9B6A"/>
+      <stop offset="50%" style="stop-color:#B87333"/>
+      <stop offset="70%" style="stop-color:#9A6B31"/>
+      <stop offset="100%" style="stop-color:#8B5A2B"/>
+    </linearGradient>
+    <!-- Darker bronze for building -->
+    <linearGradient id="darkBronze" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5A2B"/>
+      <stop offset="100%" style="stop-color:#6B4423"/>
+    </linearGradient>
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Main circle with bronze gradient -->
+  <circle cx="32" cy="32" r="28" fill="url(#bronzeGradient)" filter="url(#shadow)"/>
+  
+  <!-- Inner ring for depth -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#9A6B31" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- Classical building silhouette -->
   <!-- Roof/Pediment -->
-  <path d="M32 12L14 24H50L32 12Z" fill="#4A90E2"/>
+  <path d="M32 14L18 24H46L32 14Z" fill="url(#darkBronze)"/>
+  
   <!-- Columns -->
-  <rect x="17" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
-  <rect x="24" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
-  <rect x="30" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
-  <rect x="36" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
-  <rect x="43" y="24" width="4" height="18" rx="1" fill="#4A90E2"/>
+  <rect x="20" y="24" width="3.5" height="16" rx="0.5" fill="url(#darkBronze)"/>
+  <rect x="26" y="24" width="3.5" height="16" rx="0.5" fill="url(#darkBronze)"/>
+  <rect x="32" y="24" width="3.5" height="16" rx="0.5" fill="url(#darkBronze)"/>
+  <rect x="38" y="24" width="3.5" height="16" rx="0.5" fill="url(#darkBronze)"/>
+  
   <!-- Base -->
-  <rect x="14" y="42" width="36" height="6" rx="1" fill="#4A90E2"/>
-  <!-- Outer ring -->
-  <circle cx="32" cy="32" r="29" stroke="#4A90E2" stroke-width="3" fill="none"/>
+  <rect x="18" y="40" width="28" height="5" rx="1" fill="url(#darkBronze)"/>
+  
+  <!-- Highlight arc for 3D effect -->
+  <path d="M14 22 A20 20 0 0 1 50 22" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
 </svg>

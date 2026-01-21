@@ -127,12 +127,12 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
     const initializeLayer = async () => {
       try {
-        // Load custom museum icon - create a larger, more visible icon
+        // Load custom bronze museum icon (SVG for proper transparency)
         if (!map.hasImage('museum-icon')) {
           const iconImage = await loadImage('/icons/museum.svg')
-          // Rasterize SVG to canvas at a larger size for better visibility
+          // Render at good size for crisp display
           const canvas = document.createElement('canvas')
-          const iconSize = 64 // Larger size for visibility from far
+          const iconSize = 96 // Good balance of quality and performance
           canvas.width = iconSize
           canvas.height = iconSize
           const ctx = canvas.getContext('2d')
@@ -142,7 +142,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             ctx.drawImage(iconImage, 0, 0, iconSize, iconSize)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
             map.addImage('museum-icon', imageData, { sdf: false })
-            console.log('✅ Museum icon loaded at 64x64 size')
+            console.log('✅ Bronze museum icon loaded at 96x96 size')
           } else {
             // Fallback if canvas context fails
             map.addImage('museum-icon', iconImage)
@@ -185,11 +185,11 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
               'circle-color': [
                 'step',
                 ['get', 'point_count'],
-                '#B4A088', // Beige/Brown for small clusters
+                '#CD9B6A', // Light bronze for small clusters
                 5,
-                '#A0522D', // Sienna for medium
+                '#B87333', // Bronze for medium
                 10,
-                '#8B4513'  // SaddleBrown for large
+                '#9A6B31'  // Dark bronze for large
               ],
               'circle-radius': [
                 'step',
@@ -236,12 +236,12 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 0.8,   // Much larger at low zoom - visible from far
-              10, 1.0,
-              12, 1.2,
-              14, 1.4,
-              16, 1.6,
-              18, 1.8
+              8, 0.35,   // Visible at far zoom
+              10, 0.45,
+              12, 0.55,
+              14, 0.65,
+              16, 0.75,
+              18, 0.85   // Full size when close
             ],
             'icon-allow-overlap': true, // Always show museums
             'icon-ignore-placement': true, // Make sure they are always visible
