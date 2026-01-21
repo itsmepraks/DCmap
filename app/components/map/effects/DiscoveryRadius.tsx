@@ -27,9 +27,13 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
     addRadiusLayers()
 
     function addRadiusLayers() {
-      if (!map) return
+      if (!map || !map.getStyle()) return
 
-      // Remove existing layers and sources if they exist
+      // Remove existing layers FIRST (in reverse order of addition), then source
+      // Must remove ALL layers using the source before removing the source
+      if (map.getLayer('discovery-radius-outline')) {
+        map.removeLayer('discovery-radius-outline')
+      }
       if (map.getLayer('discovery-radius-layer')) {
         map.removeLayer('discovery-radius-layer')
       }
@@ -42,12 +46,12 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
         .filter(landmark => !landmark.visited)
         .map(landmark => {
           const [lng, lat] = landmark.coordinates
-          
+
           // Create a circle polygon approximation
           const steps = 64
           const radius = DISCOVERY_RADIUS_METERS / 111320 // Convert meters to degrees
           const coordinates: [number, number][] = []
-          
+
           for (let i = 0; i < steps; i++) {
             const angle = (i / steps) * 2 * Math.PI
             const dx = radius * Math.cos(angle)
@@ -106,6 +110,7 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
     }
 
     return () => {
+      if (!map || !map.getStyle()) return
       if (map.getLayer('discovery-radius-outline')) {
         map.removeLayer('discovery-radius-outline')
       }

@@ -29,7 +29,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
   // Track selected feature ID locally
   const selectedIdRef = useRef<string | number | null>(null)
-  
+
   // Store visible prop in ref for use during initialization
   const visibleRef = useRef(visible)
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
     if (!map) {
       return
     }
-    
+
     if (layerInitialized.current) {
       return
     }
@@ -52,7 +52,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
       const feature = e.features[0]
       const properties = feature.properties as MuseumProperties
-      
+
       // Skip if this is a cluster (shouldn't happen due to layer filter, but defensive check)
       if ('point_count' in properties) {
         return // Handled by clusterClick
@@ -108,12 +108,12 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
     const handleClusterClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
       if (!e.features || e.features.length === 0) return
-      
+
       const feature = e.features[0]
       const clusterId = feature.properties?.cluster_id
-      
+
       if (!clusterId) return
-      
+
       const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource
       source.getClusterExpansionZoom(clusterId, (err, zoom) => {
         if (err || !zoom) return
@@ -170,7 +170,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
         // Get initial visibility - HIDDEN by default unless explicitly visible
         const initialVisibility = visibleRef.current ? 'visible' : 'none'
-        
+
         // 1. Clusters Layer (Circles)
         if (!map.getLayer(CLUSTER_LAYER_ID)) {
           map.addLayer({
@@ -206,8 +206,9 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
           })
         }
 
-        // 2. Cluster Count Layer (Text)
-        if (!map.getLayer(CLUSTER_COUNT_LAYER_ID)) {
+        // 2. Cluster Count Layer (Text) - only add if style has glyphs
+        const styleHasGlyphsForCluster = Boolean(map.getStyle()?.glyphs)
+        if (!map.getLayer(CLUSTER_COUNT_LAYER_ID) && styleHasGlyphsForCluster) {
           map.addLayer({
             id: CLUSTER_COUNT_LAYER_ID,
             type: 'symbol',
@@ -271,13 +272,13 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             layout['text-size'] = 11
             layout['text-offset'] = [0, 2]
             layout['text-anchor'] = 'top'
-            
+
             // HIDE labels at lower zoom levels entirely to reduce clutter
             // Only show labels when zoomed in significantly
             layout['text-variable-anchor'] = ['top', 'bottom', 'left', 'right']
             layout['text-radial-offset'] = 0.5
             layout['text-justify'] = 'auto'
-            
+
             // Use an expression to hide text based on zoom
             paint['text-opacity'] = [
               'interpolate',
@@ -306,14 +307,14 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
         // Handlers
         handlersRef.current.click = handleClick
         handlersRef.current.clusterClick = handleClusterClick
-        
+
         map.on('click', LAYER_ID, handlersRef.current.click)
         map.on('click', CLUSTER_LAYER_ID, handlersRef.current.clusterClick)
 
         // Cursor logic
         const onMouseEnter = () => { map.getCanvas().style.cursor = 'pointer' }
         const onMouseLeave = () => { map.getCanvas().style.cursor = '' }
-        
+
         handlersRef.current.mouseEnter = onMouseEnter
         handlersRef.current.mouseLeave = onMouseLeave
 
@@ -338,7 +339,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
       if (map && layerInitialized.current) {
         if (handlers.click) map.off('click', LAYER_ID, handlers.click)
         if (handlers.clusterClick) map.off('click', CLUSTER_LAYER_ID, handlers.clusterClick)
-        
+
         if (handlers.mouseEnter) {
           map.off('mouseenter', LAYER_ID, handlers.mouseEnter)
           map.off('mouseenter', CLUSTER_LAYER_ID, handlers.mouseEnter)
@@ -357,7 +358,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
     const visibility = visible ? 'visible' : 'none'
     const layers = [LAYER_ID, CLUSTER_LAYER_ID, CLUSTER_COUNT_LAYER_ID]
-    
+
     layers.forEach(layer => {
       if (map.getLayer(layer)) {
         map.setLayoutProperty(layer, 'visibility', visibility)

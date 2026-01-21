@@ -14,6 +14,7 @@ interface MapLayersProps {
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
+  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onSelectEntity?: (entity: SelectedEntity | null) => void
 }
 
@@ -23,6 +24,7 @@ export const MapLayers = memo(function MapLayers({
   currentSeason,
   visitedLandmarks,
   onLandmarkDiscovered,
+  onTreeDiscovered,
   onSelectEntity
 }: MapLayersProps) {
   useEffect(() => {
@@ -33,21 +35,22 @@ export const MapLayers = memo(function MapLayers({
   return (
     <>
       <ParksLayer visible={layersVisible.parks} season={currentSeason} onSelect={onSelectEntity} />
-      <TreesLayer 
-        visible={layersVisible.trees} 
-        season={currentSeason} 
+      <TreesLayer
+        visible={layersVisible.trees}
+        season={currentSeason}
         onSelect={onSelectEntity}
+        onTreeDiscovered={onTreeDiscovered}
       />
       <RoadDetailsLayer visible={true} />
-      <MuseumsLayer 
-        visible={layersVisible.museums} 
+      <MuseumsLayer
+        visible={layersVisible.museums}
         onSelect={onSelectEntity}
         onMuseumDiscovered={onLandmarkDiscovered}
       />
-      <LandmarksLayer 
-        map={map} 
-        visible={layersVisible.landmarks} 
-        visitedLandmarks={visitedLandmarks} 
+      <LandmarksLayer
+        map={map}
+        visible={layersVisible.landmarks}
+        visitedLandmarks={visitedLandmarks}
         onLandmarkDiscovered={onLandmarkDiscovered}
         onSelect={onSelectEntity}
       />

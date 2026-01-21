@@ -55,6 +55,13 @@ export default function LandmarksLayer({
           return
         }
 
+        // Ensure style is accessible
+        if (!map.getStyle()) {
+          console.warn('LandmarksLayer: Style not accessible, waiting...')
+          map.once('idle', () => initializeLayer())
+          return
+        }
+
         // Create clean SVG pin icons
         const createPinIcon = (color: string, hasCheckmark: boolean = false): HTMLImageElement => {
           const svg = `

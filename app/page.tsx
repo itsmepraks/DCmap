@@ -32,10 +32,10 @@ export default function Home() {
                     layersVisible={state.layersVisible}
                     currentSeason={state.currentSeason}
                     is3D={state.is3DView}
-                    isFlying={state.isFlyMode}
                     landmarks={state.landmarksState.landmarks}
                     visitedLandmarks={state.gameState.gameProgress.visitedLandmarks}
                     onLandmarkDiscovered={state.handleLandmarkDiscovered}
+                    onTreeDiscovered={state.handleTreeDiscovered}
                     onNavigateToLandmark={state.handleNavigateToLandmark}
                     waypoints={state.waypointSystem.waypoints}
                     activeWaypointId={state.waypointSystem.activeWaypointId}

@@ -23,7 +23,6 @@ interface MapSectionProps {
   }
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   is3D: boolean
-  isFlying: boolean
 
   // Game state
   landmarks: Landmark[]
@@ -31,9 +30,10 @@ interface MapSectionProps {
 
   // Callbacks
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
+  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onNavigateToLandmark: (coordinates: [number, number]) => void
   onSelectEntity?: (entity: SelectedEntity | null) => void
-  
+
   // Waypoint system (legacy)
   waypoints: any[]
   activeWaypointId: string | null
@@ -52,10 +52,10 @@ export default function MapSection({
   layersVisible,
   currentSeason,
   is3D,
-  isFlying,
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
+  onTreeDiscovered,
   onNavigateToLandmark,
   waypoints,
   activeWaypointId,
@@ -82,8 +82,7 @@ export default function MapSection({
       <Map
         layersVisible={layersVisible}
         currentSeason={currentSeason}
-        is3D={is3D}
-        isFlying={isFlying}
+        is3DView={is3D}
         landmarks={landmarks}
         visitedLandmarks={visitedLandmarks}
         onSelect={onSelectEntity}
@@ -98,6 +97,7 @@ export default function MapSection({
             })
           }
         }}
+        onTreeDiscovered={onTreeDiscovered}
       />
 
       {/* Legacy manual waypoints (if any) */}

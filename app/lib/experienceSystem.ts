@@ -34,7 +34,7 @@ export function loadExperience(): ExperienceData {
       const level = Math.floor(data.totalXP / XP_PER_LEVEL) + 1
       const xpInCurrentLevel = data.totalXP % XP_PER_LEVEL
       const xpToNextLevel = XP_PER_LEVEL - xpInCurrentLevel
-      
+
       return {
         ...data,
         level,
@@ -93,6 +93,12 @@ export function addXP(
 
 export function getXPFromLandmark(): number {
   return XP_FROM_LANDMARK
+}
+
+export const XP_FROM_TREE = 10
+
+export function getXPFromTree(): number {
+  return XP_FROM_TREE
 }
 
 export function resetExperience(): ExperienceData {

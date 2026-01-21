@@ -4,11 +4,13 @@ import { useEffect, useMemo, useRef, useCallback } from 'react'
 import { useMap } from '@/app/lib/MapContext'
 import mapboxgl from 'mapbox-gl'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
+import { calculateDistance } from '@/app/lib/proximity'
 
 interface TreesLayerProps {
   visible: boolean
   season?: 'spring' | 'summer' | 'fall' | 'winter'
   onSelect?: (entity: SelectedEntity | null) => void
+  onTreeDiscovered?: (treeId: string, treeData: any) => void
 }
 
 const TREE_POINT_SOURCE_ID = 'dmv-tree-points'
@@ -33,19 +35,24 @@ const ALL_TREE_LAYERS = [
  * - Loads public/data/dmv_trees.geojson for real tree clusters
  * - Seasonal palettes recolor both canopy + icons
  */
-export default function TreesLayer({ visible, season = 'summer', onSelect }: TreesLayerProps) {
+export default function TreesLayer({ visible, season = 'summer', onSelect, onTreeDiscovered }: TreesLayerProps) {
   const { map } = useMap()
   const isInitialized = useRef(false)
-  
+  const onTreeDiscoveredRef = useRef(onTreeDiscovered)
+
+  useEffect(() => {
+    onTreeDiscoveredRef.current = onTreeDiscovered
+  }, [onTreeDiscovered])
+
   // Store visible prop in ref so it's accessible during initialization
   const visibleRef = useRef(visible)
   useEffect(() => {
     visibleRef.current = visible
   }, [visible])
-  
+
   // Track selected tree/cluster
   const selectedIdRef = useRef<string | number | null>(null)
-  
+
   // Store onSelect in a ref so click handlers always use the latest callback
   const onSelectRef = useRef(onSelect)
   useEffect(() => {
@@ -124,7 +131,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
     const initializeLayer = async () => {
       if (!map) return
-      
+
       // If style isn't loaded, wait for it
       if (!map.isStyleLoaded()) {
         console.log('🌲 Style not loaded yet, waiting for map idle...')
@@ -138,17 +145,17 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
         const layers = map.getStyle().layers ?? []
         // Find building layer to place trees BEFORE buildings (for proper occlusion)
-        const buildingLayerId = layers.find((layer) => 
-          layer.id === 'realistic-buildings' || 
+        const buildingLayerId = layers.find((layer) =>
+          layer.id === 'realistic-buildings' ||
           (layer.type === 'fill-extrusion' && layer['source-layer'] === 'building')
         )?.id
-        
+
         const firstSymbolId = layers.find((layer) => layer.type === 'symbol')?.id
         const beforeId = buildingLayerId || firstSymbolId
-        
+
         // Get initial visibility - HIDDEN by default unless explicitly visible
         const initialVisibility = visibleRef.current ? 'visible' : 'none'
-        
+
         const addLayer = (layer: mapboxgl.AnyLayer) => {
           if (!map.getLayer(layer.id)) {
             map.addLayer(layer, beforeId)
@@ -267,7 +274,9 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           })
         }
 
-        if (!map.getLayer(TREE_CLUSTER_COUNT_LAYER_ID)) {
+        // Only add cluster count text layer if style has glyphs defined
+        const styleHasGlyphs = Boolean(map.getStyle()?.glyphs)
+        if (!map.getLayer(TREE_CLUSTER_COUNT_LAYER_ID) && styleHasGlyphs) {
           map.addLayer({
             id: TREE_CLUSTER_COUNT_LAYER_ID,
             type: 'symbol',
@@ -332,7 +341,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
         // Add interaction handlers
         const handleTreeClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
           if (!e.features || e.features.length === 0) return
-          
+
           const feature = e.features[0]
           const properties = feature.properties
           if (!properties) return
@@ -357,6 +366,11 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
 
           const coordinates = (feature.geometry as any).coordinates.slice()
 
+          // Trigger discovery on click
+          if (onTreeDiscoveredRef.current) {
+            onTreeDiscoveredRef.current(String(feature.id || Math.random()), properties)
+          }
+
           if (onSelectRef.current) {
             onSelectRef.current({
               id: String(feature.id || Math.random()),
@@ -378,11 +392,11 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           if (!e.features || e.features.length === 0) return
           const feature = e.features[0]
           const clusterId = feature.properties?.cluster_id
-          
+
           const source = map.getSource(TREE_POINT_SOURCE_ID) as mapboxgl.GeoJSONSource
           source.getClusterExpansionZoom(clusterId, (err, zoom) => {
             if (err || zoom == null) return
-            
+
             map.easeTo({
               center: (feature.geometry as any).coordinates,
               zoom: zoom,
@@ -394,10 +408,10 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
         // Interaction events
         map.on('click', TREE_POINT_LAYER_ID, handleTreeClick)
         map.on('click', TREE_CLUSTER_LAYER_ID, handleClusterClick)
-        
+
         map.on('mouseenter', TREE_POINT_LAYER_ID, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', TREE_POINT_LAYER_ID, () => { map.getCanvas().style.cursor = '' })
-        
+
         map.on('mouseenter', TREE_CLUSTER_LAYER_ID, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', TREE_CLUSTER_LAYER_ID, () => { map.getCanvas().style.cursor = '' })
 
@@ -406,7 +420,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
           const features = map.queryRenderedFeatures(e.point, {
             layers: [TREE_POINT_LAYER_ID, TREE_CLUSTER_LAYER_ID]
           })
-          
+
           if (features.length === 0 && selectedIdRef.current !== null) {
             map.setFeatureState(
               { source: TREE_POINT_SOURCE_ID, id: selectedIdRef.current },
@@ -430,7 +444,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect }: Tre
   useEffect(() => {
     if (!map || !isInitialized.current) return
     const visibility = visible ? 'visible' : 'none'
-    
+
     ALL_TREE_LAYERS.forEach((layerId) => {
       if (map.getLayer(layerId)) {
         map.setLayoutProperty(layerId, 'visibility', visibility)

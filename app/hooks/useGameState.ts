@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  loadGameProgress, 
-  resetGameProgress, 
+import {
+  loadGameProgress,
+  resetGameProgress,
   visitLandmark,
-  type GameProgress 
+  visitTree,
+  type GameProgress
 } from '@/app/lib/gameState'
 
 interface Achievement {
@@ -27,6 +28,15 @@ export function useGameState() {
     const newProgress = visitLandmark(landmarkId, gameProgress)
     setGameProgress(newProgress)
     return true // Successfully visited
+  }
+
+  const handleVisitTree = (treeId: string) => {
+    if (gameProgress.visitedTrees && gameProgress.visitedTrees.has(treeId)) {
+      return false
+    }
+    const newProgress = visitTree(treeId, gameProgress)
+    setGameProgress(newProgress)
+    return true
   }
 
   const showAchievement = (landmarkData: Achievement) => {
@@ -56,6 +66,7 @@ export function useGameState() {
     achievement,
     showStatsModal,
     handleVisitLandmark,
+    handleVisitTree,
     showAchievement,
     dismissAchievement,
     openStatsModal,
@@ -63,4 +74,3 @@ export function useGameState() {
     handleResetProgress
   }
 }
-

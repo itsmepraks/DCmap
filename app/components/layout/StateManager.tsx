@@ -54,6 +54,7 @@ interface StateManagerReturn {
   handleToggle3D: () => void
   handleToggleFly: () => void
   handleLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
+  handleTreeDiscovered: (treeId: string, treeData: any) => void
   handleNavigateToLandmark: (coordinates: [number, number]) => void
   handleResetProgress: () => void
 
@@ -206,6 +207,17 @@ export default function StateManager({ children }: StateManagerProps) {
     console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
   }, [gameState, landmarksState, experience])
 
+  // Handle tree discovery (for Fly Mode and Map interaction)
+  const handleTreeDiscovered = useCallback((treeId: string, treeData: any) => {
+    // Check if new tree
+    const isNewVisit = gameState.handleVisitTree(treeId)
+
+    if (isNewVisit) {
+      const xpGained = experience.awardTreeXP()
+      // console.log(`🌲 +${xpGained} XP from tree!`)
+    }
+  }, [gameState, experience])
+
   // Fly mode controller
   const flyControllerState = useFlyController({
     map,
@@ -213,6 +225,7 @@ export default function StateManager({ children }: StateManagerProps) {
     landmarks: landmarksState.landmarks,
     visitedLandmarks: gameState.gameProgress.visitedLandmarks,
     onLandmarkDiscovered: handleLandmarkDiscovered,
+    onTreeDiscovered: handleTreeDiscovered,
     onPositionChange: (pos) => {
       // Update landmarks hook with real-time fly position for accurate distance calculations
       if (pos && pos.lng && pos.lat) {
@@ -348,6 +361,7 @@ export default function StateManager({ children }: StateManagerProps) {
     handleToggle3D,
     handleToggleFly,
     handleLandmarkDiscovered,
+    handleTreeDiscovered,
     handleNavigateToLandmark,
     handleResetProgress,
 

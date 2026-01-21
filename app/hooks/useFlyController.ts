@@ -11,6 +11,7 @@ interface UseFlyControllerOptions {
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
+  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onPositionChange?: (position: { lng: number; lat: number; bearing: number }) => void
 }
 
@@ -87,6 +88,7 @@ export function useFlyController({
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
+  onTreeDiscovered,
   onPositionChange
 }: UseFlyControllerOptions) {
   const { updatePose } = usePlayerState()
@@ -100,6 +102,7 @@ export function useFlyController({
 
   // Use refs for callbacks and changing data to prevent effect re-runs
   const landmarkCallbackRef = useRef(onLandmarkDiscovered)
+  const treeCallbackRef = useRef(onTreeDiscovered)
   const positionCallbackRef = useRef(onPositionChange)
   const landmarksRef = useRef(landmarks)
   const visitedLandmarksRef = useRef(visitedLandmarks)
@@ -108,7 +111,8 @@ export function useFlyController({
   // Keep refs in sync with latest values
   useEffect(() => {
     landmarkCallbackRef.current = onLandmarkDiscovered
-  }, [onLandmarkDiscovered])
+    treeCallbackRef.current = onTreeDiscovered
+  }, [onLandmarkDiscovered, onTreeDiscovered])
 
   useEffect(() => {
     positionCallbackRef.current = onPositionChange
@@ -304,23 +308,18 @@ export function useFlyController({
         position[0] += forwardLng + strafeLng
         position[1] += forwardLat + strafeLat
 
-        // Update camera
-        map.setCenter([position[0], position[1]])
-        map.setBearing(bearing)
-
         // Update camera altitude by adjusting pitch/zoom
         const altitudeFactor = Math.max(0, Math.min(1, (currentAltitude - MIN_ALTITUDE) / 100))
         const dynamicPitch = CAMERA_PITCH - (altitudeFactor * 25)
         const dynamicZoom = CAMERA_ZOOM - (altitudeFactor * 3)
 
-        const currentPitch = map.getPitch()
-        const currentZoom = map.getZoom()
-        if (Math.abs(currentPitch - dynamicPitch) > 1) {
-          map.setPitch(dynamicPitch)
-        }
-        if (Math.abs(currentZoom - dynamicZoom) > 0.2) {
-          map.setZoom(dynamicZoom)
-        }
+        // OPTIMIZED: Batch all camera updates into a single jumpTo call
+        map.jumpTo({
+          center: [position[0], position[1]],
+          bearing: bearing,
+          pitch: dynamicPitch,
+          zoom: dynamicZoom
+        })
 
         // Update player state via ref
         updatePoseRef.current({
@@ -346,9 +345,13 @@ export function useFlyController({
           })
         }
       } else {
-        // When stopped
-        map.setCenter([position[0], position[1]])
-        map.setBearing(bearing)
+        // When stopped, just ensure sync
+        if (map.getBearing() !== bearing) {
+          map.setBearing(bearing)
+        }
+        if (map.getCenter().lng !== position[0] || map.getCenter().lat !== position[1]) {
+          map.setCenter([position[0], position[1]])
+        }
 
         frameCount++
         if (frameCount % 6 === 0) {
@@ -376,6 +379,8 @@ export function useFlyController({
       if (currentTime - lastLandmarkCheck > 500) {
         lastLandmarkCheck = currentTime
         const playerPos = { lng: position[0], lat: position[1] }
+
+        // 1. Check Landmarks
         const nearby = checkNearbyLandmarks(playerPos, landmarksRef.current, visitedLandmarksRef.current, 40)
         nearby.forEach(hit => {
           const landmarkData = landmarksRef.current.find(l => l.id === hit.id)
@@ -383,6 +388,28 @@ export function useFlyController({
             landmarkCallbackRef.current?.(hit.id, landmarkData)
           }
         })
+
+        // 2. Check Trees (using map query instead of calculating distance to thousands of trees)
+        // Only trigger if we have a callback AND the layer exists
+        if (treeCallbackRef.current && map.getLayer('dmv-tree-points-layer')) {
+          try {
+            const point = map.project(position)
+            const treeFeatures = map.queryRenderedFeatures(
+              [[point.x - 10, point.y - 10], [point.x + 10, point.y + 10]],
+              { layers: ['dmv-tree-points-layer'] }
+            )
+
+            if (treeFeatures.length > 0) {
+              // Just take the first one or a random one nearby
+              const feature = treeFeatures[0]
+              if (feature.id) {
+                treeCallbackRef.current(String(feature.id), feature.properties)
+              }
+            }
+          } catch (e) {
+            // Silently ignore if layer isn't ready yet
+          }
+        }
       }
 
       animationFrameId = requestAnimationFrame(animate)
@@ -419,4 +446,3 @@ export function useFlyController({
 
   return controllerState
 }
-

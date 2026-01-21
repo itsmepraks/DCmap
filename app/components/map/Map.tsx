@@ -1,108 +1,111 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
-import { useMap } from '@/app/lib/MapContext'
-import type { LayerVisibility } from '@/app/types/map'
 import { useMapInitialization } from '@/app/hooks/useMapInitialization'
-import { MapLayers } from './MapLayers'
+import { useMap } from '@/app/lib/MapContext'
+import { MapLayers } from '@/app/components/map/MapLayers'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MapProps {
-  layersVisible: LayerVisibility
+  mapContainerId?: string
+  layersVisible: {
+    museums: boolean
+    trees: boolean
+    landmarks: boolean
+    parks: boolean
+  }
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
-  is3D: boolean
-  isFlying: boolean
+  is3DView: boolean
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
+  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onSelect?: (entity: SelectedEntity | null) => void
 }
 
 export default function Map({
+  mapContainerId = 'map',
   layersVisible,
   currentSeason,
-  is3D,
-  isFlying,
+  is3DView,
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
+  onTreeDiscovered,
   onSelect
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const { map } = useMap()
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Initialize map
   useMapInitialization(mapContainer)
 
-  // Handle 3D view toggle with smooth animation (disabled while flying)
+  // Track map load state
   useEffect(() => {
-    if (!map || isFlying) return // Don't interfere with fly mode street camera
+    if (!map) return
 
-    // Cancel any ongoing animations first to prevent conflicts
-    map.stop()
+    if (map.loaded()) {
+      setIsLoaded(true)
+    } else {
+      const onMapLoad = () => setIsLoaded(true)
+      map.on('load', onMapLoad)
 
-    // Smooth 3D transformation - use shorter duration for better responsiveness
-    map.easeTo({
-      pitch: is3D ? 70 : 45,           // More dramatic angle for immersive 3D
-      zoom: is3D ? 16 : 12,            // Wider zoom to show MD/VA region
-      duration: 1000,                  // Faster transition (reduced from 2000ms)
-      easing: (t) => t * (2 - t),      // Smooth ease-out for better performance
-      essential: true                   // Essential animation - can't be interrupted
-    })
+      // Fallback: Force loaded state after 3 seconds if load event never fires
+      const timeout = setTimeout(() => {
+        if (!isLoaded) {
+          console.warn('⚠️ Map load event timeout - forcing loaded state for layers')
+          setIsLoaded(true)
+        }
+      }, 3000)
 
-    console.log(`🎮 ${is3D ? 'Entering 3D world mode' : 'Returning to overview mode'}`)
-  }, [map, is3D, isFlying])
-
-  // Close panel on map click if not clicking a feature
-  useEffect(() => {
-    if (!map || !onSelect) return
-
-    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-      // If clicking on nothing interactive, close panel
-      // Only query layers that exist in the map
-      const availableLayers = ['landmarks-layer', 'museums-layer', 'dmv-tree-points-layer', 'parks-seasonal'].filter(
-        layerId => map.getLayer(layerId)
-      )
-      
-      if (availableLayers.length === 0) {
-        onSelect(null)
-        return
+      return () => {
+        map.off('load', onMapLoad)
+        clearTimeout(timeout)
       }
-      
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: availableLayers
+    }
+  }, [map, isLoaded])
+
+  // Handle 3D view toggle
+  useEffect(() => {
+    if (!map) return
+
+    if (is3DView) {
+      map.easeTo({
+        pitch: 60,
+        duration: 1500,
+        easing: (t) => t * (2 - t)
       })
-      if (features.length === 0) {
-        onSelect(null)
-      }
+    } else {
+      map.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 1500,
+        easing: (t) => t * (2 - t)
+      })
     }
-    map.on('click', handleMapClick)
-    return () => {
-      map.off('click', handleMapClick)
-    }
-  }, [map, onSelect])
+  }, [map, is3DView])
 
   return (
-    <>
-      <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full z-0" />
-      <style jsx global>{`
-        /* Hide default Mapbox controls */
-        .mapboxgl-ctrl-top-right {
-          display: none !important;
-        }
-        .mapboxgl-ctrl-bottom-right {
-          display: none !important;
-        }
-      `}</style>
-      {map && (
+    <div className="relative w-full h-full">
+      <div
+        ref={mapContainer}
+        id={mapContainerId}
+        className="absolute inset-0 w-full h-full focus:outline-none"
+      />
+
+      {map && isLoaded && (
         <MapLayers
           map={map}
           layersVisible={layersVisible}
           currentSeason={currentSeason}
           visitedLandmarks={visitedLandmarks}
           onLandmarkDiscovered={onLandmarkDiscovered}
+          onTreeDiscovered={onTreeDiscovered}
           onSelectEntity={onSelect}
         />
       )}
-    </>
+    </div>
   )
 }
