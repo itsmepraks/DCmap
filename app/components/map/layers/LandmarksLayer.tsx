@@ -62,75 +62,43 @@ export default function LandmarksLayer({
           return
         }
 
-        // Create clean SVG pin icons
-        const createPinIcon = (color: string, hasCheckmark: boolean = false): HTMLImageElement => {
-          const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">
-              <defs>
-                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.3"/>
-                </filter>
-              </defs>
-              <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.27 21.73 0 14 0z" 
-                    fill="${color}" filter="url(#shadow)"/>
-              <circle cx="14" cy="14" r="5" fill="${COLORS.white}"/>
-              ${hasCheckmark ? `<text x="14" y="17" text-anchor="middle" font-size="8" font-weight="bold" fill="${color}">✓</text>` : ''}
-            </svg>
-          `
-          const img = new Image(28, 40)
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
-          return img
-        }
+        // Load landmark icons from SVG files (bronze for unvisited, gold for visited)
+        const loadIconFromSvg = async (iconName: string, svgPath: string): Promise<void> => {
+          if (map.hasImage(iconName)) return
 
-        // Create small dot icon for low zoom
-        const createDotIcon = (color: string): HTMLImageElement => {
-          const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="5" fill="${color}" stroke="${COLORS.white}" stroke-width="2"/>
-            </svg>
-          `
-          const img = new Image(12, 12)
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
-          return img
-        }
-
-        // Create cluster icon
-        const createClusterIcon = (count: number): HTMLImageElement => {
-          const size = Math.min(50, 30 + count * 2)
-          const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-              <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="${COLORS.cluster}" stroke="${COLORS.white}" stroke-width="3"/>
-              <text x="${size / 2}" y="${size / 2 + 4}" text-anchor="middle" font-size="14" font-weight="bold" fill="${COLORS.white}">${count}</text>
-            </svg>
-          `
-          const img = new Image(size, size)
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
-          return img
-        }
-
-        // Load icons into map
-        const loadIcon = (name: string, img: HTMLImageElement): Promise<void> => {
           return new Promise((resolve) => {
-            if (map.hasImage(name)) {
-              resolve()
-              return
-            }
+            const img = new Image()
+            img.crossOrigin = 'anonymous'
             img.onload = () => {
-              if (!map.hasImage(name)) {
-                map.addImage(name, img)
+              const canvas = document.createElement('canvas')
+              const iconSize = 96
+              canvas.width = iconSize
+              canvas.height = iconSize
+              const ctx = canvas.getContext('2d')
+              if (ctx) {
+                ctx.imageSmoothingEnabled = true
+                ctx.imageSmoothingQuality = 'high'
+                ctx.drawImage(img, 0, 0, iconSize, iconSize)
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+                if (!map.hasImage(iconName)) {
+                  map.addImage(iconName, imageData, { sdf: false })
+                }
+                console.log(`✅ ${iconName} icon loaded`)
               }
               resolve()
             }
-            img.onerror = () => resolve()
+            img.onerror = () => {
+              console.warn(`Failed to load ${iconName} icon`)
+              resolve()
+            }
+            img.src = svgPath
           })
         }
 
+        // Load both bronze (unvisited) and gold (visited) landmark icons
         await Promise.all([
-          loadIcon('pin-unvisited', createPinIcon(COLORS.unvisited, false)),
-          loadIcon('pin-visited', createPinIcon(COLORS.visited, true)),
-          loadIcon('pin-nearby', createPinIcon(COLORS.nearby, false)),
-          loadIcon('dot-unvisited', createDotIcon(COLORS.unvisited)),
-          loadIcon('dot-visited', createDotIcon(COLORS.visited))
+          loadIconFromSvg('landmark-icon', '/icons/landmark.svg'),
+          loadIconFromSvg('landmark-visited-icon', '/icons/landmark-visited.svg')
         ])
 
         // Load landmarks data
@@ -157,7 +125,15 @@ export default function LandmarksLayer({
             source: 'landmarks',
             filter: ['has', 'point_count'],
             paint: {
-              'circle-color': COLORS.cluster,
+              'circle-color': [
+                'step',
+                ['get', 'point_count'],
+                '#CD9B6A', // Light bronze for small clusters
+                10,
+                '#B87333', // Bronze for medium
+                30,
+                '#9A6B31'  // Dark bronze for large
+              ],
               'circle-radius': [
                 'step', ['get', 'point_count'],
                 18,   // 18px for clusters with < 10 points
@@ -165,7 +141,7 @@ export default function LandmarksLayer({
                 30, 28   // 28px for clusters with 30+ points
               ],
               'circle-stroke-width': 3,
-              'circle-stroke-color': COLORS.white
+              'circle-stroke-color': '#FFFFFF'
             }
           })
         }
@@ -197,15 +173,25 @@ export default function LandmarksLayer({
             source: 'landmarks',
             filter: ['!', ['has', 'point_count']],
             layout: {
-              'icon-image': 'pin-unvisited',
+              // Use data-driven icon-image based on visited property
+              'icon-image': [
+                'case',
+                ['boolean', ['get', 'visited'], false],
+                'landmark-visited-icon', // Gold icon for visited
+                'landmark-icon'          // Bronze icon for unvisited
+              ],
               'icon-size': [
                 'interpolate', ['linear'], ['zoom'],
-                10, 0.4,   // Small at far zoom
-                14, 0.7,   // Medium
-                18, 1.0    // Full size when close
+                8, 0.35,   // Visible at far zoom
+                10, 0.45,
+                12, 0.55,
+                14, 0.65,
+                16, 0.75,
+                18, 0.85   // Full size when close
               ],
               'icon-allow-overlap': true,
-              'icon-anchor': 'bottom',
+              'icon-ignore-placement': true,
+              'icon-pitch-alignment': 'viewport',
               // Show text only at higher zoom levels
               'text-field': [
                 'step', ['zoom'],
@@ -363,14 +349,40 @@ export default function LandmarksLayer({
     initializeLayer()
   }, [map])
 
-  // Update icon images based on visited status
+  // Update source data and icons based on visited status
   useEffect(() => {
     if (!map || !isInitialized.current) return
 
-    // Update layer to use different icons based on visited status
-    // This would require re-filtering the data or using data-driven styling
-    // For now, we'll use a simpler approach with feature-state
+    const source = map.getSource('landmarks') as mapboxgl.GeoJSONSource
+    if (!source) return
 
+    // Fetch current data and update with visited status
+    const updateVisitedStatus = async () => {
+      try {
+        const response = await fetch('/data/landmarks.geojson')
+        const data = await response.json()
+
+        // Update features with visited property
+        const updatedFeatures = data.features.map((feature: any) => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            visited: visitedLandmarks.has(feature.properties.id)
+          }
+        }))
+
+        source.setData({
+          type: 'FeatureCollection',
+          features: updatedFeatures
+        })
+
+        console.log(`✅ Updated landmark visited status (${visitedLandmarks.size} visited)`)
+      } catch (error) {
+        console.warn('Failed to update landmark visited status:', error)
+      }
+    }
+
+    updateVisitedStatus()
   }, [map, visitedLandmarks])
 
   // Toggle visibility

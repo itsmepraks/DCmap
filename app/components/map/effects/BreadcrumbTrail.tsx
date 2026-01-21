@@ -25,7 +25,7 @@ export default function BreadcrumbTrail({ map, visitedLandmarks }: BreadcrumbTra
     addBreadcrumbTrail()
 
     function addBreadcrumbTrail() {
-      if (!map) return
+      if (!map || !map.getStyle()) return
 
       // Remove existing layers and sources if they exist
       if (map.getLayer('breadcrumb-trail-line')) {
@@ -46,7 +46,7 @@ export default function BreadcrumbTrail({ map, visitedLandmarks }: BreadcrumbTra
 
       // Sort landmarks by visit time
       const sortedLandmarks = [...visitedLandmarks].sort((a, b) => a.visitedAt - b.visitedAt)
-      
+
       // Create line connecting landmarks
       const lineCoordinates = sortedLandmarks.map(l => l.coordinates)
 
@@ -140,6 +140,7 @@ export default function BreadcrumbTrail({ map, visitedLandmarks }: BreadcrumbTra
     }
 
     return () => {
+      if (!map || !map.getStyle()) return
       if (map.getLayer('breadcrumb-labels')) {
         map.removeLayer('breadcrumb-labels')
       }

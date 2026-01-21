@@ -546,6 +546,31 @@ export function useMapInitialization(
             console.warn('Open-world styling skipped:', visualError)
           }
 
+          // Hide default Mapbox POI layers to prevent duplicate icons with our custom layers
+          try {
+            const allLayers = mapInstance?.getStyle()?.layers || []
+            const poiPatterns = ['poi', 'label', 'place', 'attraction', 'museum', 'marker', 'icon']
+
+            // Find and hide all POI-related symbol layers
+            allLayers.forEach(layer => {
+              // Check if layer ID contains POI-related patterns
+              const layerId = layer.id.toLowerCase()
+              const isPOILayer = poiPatterns.some(pattern => layerId.includes(pattern)) &&
+                !layerId.includes('road') &&
+                !layerId.includes('landmarks') &&
+                !layerId.includes('museums') &&
+                !layerId.includes('dmv-tree')
+
+              // Also hide any symbol layer using Mapbox default sprites for POIs
+              if (isPOILayer && layer.type === 'symbol') {
+                mapInstance?.setLayoutProperty(layer.id, 'visibility', 'none')
+                console.log(`✅ Hidden POI layer: ${layer.id}`)
+              }
+            })
+          } catch (poiError) {
+            console.warn('POI layer hiding skipped:', poiError)
+          }
+
           console.log('✅ Map load event complete - terrain/buildings/sky initialized')
         })
 

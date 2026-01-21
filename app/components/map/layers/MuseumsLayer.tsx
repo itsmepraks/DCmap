@@ -74,7 +74,7 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
         selectedIdRef.current = feature.id
         map.setFeatureState(
           { source: SOURCE_ID, id: feature.id },
-          { selected: true }
+          { selected: true, visited: true } // Mark as visited when clicked
         )
       }
 
@@ -127,12 +127,12 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
 
     const initializeLayer = async () => {
       try {
-        // Load custom bronze museum icon (SVG for proper transparency)
-        if (!map.hasImage('museum-icon')) {
-          const iconImage = await loadImage('/icons/museum.svg')
-          // Render at good size for crisp display
+        // Load museum icons (bronze for unvisited, gold for visited)
+        const loadMuseumIcon = async (iconName: string, svgPath: string) => {
+          if (map.hasImage(iconName)) return
+          const iconImage = await loadImage(svgPath)
           const canvas = document.createElement('canvas')
-          const iconSize = 96 // Good balance of quality and performance
+          const iconSize = 96
           canvas.width = iconSize
           canvas.height = iconSize
           const ctx = canvas.getContext('2d')
@@ -141,13 +141,20 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             ctx.imageSmoothingQuality = 'high'
             ctx.drawImage(iconImage, 0, 0, iconSize, iconSize)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-            map.addImage('museum-icon', imageData, { sdf: false })
-            console.log('✅ Bronze museum icon loaded at 96x96 size')
-          } else {
-            // Fallback if canvas context fails
-            map.addImage('museum-icon', iconImage)
+            if (!map.hasImage(iconName)) {
+              map.addImage(iconName, imageData, { sdf: false })
+              console.log(`✅ ${iconName} loaded`)
+            }
+          } else if (!map.hasImage(iconName)) {
+            map.addImage(iconName, iconImage)
           }
         }
+
+        // Load both bronze and gold museum icons
+        await Promise.all([
+          loadMuseumIcon('museum-icon', '/icons/museum.svg'),
+          loadMuseumIcon('museum-visited-icon', '/icons/museum-visited.svg')
+        ])
 
         // Fetch museums GeoJSON data
         const response = await fetch('/data/museums.geojson')
@@ -231,6 +238,8 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
           const styleHasGlyphs = Boolean(map.getStyle()?.glyphs)
 
           const layout: SymbolLayout = {
+            // Note: feature-state cannot be used with layout properties
+            // Museums use static bronze icon (gold visited icon would require source data update)
             'icon-image': 'museum-icon',
             'icon-size': [
               'interpolate',

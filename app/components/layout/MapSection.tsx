@@ -100,7 +100,7 @@ export default function MapSection({
         onTreeDiscovered={onTreeDiscovered}
       />
 
-      {/* Legacy manual waypoints (if any) */}
+      {/* Legacy manual waypoints - DISABLED to prevent duplicate blue markers
       {waypoints.length > 0 && (
         <WaypointLayer
           map={map}
@@ -109,6 +109,7 @@ export default function MapSection({
           onWaypointClick={(waypoint) => onNavigateToLandmark(waypoint.coordinates)}
         />
       )}
+      */}
 
       {/* Discovery Radius Visualization */}
       <DiscoveryRadius
