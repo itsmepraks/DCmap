@@ -27,18 +27,31 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
     addRadiusLayers()
 
     function addRadiusLayers() {
-      if (!map || !map.getStyle()) return
+      if (!map) return
+
+      // Check if style is available
+      try {
+        const style = map.getStyle()
+        if (!style) return
+      } catch {
+        return // Style not ready
+      }
 
       // Remove existing layers FIRST (in reverse order of addition), then source
       // Must remove ALL layers using the source before removing the source
-      if (map.getLayer('discovery-radius-outline')) {
-        map.removeLayer('discovery-radius-outline')
-      }
-      if (map.getLayer('discovery-radius-layer')) {
-        map.removeLayer('discovery-radius-layer')
-      }
-      if (map.getSource('discovery-radius')) {
-        map.removeSource('discovery-radius')
+      try {
+        if (map.getLayer('discovery-radius-outline')) {
+          map.removeLayer('discovery-radius-outline')
+        }
+        if (map.getLayer('discovery-radius-layer')) {
+          map.removeLayer('discovery-radius-layer')
+        }
+        if (map.getSource('discovery-radius')) {
+          map.removeSource('discovery-radius')
+        }
+      } catch (error) {
+        console.warn('DiscoveryRadius: Error cleaning up layers', error)
+        return
       }
 
       // Create GeoJSON features for unvisited landmarks

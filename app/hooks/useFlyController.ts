@@ -24,9 +24,9 @@ export interface FlyControllerState {
 }
 
 const METERS_PER_DEG_LAT = 111132
-const MAX_SPEED = 35 // Maximum meters per second (126 km/h) - fast and fluid
-const ACCELERATION = 50 // meters per second squared - snappy response
-const DECELERATION = 20 // meters per second squared - smooth momentum
+const MAX_SPEED = 50 // Maximum meters per second (180 km/h) - fast and responsive
+const ACCELERATION = 120 // meters per second squared - very snappy response
+const DECELERATION = 40 // meters per second squared - smooth but quick stop
 const CAMERA_PITCH = 75 // degrees - looking down at street level
 const CAMERA_ZOOM = 18.5 // close zoom for street view
 const MIN_ALTITUDE = 3 // minimum altitude in meters
