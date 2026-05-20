@@ -172,66 +172,21 @@ body {
 }
 
 /* ========================================
-   GTA-like Map Canvas Enhancements
+   Map Canvas
+   Visual personality lives in the Mapbox style JSON, not in CSS filters.
    ======================================== */
 .mapboxgl-canvas-container {
   cursor: grab;
-  /* Smooth rendering for gaming experience */
   image-rendering: -webkit-optimize-contrast;
-  transform: translateZ(0);
-  will-change: transform;
-  /* GTA-style visual effects */
-  filter: contrast(1.15) saturate(1.2) brightness(1.05);
-  position: relative;
-}
-
-.mapboxgl-canvas-container::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  /* GTA-style vignette effect */
-  background: radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0, 0, 0, 0.15) 100%);
-  z-index: 1000;
-  mix-blend-mode: multiply;
 }
 
 .mapboxgl-canvas-container:active {
   cursor: grabbing;
 }
 
-/* Enhanced map canvas for 60fps performance with GTA-style effects */
 .mapboxgl-canvas {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
-  /* Enhanced game-like appearance */
-  filter: contrast(1.1) saturate(1.15);
-}
-
-/* GTA-style color grading overlay */
-.mapboxgl-map {
-  position: relative;
-}
-
-.mapboxgl-map::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  /* GTA-style color grading - warm, vibrant tones */
-  background: linear-gradient(135deg, 
-    rgba(255, 200, 100, 0.03) 0%,
-    rgba(100, 150, 255, 0.02) 50%,
-    rgba(255, 150, 100, 0.03) 100%
-  );
-  z-index: 999;
-  mix-blend-mode: overlay;
 }
 
 /* Improve marker click targets */
@@ -327,6 +282,20 @@ body {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+  }
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

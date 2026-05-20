@@ -72,7 +72,7 @@ export default function UnifiedHUD({
       >
         {/* Grip Handle */}
         <div className="w-full flex justify-end mb-1 opacity-0 hover:opacity-100 transition-opacity">
-          <div className="px-2 py-0.5 rounded bg-black/20 text-[10px] font-bold text-white backdrop-blur-sm">
+          <div className="px-2 py-0.5 rounded bg-black/20 text-xs font-bold text-white backdrop-blur-sm">
             ⋮⋮ DRAG
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function UnifiedHUD({
                       {recommendedLandmark.name}
                     </div>
                     {recommendationDistance !== null && recommendationDistance !== undefined && (
-                      <div className="text-[10px] mt-0.5" style={{ 
+                      <div className="text-xs mt-0.5" style={{ 
                         color: minecraftTheme.colors.text.secondary,
                         fontFamily: 'monospace'
                       }}>
@@ -124,6 +124,7 @@ export default function UnifiedHUD({
                       e.stopPropagation()
                       setShowRecommendation(false)
                     }}
+                    aria-label="Dismiss recommendation"
                     className="opacity-50 hover:opacity-100 transition-opacity text-xs"
                     style={{ color: minecraftTheme.colors.text.secondary }}
                   >
@@ -159,14 +160,14 @@ export default function UnifiedHUD({
                 }}
               >
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[8px] font-bold" style={{ color: '#1E3A5F', fontFamily: 'monospace' }}>
+                  <span className="text-xs font-bold" style={{ color: '#1E3A5F', fontFamily: 'monospace' }}>
                     🦅 FLY
                   </span>
-                  <span className="text-[10px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
-                    {(flySpeed * 3.6).toFixed(0)} km/h
+                  <span className="text-xs font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
+                    {flySpeed.toFixed(0)} km/h
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-[8px] font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
+                <div className="flex items-center justify-between text-xs font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
                   <span>Alt: {flyAltitude.toFixed(0)}m</span>
                   <span style={{ color: '#357ABD' }}>{getCardinalDirection(flyBearing)}</span>
                 </div>
@@ -187,13 +188,13 @@ export default function UnifiedHUD({
                     maxWidth: '180px',
                   }}
                 >
-                  <div className="text-[8px] font-bold mb-0.5" style={{ color: minecraftTheme.colors.text.light, fontFamily: 'monospace' }}>
+                  <div className="text-xs font-bold mb-0.5" style={{ color: minecraftTheme.colors.text.light, fontFamily: 'monospace' }}>
                     🎯 NEAREST
                   </div>
-                  <div className="text-[10px] font-bold truncate" style={{ color: minecraftTheme.colors.text.primary, fontFamily: 'monospace' }}>
+                  <div className="text-xs font-bold truncate" style={{ color: minecraftTheme.colors.text.primary, fontFamily: 'monospace' }}>
                     {nearestLandmark.name}
                   </div>
-                  <div className="text-[8px] font-bold mt-0.5" style={{ color: minecraftTheme.colors.terracotta.base, fontFamily: 'monospace' }}>
+                  <div className="text-xs font-bold mt-0.5" style={{ color: minecraftTheme.colors.terracotta.base, fontFamily: 'monospace' }}>
                     📍 {formatDistance(nearestLandmark.distance)}
                   </div>
                 </motion.div>
@@ -232,7 +233,7 @@ export default function UnifiedHUD({
                 }}
               >
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[8px] font-bold" style={{ 
+                  <span className="text-xs font-bold" style={{ 
                     color: minecraftTheme.colors.accent.greenDark,
                     fontFamily: 'monospace'
                   }}>
@@ -243,19 +244,20 @@ export default function UnifiedHUD({
                       e.stopPropagation()
                       setShowNearestCard(false)
                     }}
-                    className="opacity-50 hover:opacity-100 transition-opacity text-[8px]"
+                    aria-label="Dismiss nearest landmark"
+                    className="opacity-50 hover:opacity-100 transition-opacity text-xs"
                     style={{ color: minecraftTheme.colors.text.secondary }}
                   >
                     ✕
                   </button>
                 </div>
-                <div className="text-[10px] font-bold truncate" style={{ 
+                <div className="text-xs font-bold truncate" style={{ 
                   color: minecraftTheme.colors.text.primary,
                   fontFamily: 'monospace'
                 }}>
                   {nearestUndiscovered.name}
                 </div>
-                <div className="text-[8px] mt-0.5" style={{ 
+                <div className="text-xs mt-0.5" style={{ 
                   color: minecraftTheme.colors.accent.green,
                   fontFamily: 'monospace'
                 }}>
@@ -306,7 +308,7 @@ export default function UnifiedHUD({
                     }}
                   >
                     <div className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -315,7 +317,7 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>W</kbd>
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -324,7 +326,7 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>A</kbd>
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -333,7 +335,7 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>S</kbd>
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -342,11 +344,11 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>D</kbd>
-                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>Move</span>
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Move</span>
                     </div>
                     <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
                     <div className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -355,11 +357,11 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>Mouse</kbd>
-                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>Look</span>
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Look</span>
                     </div>
                     <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
                     <div className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -368,8 +370,8 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>Space</kbd>
-                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>↑</span>
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>↑</span>
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -378,11 +380,11 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>Shift</kbd>
-                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>↓</span>
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>↓</span>
                     </div>
                     <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
                     <div className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 text-[10px]" style={{
+                      <kbd className="px-1.5 py-0.5 text-xs" style={{
                         background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.light} 0%, ${minecraftTheme.colors.beige.dark} 100%)`,
                         border: `2px solid ${minecraftTheme.colors.terracotta.dark}`,
                         borderRadius: '2px',
@@ -391,7 +393,7 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>ESC</kbd>
-                      <span className="text-[10px]" style={{ color: minecraftTheme.colors.text.secondary }}>Exit</span>
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Exit</span>
                     </div>
                   </motion.div>
                 ) : (

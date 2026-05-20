@@ -65,6 +65,15 @@ export default function MiniStatsBar({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onOpenStats}
+      role="button"
+      tabIndex={0}
+      aria-label="Open exploration stats"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpenStats()
+        }
+      }}
       className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 cursor-pointer"
       whileHover={{ scale: 1.02, x: 2 }}
       whileTap={{ scale: 0.98 }}
@@ -208,7 +217,7 @@ export default function MiniStatsBar({
 
           {/* CTA */}
           <div className="mt-3 pt-2 border-t border-stone-200 text-center">
-            <span className="text-[10px] font-bold text-stone-500">
+            <span className="text-xs font-bold text-stone-500">
               Click for full exploration stats
             </span>
           </div>

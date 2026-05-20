@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
+import { useFocusTrap } from '@/app/hooks/useFocusTrap'
+import { STORAGE_KEYS } from '@/app/lib/storageKeys'
 
-const ONBOARDING_STORAGE_KEY = 'dc-explorer-onboarding-completed'
+const ONBOARDING_STORAGE_KEY = STORAGE_KEYS.onboardingComplete
 
 const tutorialSteps = [
   {
@@ -30,15 +32,17 @@ const tutorialSteps = [
 export default function OnboardingTutorial() {
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
-    // Check if onboarding has been completed
-    const hasCompletedOnboarding = localStorage.getItem(ONBOARDING_STORAGE_KEY)
-    if (!hasCompletedOnboarding) {
-      // Show onboarding after a short delay
-      setTimeout(() => setIsVisible(true), 500)
-    }
+    if (typeof window === 'undefined') return
+    if (localStorage.getItem(ONBOARDING_STORAGE_KEY)) return
+    const timer = window.setTimeout(() => setIsVisible(true), 500)
+    return () => window.clearTimeout(timer)
   }, [])
+
+  const handleSkip = () => handleComplete()
+  const dialogRef = useFocusTrap<HTMLDivElement>(isVisible, handleSkip)
 
   const handleNext = () => {
     if (currentStep < tutorialSteps.length - 1) {
@@ -48,12 +52,10 @@ export default function OnboardingTutorial() {
     }
   }
 
-  const handleSkip = () => {
-    handleComplete()
-  }
-
-  const handleComplete = () => {
+  function handleComplete() {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true')
+    // Notify same-tab listeners (storage events don't fire in the originating tab).
+    window.dispatchEvent(new Event('dc:onboarding-complete'))
     setIsVisible(false)
   }
 
@@ -73,10 +75,15 @@ export default function OnboardingTutorial() {
           }}
         >
           <motion.div
-            initial={{ scale: 0.8, y: 50 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.8, y: 50 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="onboarding-title"
+            aria-describedby="onboarding-desc"
+            initial={reduceMotion ? { opacity: 0 } : { scale: 0.8, y: 50 }}
+            animate={reduceMotion ? { opacity: 1 } : { scale: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { scale: 0.8, y: 50 }}
+            transition={reduceMotion ? { duration: 0.15 } : { type: 'spring', stiffness: 300, damping: 25 }}
             className="relative max-w-md mx-4"
             style={{
               background: `linear-gradient(145deg, ${minecraftTheme.colors.beige.base} 0%, ${minecraftTheme.colors.beige.light} 100%)`,
@@ -123,6 +130,7 @@ export default function OnboardingTutorial() {
               </motion.div>
               
               <motion.h2
+                id="onboarding-title"
                 key={`title-${currentStep}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -148,6 +156,7 @@ export default function OnboardingTutorial() {
               </motion.div>
 
               <motion.p
+                id="onboarding-desc"
                 key={`desc-${currentStep}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}

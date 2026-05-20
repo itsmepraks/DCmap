@@ -3,6 +3,7 @@
 import { MapProvider } from './lib/MapContext'
 import { PlayerProvider } from './lib/playerState'
 import { FeedbackProvider } from './lib/FeedbackProvider'
+import { LiveAnnouncerProvider } from './components/ui/LiveAnnouncer'
 import StateManager from './components/layout/StateManager'
 import MapSection from './components/layout/MapSection'
 import GameUI from './components/layout/GameUI'
@@ -18,7 +19,8 @@ import ErrorBoundary from './components/ui/ErrorBoundary'
 export default function Home() {
   return (
     <ErrorBoundary>
-      <FeedbackProvider>
+      <LiveAnnouncerProvider>
+       <FeedbackProvider>
         <PlayerProvider>
           <MapProvider>
             <StateManager>
@@ -94,6 +96,7 @@ export default function Home() {
                     showBorderWarning={state.landmarksState.showBorderWarning}
                     borderDirection={state.landmarksState.borderDirection}
                     nearestUndiscovered={state.nearestUndiscovered}
+                    recommendedLandmark={state.recommendedLandmark}
                   />
 
                   {/* Modal Overlays */}
@@ -130,7 +133,8 @@ export default function Home() {
             </StateManager>
           </MapProvider>
         </PlayerProvider>
-      </FeedbackProvider>
+       </FeedbackProvider>
+      </LiveAnnouncerProvider>
     </ErrorBoundary>
   )
 }

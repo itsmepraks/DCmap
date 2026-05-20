@@ -1,8 +1,9 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useState } from 'react'
 import { getCurrentTier, getNextTier, getProgressToNextTier, ACHIEVEMENT_TIERS } from '@/app/lib/achievementTiers'
+import { useFocusTrap } from '@/app/hooks/useFocusTrap'
 
 interface Landmark {
   id: string
@@ -50,6 +51,8 @@ export default function StatsModal({
   onReset
 }: StatsModalProps) {
   const [activeTab, setActiveTab] = useState<'landmarks' | 'museums'>('landmarks')
+  const reduceMotion = useReducedMotion()
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen, onClose)
   
   // Calculate stats
   const totalDiscovered = visitedLandmarksCount + visitedMuseumsCount
@@ -82,13 +85,17 @@ export default function StatsModal({
 
           {/* Modal */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            initial={reduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 20 }}
+            animate={reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 20 }}
+            transition={reduceMotion ? { duration: 0.15 } : { type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none"
           >
             <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="stats-modal-title"
               className="pointer-events-auto relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-5 md:p-6 shadow-2xl"
               style={{
                 background: 'linear-gradient(135deg, #FEFCF8 0%, #F8F4ED 100%)',
@@ -99,6 +106,7 @@ export default function StatsModal({
               {/* Close button */}
               <button
                 onClick={onClose}
+                aria-label="Close stats"
                 className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full font-bold text-lg transition-colors hover:bg-stone-200 text-stone-500"
               >
                 ×
@@ -106,7 +114,7 @@ export default function StatsModal({
 
               {/* Header */}
               <div className="text-center mb-5">
-                <h2 className="text-2xl md:text-3xl font-bold mb-1" style={{ color: '#2C5F2D' }}>
+                <h2 id="stats-modal-title" className="text-2xl md:text-3xl font-bold mb-1" style={{ color: '#2C5F2D' }}>
                   🗺️ Exploration Hub
                 </h2>
                 <p className="text-stone-500 text-sm">
@@ -181,7 +189,7 @@ export default function StatsModal({
                     <div className="flex items-center gap-3 mb-3">
                       <div className="text-4xl">{currentTier.icon}</div>
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider opacity-60" style={{ color: currentTier.color }}>
+                        <div className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: currentTier.color }}>
                           Current Rank
                         </div>
                         <h3 className="text-lg font-bold text-stone-800">{currentTier.name}</h3>
@@ -201,7 +209,7 @@ export default function StatsModal({
                         <div className="space-y-2">
                           {/* Landmarks needed */}
                           <div>
-                            <div className="flex justify-between text-[10px] text-stone-500 mb-0.5">
+                            <div className="flex justify-between text-xs text-stone-500 mb-0.5">
                               <span>🏛️ Landmarks</span>
                               <span className="font-semibold">{visitedLandmarksCount} / {nextTier.minLandmarks}</span>
                             </div>
@@ -218,7 +226,7 @@ export default function StatsModal({
                           
                           {/* Museums needed */}
                           <div>
-                            <div className="flex justify-between text-[10px] text-stone-500 mb-0.5">
+                            <div className="flex justify-between text-xs text-stone-500 mb-0.5">
                               <span>🎨 Museums</span>
                               <span className="font-semibold">{visitedMuseumsCount} / {nextTier.minMuseums}</span>
                             </div>
@@ -253,7 +261,7 @@ export default function StatsModal({
                         return (
                           <div 
                             key={tier.level}
-                            className={`flex items-center justify-between text-[10px] px-2 py-1.5 rounded-lg ${
+                            className={`flex items-center justify-between text-xs px-2 py-1.5 rounded-lg ${
                               isCurrentTier ? 'bg-amber-50 border border-amber-200' : 
                               isAchieved ? 'bg-green-50 text-green-700' : 'text-stone-500 bg-stone-50'
                             }`}
@@ -286,17 +294,17 @@ export default function StatsModal({
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-amber-600">{totalPoints.toLocaleString()}</div>
-                        <div className="text-[10px] text-amber-500">of {maxPoints.toLocaleString()} possible</div>
+                        <div className="text-xs text-amber-500">of {maxPoints.toLocaleString()} possible</div>
                       </div>
                     </div>
                     <div className="mt-3 flex gap-3">
                       <div className="flex-1 bg-white/60 rounded-lg px-3 py-2 text-center">
                         <div className="font-bold text-green-600 text-sm">+{POINTS_CONFIG.landmarkVisit}</div>
-                        <div className="text-stone-500 text-[10px]">per landmark</div>
+                        <div className="text-stone-500 text-xs">per landmark</div>
                       </div>
                       <div className="flex-1 bg-white/60 rounded-lg px-3 py-2 text-center">
                         <div className="font-bold text-blue-600 text-sm">+{POINTS_CONFIG.museumVisit}</div>
-                        <div className="text-stone-500 text-[10px]">per museum</div>
+                        <div className="text-stone-500 text-xs">per museum</div>
                       </div>
                     </div>
                   </div>
@@ -365,7 +373,7 @@ export default function StatsModal({
                                   }`}>
                                     {landmark.visited ? landmark.name : '???'}
                                   </h4>
-                                  <p className="text-[10px] text-stone-500 truncate">
+                                  <p className="text-xs text-stone-500 truncate">
                                     {landmark.visited ? landmark.category : 'Explore to discover'}
                                   </p>
                                 </div>
@@ -373,12 +381,12 @@ export default function StatsModal({
                                 {/* Status Badge */}
                                 <div className="flex items-center gap-1.5">
                                   {landmark.visited ? (
-                                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                    <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">
                                       <span className="w-2 h-2 rounded-full bg-green-500"></span>
                                       Visited
                                     </span>
                                   ) : (
-                                    <span className="flex items-center gap-1 text-[10px] font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
+                                    <span className="flex items-center gap-1 text-xs font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
                                       <span className="w-2 h-2 rounded-full bg-stone-300"></span>
                                       Not Found
                                     </span>
@@ -427,7 +435,7 @@ export default function StatsModal({
                                   }`}>
                                     {museum.visited ? museum.name : '???'}
                                   </h4>
-                                  <p className="text-[10px] text-stone-500 truncate">
+                                  <p className="text-xs text-stone-500 truncate">
                                     {museum.visited && museum.address ? museum.address : 'Explore to discover'}
                                   </p>
                                 </div>
@@ -435,12 +443,12 @@ export default function StatsModal({
                                 {/* Status Badge */}
                                 <div className="flex items-center gap-1.5">
                                   {museum.visited ? (
-                                    <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                    <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                                       <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                                       Visited
                                     </span>
                                   ) : (
-                                    <span className="flex items-center gap-1 text-[10px] font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
+                                    <span className="flex items-center gap-1 text-xs font-medium text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
                                       <span className="w-2 h-2 rounded-full bg-stone-300"></span>
                                       Not Found
                                     </span>
