@@ -57,7 +57,7 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
       >
         {/* Grip Handle */}
         <div className="w-full flex justify-center mb-1 opacity-0 hover:opacity-100 transition-opacity">
-          <div className="px-2 py-0.5 rounded bg-black/20 text-[10px] font-bold text-white backdrop-blur-sm">
+          <div className="px-2 py-0.5 rounded bg-black/20 text-xs font-bold text-white backdrop-blur-sm">
             ⋮⋮ DRAG
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
             {/* "NEW" badge when close (< 200m) - encourages exploration */}
             {nearestLandmark.distance < 200 && nearestLandmark.distance >= 100 && (
               <span 
-                className="absolute -top-0.5 -right-0.5 text-[8px] sm:text-[10px] font-bold px-1 py-0.5 rounded z-20"
+                className="absolute -top-0.5 -right-0.5 text-xs sm:text-xs font-bold px-1 py-0.5 rounded z-20"
                 style={{
                   background: minecraftTheme.colors.terracotta.base,
                   color: '#FFF',
@@ -126,7 +126,7 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
             </span>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span 
-                className="text-[10px] sm:text-xs font-bold font-mono"
+                className="text-xs sm:text-xs font-bold font-mono"
                 style={{ color: minecraftTheme.colors.text.secondary }}
               >
                 📍 {Math.round(nearestLandmark.distance)}m
@@ -167,7 +167,7 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
           >
             <motion.button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-[10px] sm:text-xs font-bold font-mono px-2 py-1 rounded"
+              className="text-xs sm:text-xs font-bold font-mono px-2 py-1 rounded"
               style={{
                 background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}E0, ${minecraftTheme.colors.beige.light}E0)`,
                 border: `1px solid ${minecraftTheme.colors.terracotta.light}`,
@@ -199,7 +199,7 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
                     <span className="text-base">{landmark.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div 
-                        className="text-[10px] font-bold font-mono truncate"
+                        className="text-xs font-bold font-mono truncate"
                         style={{ color: minecraftTheme.colors.text.primary }}
                       >
                         {landmark.name}

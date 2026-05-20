@@ -165,7 +165,7 @@ export default function MuseumExplorer({ isVisible, visitedLandmarks, onNavigate
                           `}>
                             {museum.name}
                           </h4>
-                          <span className={`text-[10px] ${isVisited ? 'text-stone-500' : 'text-stone-400'}`}>
+                          <span className={`text-xs ${isVisited ? 'text-stone-500' : 'text-stone-400'}`}>
                             museum
                           </span>
                         </div>
@@ -227,7 +227,7 @@ export default function MuseumExplorer({ isVisible, visitedLandmarks, onNavigate
 
               {/* Summary Footer */}
               <div className="mt-3 pt-2 border-t border-stone-200">
-                <div className="flex items-center justify-between text-[10px] text-stone-500">
+                <div className="flex items-center justify-between text-xs text-stone-500">
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                     {visitedCount} discovered

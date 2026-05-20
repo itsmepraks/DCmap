@@ -143,7 +143,7 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
                         `}>
                           {landmark.name}
                         </h4>
-                        <span className={`text-[10px] ${landmark.visited ? 'text-stone-500' : 'text-stone-400'}`}>
+                        <span className={`text-xs ${landmark.visited ? 'text-stone-500' : 'text-stone-400'}`}>
                           {landmark.category || 'landmark'}
                         </span>
                       </div>
@@ -205,7 +205,7 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
 
               {/* Summary Footer */}
               <div className="mt-3 pt-2 border-t border-stone-200">
-                <div className="flex items-center justify-between text-[10px] text-stone-500">
+                <div className="flex items-center justify-between text-xs text-stone-500">
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
                     {visitedCount} discovered

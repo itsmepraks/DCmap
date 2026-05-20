@@ -110,7 +110,7 @@ export default function EntityInfoPanel({ entity, onClose, onNavigate }: EntityI
                       key={key} 
                       className="bg-white/60 p-3 rounded-xl border border-[#D4501E]/10 flex flex-col"
                     >
-                      <span className="text-[10px] text-[#8B7355] uppercase font-bold mb-1 tracking-wide">
+                      <span className="text-xs text-[#8B7355] uppercase font-bold mb-1 tracking-wide">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </span>
                       <span className="text-sm text-[#2C1810] font-medium leading-snug">

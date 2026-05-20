@@ -202,13 +202,13 @@ export default function FloatingControlPanel({
                 }}
               >
                 <p 
-                  className="text-[10px] sm:text-xs text-center"
+                  className="text-xs sm:text-xs text-center"
                   style={{ 
                     color: minecraftTheme.colors.text.secondary,
                     fontFamily: 'monospace'
                   }}
                 >
-                  💡 Tap outside or <kbd className="px-1 py-0.5 rounded text-[9px] sm:text-[10px] font-bold" style={{ background: 'rgba(0,0,0,0.1)' }}>ESC</kbd> to close
+                  💡 Tap outside or <kbd className="px-1 py-0.5 rounded text-[9px] sm:text-xs font-bold" style={{ background: 'rgba(0,0,0,0.1)' }}>ESC</kbd> to close
                 </p>
               </div>
 
@@ -334,7 +334,7 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
 
       <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1 relative z-10">{icon}</span>
       <span 
-        className="text-[10px] sm:text-xs font-bold uppercase relative z-10"
+        className="text-xs sm:text-xs font-bold uppercase relative z-10"
         style={{ 
           color: isActive ? 'white' : minecraftTheme.colors.text.secondary,
           fontFamily: 'monospace',
