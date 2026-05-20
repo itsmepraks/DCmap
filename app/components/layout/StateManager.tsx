@@ -10,6 +10,7 @@ import { useExperience } from '@/app/hooks/useExperience'
 import { useMap } from '@/app/lib/MapContext'
 import { usePlayerState } from '@/app/lib/playerState'
 import { calculateDistance, type Coordinates } from '@/app/lib/proximity'
+import { useAnnounce } from '@/app/components/ui/LiveAnnouncer'
 
 import { type SelectedEntity } from '../ui/EntityInfoPanel'
 
@@ -66,6 +67,7 @@ interface StateManagerReturn {
   // Progressive Waypoint System (NEW)
   playerPosition: Coordinates | null
   nearestUndiscovered: { id: string; name: string; distance: number; coordinates: [number, number] } | null
+  recommendedLandmark: { id: string; name: string; coordinates: [number, number]; distance: number } | null
 
   // Entity Selection (New)
   selectedEntity: SelectedEntity | null
@@ -105,6 +107,7 @@ export default function StateManager({ children }: StateManagerProps) {
 
   const { map } = useMap()
   const { state: playerState } = usePlayerState()
+  const announce = useAnnounce()
 
   // Track map load state
   useEffect(() => {
@@ -121,7 +124,6 @@ export default function StateManager({ children }: StateManagerProps) {
     // Fallback: Force loading state to true after 5 seconds
     const timeout = setTimeout(() => {
       if (map && !isMapLoaded) {
-        console.warn('⚠️ Map loading timeout - forcing ready state')
         setIsMapLoaded(true)
       }
     }, 5000)
@@ -171,9 +173,10 @@ export default function StateManager({ children }: StateManagerProps) {
       if (newFlyMode && !is3DView) {
         setIs3DView(true)
       }
+      announce(newFlyMode ? 'Fly mode activated. Use WASD to move.' : 'Fly mode deactivated.')
       return newFlyMode
     })
-  }, [is3DView])
+  }, [is3DView, announce])
 
   // Handle landmark discovery
   const handleLandmarkDiscovered = useCallback((landmarkId: string, landmarkData: any) => {
@@ -187,11 +190,11 @@ export default function StateManager({ children }: StateManagerProps) {
 
     // Award XP for landmark discovery
     const xpGained = experience.awardLandmarkXP()
-    console.log(`✨ +${xpGained} XP from landmark discovery!`)
 
     // Show discovery animation
     const landmark = landmarksState.getLandmarkById(landmarkId)
     if (landmark) {
+      announce(`Landmark discovered: ${landmark.name}. Plus ${xpGained} XP.`)
       landmarksState.showDiscoveryAnimation(landmarkId)
 
       // Show achievement after discovery animation
@@ -204,8 +207,7 @@ export default function StateManager({ children }: StateManagerProps) {
       }, 3000)
     }
 
-    console.log('🏆 Landmark discovered:', landmarkData.name || landmarkId)
-  }, [gameState, landmarksState, experience])
+  }, [gameState, landmarksState, experience, announce])
 
   // Handle tree discovery (for Fly Mode and Map interaction)
   const handleTreeDiscovered = useCallback((treeId: string, treeData: any) => {
@@ -213,8 +215,7 @@ export default function StateManager({ children }: StateManagerProps) {
     const isNewVisit = gameState.handleVisitTree(treeId)
 
     if (isNewVisit) {
-      const xpGained = experience.awardTreeXP()
-      // console.log(`🌲 +${xpGained} XP from tree!`)
+      experience.awardTreeXP()
     }
   }, [gameState, experience])
 
@@ -246,7 +247,8 @@ export default function StateManager({ children }: StateManagerProps) {
     return null
   }, [flyControllerState.position, map])
 
-  // Compute nearest undiscovered landmark for HUD
+  // Compute nearest undiscovered landmark for HUD (single source for both
+  // the "nearest undiscovered" card and the "recommended" card).
   const nearestUndiscovered = useMemo(() => {
     if (!playerPosition || landmarksState.landmarks.length === 0) return null
 
@@ -373,6 +375,7 @@ export default function StateManager({ children }: StateManagerProps) {
     // Progressive Waypoint System (NEW)
     playerPosition,
     nearestUndiscovered,
+    recommendedLandmark: nearestUndiscovered,
 
     // Entity Selection
     selectedEntity,

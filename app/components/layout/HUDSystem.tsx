@@ -54,6 +54,7 @@ interface HUDSystemProps {
 
   // Progressive Waypoint System (NEW)
   nearestUndiscovered?: { id: string; name: string; distance: number; coordinates: [number, number] } | null
+  recommendedLandmark?: { id: string; name: string; distance: number; coordinates: [number, number] } | null
 }
 
 export default function HUDSystem({
@@ -82,7 +83,8 @@ export default function HUDSystem({
   onNavigateToLandmark,
   showBorderWarning,
   borderDirection,
-  nearestUndiscovered
+  nearestUndiscovered,
+  recommendedLandmark
 }: HUDSystemProps) {
   return (
     <>
@@ -122,86 +124,8 @@ export default function HUDSystem({
       {/* Unified HUD - Consolidates recommendations, fly controls, and stats */}
       <UnifiedHUD
         mode={isFlying ? 'fly' : 'map'}
-        recommendedLandmark={
-          (() => {
-            const unvisited = landmarksState.landmarks.filter(
-              (l: any) => !gameState.gameProgress.visitedLandmarks.has(l.id)
-            )
-            if (unvisited.length === 0) return null
-
-            // Prioritize nearest unvisited landmark
-            if (flyControllerState.position) {
-              let nearest: typeof unvisited[0] | null = null
-              let nearestDistance = Infinity
-
-              unvisited.forEach((landmark: any) => {
-                const R = 6371000
-                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-                const a =
-                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                const d = R * c
-                if (d < nearestDistance) {
-                  nearestDistance = d
-                  nearest = landmark
-                }
-              })
-
-              return nearest ? nearest : null
-            }
-            return unvisited[0] || null
-          })()
-        }
-        recommendationDistance={
-          (() => {
-            const unvisited = landmarksState.landmarks.filter(
-              (l: any) => !gameState.gameProgress.visitedLandmarks.has(l.id)
-            )
-            if (unvisited.length === 0 || !flyControllerState.position) return null
-
-            // Calculate distance to recommended landmark
-            type LandmarkType = typeof unvisited[0]
-            const recommended = ((): LandmarkType | null => {
-              // Nearest unvisited landmark
-              let nearest: LandmarkType | null = null
-              let nearestDistance = Infinity
-
-              unvisited.forEach((landmark: any) => {
-                const R = 6371000
-                const dLat = (landmark.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-                const dLng = (landmark.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-                const a =
-                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(landmark.coordinates[1] * Math.PI / 180) *
-                  Math.sin(dLng / 2) * Math.sin(dLng / 2)
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                const d = R * c
-                if (d < nearestDistance) {
-                  nearestDistance = d
-                  nearest = landmark
-                }
-              })
-
-              return nearest
-            })()
-
-            if (!recommended) return null
-
-            // Calculate distance to recommended landmark
-            const R = 6371000
-            const dLat = (recommended.coordinates[1] - flyControllerState.position!.lat) * Math.PI / 180
-            const dLng = (recommended.coordinates[0] - flyControllerState.position!.lng) * Math.PI / 180
-            const a =
-              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(flyControllerState.position!.lat * Math.PI / 180) * Math.cos(recommended.coordinates[1] * Math.PI / 180) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2)
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-            return R * c
-          })()
-        }
+        recommendedLandmark={recommendedLandmark ?? null}
+        recommendationDistance={recommendedLandmark?.distance ?? null}
         onNavigateToRecommendation={onNavigateToLandmark}
         flySpeed={flyControllerState.speed}
         flyAltitude={flyControllerState.altitude}
