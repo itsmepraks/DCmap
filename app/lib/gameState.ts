@@ -1,6 +1,8 @@
 'use client'
 
-const STORAGE_KEY = 'dc-game-progress'
+import { STORAGE_KEYS } from './storageKeys'
+
+const STORAGE_KEY = STORAGE_KEYS.gameProgress
 
 export interface VisitedLandmark {
   id: string
@@ -134,12 +136,12 @@ export function getGameStats(progress: GameProgress) {
 export function resetGameProgress(): GameProgress {
   // Clear all related storage
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem('dc-explorer-quests')      // Fixed: correct quest storage key
-    localStorage.removeItem('dc-daily-challenges')      // Fixed: correct challenges storage key
-    localStorage.removeItem('dc-streak')                // Fixed: correct streak storage key
-    localStorage.removeItem('dc-experience')            // Added: clear experience
-    localStorage.removeItem('dc-waypoints')             // Added: clear waypoints
+    localStorage.removeItem(STORAGE_KEYS.gameProgress)
+    localStorage.removeItem(STORAGE_KEYS.quests)
+    localStorage.removeItem(STORAGE_KEYS.challenges)
+    localStorage.removeItem(STORAGE_KEYS.streak)
+    localStorage.removeItem(STORAGE_KEYS.experience)
+    localStorage.removeItem(STORAGE_KEYS.waypoints)
   }
 
   const newProgress = {

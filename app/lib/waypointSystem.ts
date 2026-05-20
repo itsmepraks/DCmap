@@ -1,6 +1,8 @@
 'use client'
 
-const STORAGE_KEY = 'dc-waypoints'
+import { STORAGE_KEYS } from './storageKeys'
+
+const STORAGE_KEY = STORAGE_KEYS.waypoints
 
 export interface Waypoint {
   id: string

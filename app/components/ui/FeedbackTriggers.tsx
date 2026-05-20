@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useContextualHints } from '@/app/hooks/useContextualHints'
+import { STORAGE_KEYS } from '@/app/lib/storageKeys'
 
-const ONBOARDING_STORAGE_KEY = 'dc-explorer-onboarding-completed'
+const ONBOARDING_STORAGE_KEY = STORAGE_KEYS.onboardingComplete
 
 interface FeedbackTriggersProps {
     // Map state
@@ -41,14 +42,24 @@ export default function FeedbackTriggers({
     const [onboardingComplete, setOnboardingComplete] = useState(false)
 
     useEffect(() => {
-        const checkOnboarding = () => {
+        const check = () => {
             const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true'
             setOnboardingComplete(onboardingCompleteProp ?? completed)
         }
-        checkOnboarding()
-        // Re-check periodically in case onboarding just finished
-        const interval = setInterval(checkOnboarding, 1000)
-        return () => clearInterval(interval)
+        check()
+
+        // Same-tab signal from OnboardingTutorial.handleComplete()
+        const onLocalComplete = () => check()
+        // Cross-tab signal from the storage event
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === ONBOARDING_STORAGE_KEY) check()
+        }
+        window.addEventListener('dc:onboarding-complete', onLocalComplete)
+        window.addEventListener('storage', onStorage)
+        return () => {
+            window.removeEventListener('dc:onboarding-complete', onLocalComplete)
+            window.removeEventListener('storage', onStorage)
+        }
     }, [onboardingCompleteProp])
 
     // Track previous values for change detection

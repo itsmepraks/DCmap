@@ -1,6 +1,8 @@
 'use client'
 
-const STORAGE_KEY = 'dc-experience'
+import { STORAGE_KEYS } from './storageKeys'
+
+const STORAGE_KEY = STORAGE_KEYS.experience
 
 export interface ExperienceData {
   totalXP: number

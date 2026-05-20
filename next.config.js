@@ -1,15 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Temporarily disable Strict Mode to prevent map flickering in development
-  // Strict Mode causes intentional double-mounting which conflicts with Mapbox initialization
-  reactStrictMode: false,
-  
-  // ESLint configuration for builds
+  reactStrictMode: true,
+
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors. Only enable during build if you've verified
-    // that the errors are in unused legacy code (like disabled walk mode files).
     ignoreDuringBuilds: false,
+  },
+
+  // Strip diagnostic console output from production builds; keep error/warn
+  // so real problems still surface in browser devtools and telemetry.
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
+  },
+
+  // Cache static GeoJSON aggressively — these files are content-addressed by name
+  // and only change when the dataset itself changes.
+  async headers() {
+    return [
+      {
+        source: '/data/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Permissions-Policy', value: 'geolocation=(self), microphone=(), camera=()' },
+        ],
+      },
+    ]
   },
 }
 
