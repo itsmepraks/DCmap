@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
 
@@ -11,13 +12,28 @@ interface ControlDockProps {
   onToggleLayers: () => void
 }
 
-export default function ControlDock({ 
-  is3D, 
-  onToggle3D, 
-  isFlying, 
+function useIsKeyboardCapable() {
+  // Fly mode requires WASD + mouse drag — no usable touch fallback yet.
+  const [capable, setCapable] = useState(true)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
+    const update = () => setCapable(mq.matches)
+    update()
+    mq.addEventListener?.('change', update)
+    return () => mq.removeEventListener?.('change', update)
+  }, [])
+  return capable
+}
+
+export default function ControlDock({
+  is3D,
+  onToggle3D,
+  isFlying,
   onToggleFly,
   onToggleLayers
 }: ControlDockProps) {
+  const keyboardCapable = useIsKeyboardCapable()
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
@@ -56,17 +72,21 @@ export default function ControlDock({
           activeColor="#D4501E"
         />
 
-        <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+        {keyboardCapable && (
+          <>
+            <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
 
-        {/* Fly Mode */}
-        <DockButton
-          icon="🦅"
-          label="FLY"
-          isActive={isFlying}
-          onClick={onToggleFly}
-          color="#4A90E2"
-          activeColor="#6BB3FF"
-        />
+            {/* Fly Mode (desktop only — requires WASD + mouse) */}
+            <DockButton
+              icon="🦅"
+              label="FLY"
+              isActive={isFlying}
+              onClick={onToggleFly}
+              color="#4A90E2"
+              activeColor="#6BB3FF"
+            />
+          </>
+        )}
       </div>
       
       {/* Pixelated corners with glow */}
@@ -101,6 +121,8 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       whileHover={{ scale: 1.12, y: -4 }}
       whileTap={{ scale: 0.92 }}
       onClick={onClick}
+      aria-label={label}
+      aria-pressed={isActive}
       className="relative flex flex-col items-center justify-center w-16 h-16 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl transition-all group overflow-hidden"
       style={{
         background: isActive 
@@ -136,7 +158,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
         {icon}
       </span>
       <span 
-        className="text-[8px] font-bold font-mono tracking-wider uppercase relative z-10"
+        className="text-xs font-bold font-mono tracking-wider uppercase relative z-10"
         style={{ 
           color: isActive ? '#FFF' : '#5D4037', 
           textShadow: isActive ? '0 1px 2px rgba(0,0,0,0.5)' : 'none' 

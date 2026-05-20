@@ -129,7 +129,6 @@ export function useMapInitialization(
         // Store map in context IMMEDIATELY so components can use it
         // Don't wait for 'load' event as it may be delayed or never fire
         setMap(mapInstance)
-        console.log('✅ Map instance stored in context')
 
         // Apply world border after creation
         applyWorldBorder(mapInstance)
@@ -564,14 +563,12 @@ export function useMapInitialization(
               // Also hide any symbol layer using Mapbox default sprites for POIs
               if (isPOILayer && layer.type === 'symbol') {
                 mapInstance?.setLayoutProperty(layer.id, 'visibility', 'none')
-                console.log(`✅ Hidden POI layer: ${layer.id}`)
               }
             })
           } catch (poiError) {
             console.warn('POI layer hiding skipped:', poiError)
           }
 
-          console.log('✅ Map load event complete - terrain/buildings/sky initialized')
         })
 
         mapInstance.on('error', (e) => {

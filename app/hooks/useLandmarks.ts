@@ -49,77 +49,52 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
       .catch(err => console.error('Failed to load landmarks:', err))
   }, [])
 
-  // Update proximity hints in real-time based on map center or fly position
-  // Uses requestAnimationFrame for smooth real-time distance updates
+  // Recompute proximity when the map moves or the fly-mode position changes.
+  // Throttled to ~5Hz; no idle work — replaces the previous always-on rAF loop.
   useEffect(() => {
     if (!map || !landmarks.length) return
 
-    let animationFrameId: number | null = null
-    let lastUpdateTime = 0
-    const UPDATE_INTERVAL = 200 // Update every 200ms for better performance (reduced from 100ms)
+    const THROTTLE_MS = 200
+    let lastRun = 0
+    let pending = false
+    let lastNearbyIds = ''
 
-    const updateProximity = (currentTime: number) => {
-      // Throttle updates to every 200ms for better performance
-      if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
-        animationFrameId = requestAnimationFrame(updateProximity)
-        return
-      }
-      lastUpdateTime = currentTime
+    const recompute = () => {
+      pending = false
+      lastRun = performance.now()
 
-      // Use currentPosition if set (from fly mode), otherwise use map center
       const center = map.getCenter()
       const currentPos: [number, number] = currentPosition || [center.lng, center.lat]
-      
-      const nearby = getNearbyLandmarks(
-        currentPos,
-        landmarks,
-        1000, // 1km radius
-        visitedLandmarks
-      )
-      
-      // Only update if nearby landmarks actually changed to reduce re-renders
-      setNearbyLandmarks(prev => {
-        const prevIds = new Set(prev.map(l => l.id))
-        const newIds = new Set(nearby.map(l => l.id))
-        if (prevIds.size === newIds.size && [...prevIds].every(id => newIds.has(id))) {
-          return prev // No change, skip re-render
-        }
-        return nearby
-      })
-      
-      // Check for world border warning
+
+      const nearby = getNearbyLandmarks(currentPos, landmarks, 1000, visitedLandmarks)
+
+      const nextIds = nearby.map(l => l.id).join('|')
+      if (nextIds !== lastNearbyIds) {
+        lastNearbyIds = nextIds
+        setNearbyLandmarks(nearby)
+      }
+
       const nearBorder = isNearBorder(center.lng, center.lat)
       setShowBorderWarning(nearBorder)
       if (nearBorder) {
         const direction = getBorderDirection(center.lng, center.lat)
         if (direction) setBorderDirection(direction)
       }
-
-      animationFrameId = requestAnimationFrame(updateProximity)
     }
 
-    // Start continuous updates for real-time distance tracking
-    animationFrameId = requestAnimationFrame(updateProximity)
-
-    // Also update on map move for immediate response
-    const handleMapMove = () => {
-      const center = map.getCenter()
-      const currentPos: [number, number] = currentPosition || [center.lng, center.lat]
-      const nearby = getNearbyLandmarks(
-        currentPos,
-        landmarks,
-        1000,
-        visitedLandmarks
-      )
-      setNearbyLandmarks(nearby)
+    const schedule = () => {
+      if (pending) return
+      const wait = Math.max(0, THROTTLE_MS - (performance.now() - lastRun))
+      pending = true
+      window.setTimeout(recompute, wait)
     }
-    map.on('move', handleMapMove)
+
+    // Initial compute, then drive updates from map.move only.
+    recompute()
+    map.on('move', schedule)
 
     return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId)
-      }
-      map.off('move', handleMapMove)
+      map.off('move', schedule)
     }
   }, [map, landmarks, visitedLandmarks, currentPosition])
 

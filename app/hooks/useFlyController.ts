@@ -134,8 +134,6 @@ export function useFlyController({
   useEffect(() => {
     if (typeof window === 'undefined' || !map || !isActive) return
 
-    console.log('🦅 Fly mode activated - seamless transition')
-
     // Track pressed keys
     const keys = new Set<string>()
 
@@ -194,14 +192,12 @@ export function useFlyController({
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault()
         targetAltitude = Math.min(targetAltitude + 15, MAX_ALTITUDE)
-        console.log('🔼 Altitude UP:', targetAltitude)
       }
 
       // Altitude DOWN - Shift key
       if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
         e.preventDefault()
         targetAltitude = Math.max(targetAltitude - 15, MIN_ALTITUDE)
-        console.log('🔽 Altitude DOWN:', targetAltitude)
       }
     }
 
@@ -425,7 +421,6 @@ export function useFlyController({
     window.addEventListener('mousemove', handleMouseMove)
 
     return () => {
-      console.log('🦅 Fly mode deactivated')
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)

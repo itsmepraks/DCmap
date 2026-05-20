@@ -55,7 +55,6 @@ export default function Map({
       // Fallback: Force loaded state after 3 seconds if load event never fires
       const timeout = setTimeout(() => {
         if (!isLoaded) {
-          console.warn('⚠️ Map load event timeout - forcing loaded state for layers')
           setIsLoaded(true)
         }
       }, 3000)
