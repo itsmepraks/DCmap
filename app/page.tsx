@@ -12,6 +12,7 @@ import StatsModal from './components/ui/StatsModal'
 import GameOverlay from './components/ui/GameOverlay'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
 import FeedbackToastContainer from './components/ui/FeedbackToast'
+import SeasonalParticles from './components/map/effects/SeasonalParticles'
 import FeedbackTriggers from './components/ui/FeedbackTriggers'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 
@@ -49,6 +50,9 @@ export default function Home() {
                     onSelectEntity={state.gameState.setSelectedEntity}
                   />
 
+                  {/* Ambient seasonal particles (cherry petals / leaves / snow / dust) */}
+                  <SeasonalParticles season={state.currentSeason} />
+
                   {/* Game UI Elements */}
                   <GameUI
                     achievement={state.gameState.achievement}
@@ -82,6 +86,11 @@ export default function Home() {
                     onToggle3D={state.handleToggle3D}
                     isFlying={state.isFlyMode}
                     onToggleFly={state.handleToggleFly}
+                    timeOfDayIcon={state.timeOfDayIcon}
+                    timeOfDayLabel={state.timeOfDayLabel}
+                    onCycleTimeOfDay={state.cycleTimeOfDay}
+                    isSatelliteView={state.isSatelliteView}
+                    onToggleSatellite={state.toggleSatellite}
                     onToggleLayers={() => state.setIsControlPanelOpen(!state.isControlPanelOpen)}
                     isControlPanelOpen={state.isControlPanelOpen}
                     onCloseControlPanel={() => state.setIsControlPanelOpen(false)}
