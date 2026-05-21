@@ -20,12 +20,9 @@ const TREE_CLUSTER_COUNT_LAYER_ID = 'dmv-tree-cluster-count'
 
 // All layer IDs for this component
 const ALL_TREE_LAYERS = [
-  'dmv-tree-canopy-base',
-  'dmv-tree-canopy-volume',
-  'dmv-tree-canopy-shadow',
   TREE_CLUSTER_LAYER_ID,
   TREE_CLUSTER_COUNT_LAYER_ID,
-  TREE_POINT_LAYER_ID
+  TREE_POINT_LAYER_ID,
 ]
 
 /**
@@ -164,71 +161,13 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
           }
         }
 
-        const colors = seasonColors[season]
-
-        addLayer({
-          id: 'dmv-tree-canopy-base',
-          type: 'fill',
-          source: 'composite',
-          'source-layer': 'landcover',
-          filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
-          paint: {
-            'fill-color': colors.base,
-            'fill-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              8, 0.4,
-              12, 0.6,
-              16, 0.75
-            ]
-          }
-        })
-
-        addLayer({
-          id: 'dmv-tree-canopy-volume',
-          type: 'fill-extrusion',
-          source: 'composite',
-          'source-layer': 'landcover',
-          filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
-          minzoom: 10,
-          paint: {
-            'fill-extrusion-color': colors.base,
-            'fill-extrusion-base': 0,
-            'fill-extrusion-height': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              10, 2,
-              13, 6,
-              15, 12
-            ],
-            'fill-extrusion-opacity': 0.8,
-            'fill-extrusion-vertical-gradient': true,
-            'fill-extrusion-ambient-occlusion-intensity': 0.6,
-            'fill-extrusion-ambient-occlusion-radius': 3
-          }
-        })
-
-        addLayer({
-          id: 'dmv-tree-canopy-shadow',
-          type: 'line',
-          source: 'composite',
-          'source-layer': 'landcover',
-          filter: ['in', ['get', 'class'], ['literal', ['forest', 'wood', 'scrub', 'grass', 'crop']]],
-          paint: {
-            'line-color': colors.shadow,
-            'line-width': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              9, 0.25,
-              13, 0.7,
-              16, 1.2
-            ],
-            'line-opacity': 0.5
-          }
-        })
+        // NOTE: We intentionally do NOT paint custom canopy fills over
+        // Standard's landcover. Standard already renders 3D tree models in
+        // green; recoloring landcover polygons doesn't affect those models
+        // (you'd see green trees on orange ground in fall — worse than no
+        // seasonal change at all). Seasonal feel is driven by the
+        // SeasonalGrade + SeasonalParticles overlays, which tint the whole
+        // composited scene including Standard's trees.
 
         // Load DC tree data
         const treeResponse = await fetch('/data/dc_trees.geojson')
@@ -255,21 +194,21 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
             type: 'circle',
             source: TREE_POINT_SOURCE_ID,
             filter: ['has', 'point_count'],
-            layout: {
-              'visibility': initialVisibility
-            },
+            layout: { visibility: initialVisibility },
             paint: {
-              'circle-color': colors.highlight,
+              // Neutral muted green so clusters read as "trees", not as a
+              // seasonal call-out fighting Standard's permanently-green tree
+              // models.
+              'circle-color': '#3d6b3a',
               'circle-radius': [
-                'step',
-                ['get', 'point_count'],
-                12,
-                25, 18,
-                75, 26
+                'step', ['get', 'point_count'],
+                10,
+                25, 14,
+                75, 20,
               ],
-              'circle-opacity': 0.85,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#ffffff'
+              'circle-opacity': 0.55,
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': 'rgba(255,255,255,0.75)',
             }
           })
         }
@@ -297,47 +236,38 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
         }
 
         if (!map.getLayer(TREE_POINT_LAYER_ID)) {
+          // Replace symbol+icon with a small neutral circle. Standard's 3D
+          // tree models are the primary visual — this layer exists purely as
+          // a click target for the DMV inventory metadata (species, condition,
+          // diameter) and as a faint visual cue of inventoried locations.
           map.addLayer({
             id: TREE_POINT_LAYER_ID,
-            type: 'symbol',
+            type: 'circle',
             source: TREE_POINT_SOURCE_ID,
             filter: ['!', ['has', 'point_count']],
-            layout: {
-              'visibility': initialVisibility,
-              'icon-image': `tree-icon-${season}`,
-              // Scaled down dramatically — Mapbox Standard already renders
-              // proper 3D tree models. These icons act as season-coloured
-              // accents on top, not as the primary tree representation.
-              'icon-size': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                12, 0.18,
-                14, 0.28,
-                16, 0.42,
-                18, 0.55,
-              ],
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': true,
-              'icon-pitch-alignment': 'map',
-              'icon-rotation-alignment': 'map'
-            },
+            layout: { visibility: initialVisibility },
             paint: {
-              'icon-opacity': 0.85,
-              'icon-halo-color': [
+              'circle-color': '#3d6b3a',
+              'circle-radius': [
+                'interpolate', ['linear'], ['zoom'],
+                12, 1.5,
+                15, 2.5,
+                18, 4,
+              ],
+              'circle-opacity': 0.35,
+              'circle-stroke-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                2.5,
+                0.5,
+              ],
+              'circle-stroke-color': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
                 '#FFD700',
-                '#ffffff'
+                'rgba(255,255,255,0.5)',
               ],
-              'icon-halo-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                6,
-                3
-              ],
-              'icon-halo-blur': 2
-            }
+            },
           })
         }
 
@@ -455,29 +385,9 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
     })
   }, [map, visible])
 
-  // Handle season changes
-  useEffect(() => {
-    if (!map || !isInitialized.current) return
-    createSeasonIcons()
-
-    const colors = seasonColors[season]
-    if (map.getLayer('dmv-tree-canopy-base')) {
-      map.setPaintProperty('dmv-tree-canopy-base', 'fill-color', colors.base)
-    }
-    if (map.getLayer('dmv-tree-canopy-volume')) {
-      map.setPaintProperty('dmv-tree-canopy-volume', 'fill-extrusion-color', colors.base)
-    }
-    if (map.getLayer('dmv-tree-canopy-shadow')) {
-      map.setPaintProperty('dmv-tree-canopy-shadow', 'line-color', colors.shadow)
-    }
-    if (map.getLayer(TREE_CLUSTER_LAYER_ID)) {
-      map.setPaintProperty(TREE_CLUSTER_LAYER_ID, 'circle-color', colors.highlight)
-    }
-    if (map.getLayer(TREE_POINT_LAYER_ID)) {
-      map.setLayoutProperty(TREE_POINT_LAYER_ID, 'icon-image', `tree-icon-${season}`)
-    }
-    console.log(`🍂 TreesLayer season updated to: ${season}`)
-  }, [map, season, seasonColors, createSeasonIcons])
+  // No season-driven recolor — tree dots stay neutral green to match Standard.
+  // Seasonal feel is handled by the SeasonalGrade overlay sitting above the
+  // map canvas, which tints everything (including Standard's trees) at once.
 
   return null
 }

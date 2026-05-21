@@ -11,33 +11,31 @@ type Season = 'spring' | 'summer' | 'fall' | 'winter'
  * style internals (which we can't recolor for Standard's built-in 3D trees).
  */
 
+// Seasonal grade strength is intentionally subtle — Standard renders DC very
+// vividly already, and stacking opaque colour washes bleached the scene.
 const GRADES: Record<Season, { color: string; opacity: number; blend: string }> = {
   spring: {
-    // soft cherry pink wash + warm midday
     color:
-      'radial-gradient(ellipse at 50% 30%, rgba(255, 200, 215, 0.5) 0%, rgba(255, 220, 200, 0.25) 50%, transparent 100%)',
-    opacity: 0.6,
+      'radial-gradient(ellipse at 50% 30%, rgba(255, 200, 215, 0.35) 0%, rgba(255, 220, 200, 0.18) 50%, transparent 100%)',
+    opacity: 0.4,
     blend: 'soft-light',
   },
   summer: {
-    // golden, slightly hazy
     color:
-      'radial-gradient(ellipse at 50% 40%, rgba(255, 220, 130, 0.4) 0%, rgba(255, 200, 100, 0.2) 60%, transparent 100%)',
-    opacity: 0.7,
+      'radial-gradient(ellipse at 50% 40%, rgba(255, 220, 130, 0.28) 0%, rgba(255, 200, 100, 0.15) 60%, transparent 100%)',
+    opacity: 0.45,
     blend: 'soft-light',
   },
   fall: {
-    // warm orange + amber sweep
     color:
-      'linear-gradient(180deg, rgba(255, 130, 60, 0.35) 0%, rgba(225, 95, 40, 0.25) 50%, rgba(150, 50, 20, 0.2) 100%)',
-    opacity: 0.85,
+      'linear-gradient(180deg, rgba(255, 140, 70, 0.22) 0%, rgba(220, 95, 40, 0.16) 50%, rgba(150, 50, 20, 0.14) 100%)',
+    opacity: 0.55,
     blend: 'soft-light',
   },
   winter: {
-    // cool desaturating blue + low contrast
     color:
-      'linear-gradient(180deg, rgba(180, 210, 240, 0.45) 0%, rgba(200, 220, 240, 0.35) 50%, rgba(220, 230, 240, 0.5) 100%)',
-    opacity: 0.85,
+      'linear-gradient(180deg, rgba(180, 210, 240, 0.32) 0%, rgba(200, 220, 240, 0.25) 50%, rgba(220, 230, 240, 0.32) 100%)',
+    opacity: 0.6,
     blend: 'soft-light',
   },
 }
