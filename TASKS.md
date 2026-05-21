@@ -58,9 +58,52 @@ Severity legend:
 - [ ] **P3.6** Audit prop drilling — **deferred**: bundle with P1.1.
 - [ ] **P3.7** Extract `<Card variant="minecraft">`, `<DockButton>`, `<KbdKey>` — **deferred**: bundle with P1.13.
 
-## F — Future Features (Brainstorm — requires strategic decision)
+## Roadmap — Phased Plan
 
-**🎯 STRATEGIC DECISION REQUIRED FIRST: Pick the primary audience.** Until this is decided, every feature below pulls in five directions.
+### ✅ Phase 1 — Cinematic Vibes (this session)
+Switched from custom illustrated style to Mapbox Standard (photorealistic).
+- Real 3D buildings, real 3D trees, atmospheric fog, realistic shadows — all native
+- Time-of-day lighting cycle (dawn / day / dusk / night) wired to a dock button
+- Idle camera drift after 12s of no interaction; cancels on any input
+- Seasonal particles (cherry petals / dust / leaves / snow) with reduced-motion respect
+- Cinematic title-card loading sequence — SVG outline draw-on + caption
+- Satellite imagery toggle in the floating control panel
+- Custom Vercel Analytics events: `landmark_discovered`, `fly_mode_toggled`, `satellite_toggled`, `time_of_day_cycled`
+
+### Phase 2 — Real-World Mode (next session, ~1 session)
+- **F.3 GPS / real-world mode** — wire `mapbox-gl-geolocate` into the discovery loop
+- **F.10 Cmd+K search** — fuzzy search over landmarks/museums/neighborhoods
+- **F.11 Per-landmark deep links** + `@vercel/og` per-landmark OG images
+
+### Phase 3 — Curated Tours (~1-2 sessions)
+- **F.5 Themed walking tours** from existing `walk_graph.json` — auto-pilot fly + narration cards
+- **F.7 Mystery landmark of the day** — daily rotating clue
+- **F.8 Achievement overhaul** — specific snackable goals tied to tours
+- **F.6 Digital passport** — replace XP with stamps/stickers + shareable PDF
+
+### Phase 4 — AI Tour Guide (~2-3 sessions)
+- **F.1 AI tour guide** via Vercel AI SDK + AI Gateway
+  - Cmd+K chat that streams routes and narration
+  - TTS via OpenAI or ElevenLabs
+- **F.9 Cinematic onboarding** — auto-pilot camera demo with AI voiceover
+
+### Phase 5 — Time Travel (~3-4 sessions)
+- **F.2 Time-travel slider** 1800 → 2026
+  - Needs historical building data sourcing (LOC, DC archives, OpenStreetMap historical)
+  - Buildings fade in/out by year built
+- **F.4 Tree app pivot** (alternate direction if audience = nature)
+
+### Phase 6 — Polish & Platform (~1 session)
+- **F.13** RSC conversion for shell + metadata
+- **F.14** PWA + offline support
+- **F.16** Mapbox cost ceiling + rate-limit fallback UI
+- **F.17 / F.18 / F.20** Typography pass, polished loading sequence, optional sound design
+
+---
+
+## F — Future Features (Backlog — strategic decision still open)
+
+**🎯 STRATEGIC DECISION REQUIRED FIRST: Pick the primary audience.** Until this is decided, the Phase 4–5 choices remain ambiguous.
 
 Audience options: Tourists · Game players · History students · Geocachers/IRL · Tree & nature enthusiasts.
 
