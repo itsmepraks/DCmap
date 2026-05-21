@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { useMap } from '@/app/lib/MapContext'
 import { applyWorldBorder, DC_CENTER, ZOOM_LEVELS } from '@/app/lib/worldBorder'
@@ -17,18 +17,19 @@ export const SATELLITE_STYLE = 'mapbox://styles/mapbox/standard-satellite'
  *
  * Standard renders photorealistic 3D buildings, real 3D tree models,
  * realistic shadows, atmospheric fog, and time-of-day lighting natively.
- * Light preset, label visibility, and emissive strength are configured
- * downstream via `map.setConfigProperty('basemap', ...)`.
+ * Strict-mode safe: cancellation flag prevents the second mount from
+ * orphaning a Mapbox instance, and cleanup clears the map from context.
  */
 export function useMapInitialization(
   containerRef: React.RefObject<HTMLDivElement>,
   options: UseMapInitializationOptions = {}
 ) {
-  const { map, setMap } = useMap()
-  const isInitialized = useRef(false)
+  const { setMap } = useMap()
+  const styleUrl = options.styleUrl
 
   useEffect(() => {
-    if (isInitialized.current || map || !containerRef.current) return
+    const container = containerRef.current
+    if (!container) return
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
     if (!token || token.includes('placeholder')) {
@@ -38,17 +39,15 @@ export function useMapInitialization(
       )
       return
     }
-
-    isInitialized.current = true
     mapboxgl.accessToken = token
 
-    const container = containerRef.current
+    let cancelled = false
     let mapInstance: mapboxgl.Map | null = null
 
     try {
       mapInstance = new mapboxgl.Map({
         container,
-        style: options.styleUrl || STANDARD_STYLE,
+        style: styleUrl || STANDARD_STYLE,
         center: DC_CENTER,
         zoom: ZOOM_LEVELS.default,
         pitch: 60,
@@ -61,13 +60,14 @@ export function useMapInitialization(
         attributionControl: true,
       })
 
+      // Make available to consumers immediately; downstream hooks gate work on
+      // map.loaded() or 'style.load' events anyway.
       setMap(mapInstance)
       applyWorldBorder(mapInstance)
       mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
-      mapInstance.on('style.load', () => {
-        if (!mapInstance) return
-        // Standard exposes a small set of config properties for cinematic vibe.
+      const onStyleLoad = () => {
+        if (!mapInstance || cancelled) return
         try {
           mapInstance.setConfigProperty('basemap', 'lightPreset', 'dusk')
           mapInstance.setConfigProperty('basemap', 'show3dObjects', true)
@@ -75,10 +75,9 @@ export function useMapInitialization(
           mapInstance.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
           mapInstance.setConfigProperty('basemap', 'showTransitLabels', false)
         } catch {
-          // setConfigProperty exists only on Standard / config-aware styles.
+          // setConfigProperty only exists on Standard / config-aware styles.
         }
 
-        // Add high-res terrain on top of Standard's base 3D.
         try {
           if (!mapInstance.getSource('mapbox-dem')) {
             mapInstance.addSource('mapbox-dem', {
@@ -90,21 +89,22 @@ export function useMapInitialization(
             mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.3 })
           }
         } catch {
-          // Terrain can fail silently on slow connections; not fatal.
+          // Terrain can fail silently; not fatal.
         }
-      })
-
-      mapInstance.on('error', (e) => {
-        console.error('Map error:', e.error)
-      })
+      }
+      mapInstance.on('style.load', onStyleLoad)
+      mapInstance.on('error', (e) => console.error('Map error:', e.error))
     } catch (error) {
       console.error('Error creating map:', error)
-      isInitialized.current = false
     }
 
     return () => {
-      if (mapInstance) mapInstance.remove()
-      isInitialized.current = false
+      cancelled = true
+      if (mapInstance) {
+        mapInstance.remove()
+        mapInstance = null
+      }
+      setMap(null)
     }
-  }, [containerRef, options.styleUrl, setMap, map])
+  }, [containerRef, styleUrl, setMap])
 }
