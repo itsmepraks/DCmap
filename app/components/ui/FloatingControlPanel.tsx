@@ -15,6 +15,8 @@ interface FloatingControlPanelProps {
   onToggleLayer: (layer: keyof FloatingControlPanelProps['layersVisible']) => void
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   onSeasonChange: (season: 'spring' | 'summer' | 'fall' | 'winter') => void
+  isSatelliteView?: boolean
+  onToggleSatellite?: () => void
 }
 
 export default function FloatingControlPanel({
@@ -23,7 +25,9 @@ export default function FloatingControlPanel({
   layersVisible,
   onToggleLayer,
   currentSeason,
-  onSeasonChange
+  onSeasonChange,
+  isSatelliteView,
+  onToggleSatellite,
 }: FloatingControlPanelProps) {
   const seasons = [
     { value: 'spring' as const, label: 'Spring', icon: '🌸', color: '#FFB7C5' },
@@ -191,6 +195,38 @@ export default function FloatingControlPanel({
                     ))}
                   </div>
                 </div>
+
+                {onToggleSatellite && (
+                  <>
+                    <div
+                      className="h-px"
+                      style={{
+                        background: `linear-gradient(90deg, transparent, ${minecraftTheme.colors.terracotta.light}, transparent)`,
+                      }}
+                    />
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-base">🛰️</span>
+                        <h4
+                          className="text-sm font-bold uppercase tracking-wider"
+                          style={{
+                            color: minecraftTheme.colors.text.secondary,
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          Imagery
+                        </h4>
+                      </div>
+                      <LayerToggle
+                        icon={isSatelliteView ? '🛰️' : '🏙️'}
+                        label={isSatelliteView ? 'Satellite' : 'Standard'}
+                        color="#4A90E2"
+                        isActive={!!isSatelliteView}
+                        onToggle={onToggleSatellite}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Footer hint - Fixed */}

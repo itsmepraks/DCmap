@@ -33,6 +33,9 @@ interface HUDSystemProps {
   isFlying: boolean
   onToggleFly: () => void
   onToggleLayers: () => void
+  timeOfDayIcon?: string
+  timeOfDayLabel?: string
+  onCycleTimeOfDay?: () => void
 
   // Floating panel
   isControlPanelOpen: boolean
@@ -41,6 +44,8 @@ interface HUDSystemProps {
   onToggleLayer: (layerId: keyof LayerVisibility) => void
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   onSeasonChange: (season: 'spring' | 'summer' | 'fall' | 'winter') => void
+  isSatelliteView?: boolean
+  onToggleSatellite?: () => void
 
   // Unified HUD
   flyControllerState: any
@@ -71,12 +76,17 @@ export default function HUDSystem({
   isFlying,
   onToggleFly,
   onToggleLayers,
+  timeOfDayIcon,
+  timeOfDayLabel,
+  onCycleTimeOfDay,
   isControlPanelOpen,
   onCloseControlPanel,
   layersVisible,
   onToggleLayer,
   currentSeason,
   onSeasonChange,
+  isSatelliteView,
+  onToggleSatellite,
   flyControllerState,
   landmarksState,
   gameState,
@@ -109,6 +119,9 @@ export default function HUDSystem({
         isFlying={isFlying}
         onToggleFly={onToggleFly}
         onToggleLayers={onToggleLayers}
+        timeOfDayIcon={timeOfDayIcon}
+        timeOfDayLabel={timeOfDayLabel}
+        onCycleTimeOfDay={onCycleTimeOfDay}
       />
 
       {/* Floating Control Panel - Replaces old Sidebar */}
@@ -119,6 +132,8 @@ export default function HUDSystem({
         onToggleLayer={onToggleLayer}
         currentSeason={currentSeason}
         onSeasonChange={onSeasonChange}
+        isSatelliteView={isSatelliteView}
+        onToggleSatellite={onToggleSatellite}
       />
 
       {/* Unified HUD - Consolidates recommendations, fly controls, and stats */}

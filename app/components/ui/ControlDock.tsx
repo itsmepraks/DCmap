@@ -10,6 +10,9 @@ interface ControlDockProps {
   isFlying: boolean
   onToggleFly: () => void
   onToggleLayers: () => void
+  timeOfDayIcon?: string
+  timeOfDayLabel?: string
+  onCycleTimeOfDay?: () => void
 }
 
 function useIsKeyboardCapable() {
@@ -31,7 +34,10 @@ export default function ControlDock({
   onToggle3D,
   isFlying,
   onToggleFly,
-  onToggleLayers
+  onToggleLayers,
+  timeOfDayIcon,
+  timeOfDayLabel,
+  onCycleTimeOfDay,
 }: ControlDockProps) {
   const keyboardCapable = useIsKeyboardCapable()
   return (
@@ -71,6 +77,20 @@ export default function ControlDock({
           color="#D4501E"
           activeColor="#D4501E"
         />
+
+        {onCycleTimeOfDay && timeOfDayIcon && timeOfDayLabel && (
+          <>
+            <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+            <DockButton
+              icon={timeOfDayIcon}
+              label={timeOfDayLabel.toUpperCase()}
+              isActive={true}
+              onClick={onCycleTimeOfDay}
+              color="#7B5FB8"
+              activeColor="#A88BD9"
+            />
+          </>
+        )}
 
         {keyboardCapable && (
           <>

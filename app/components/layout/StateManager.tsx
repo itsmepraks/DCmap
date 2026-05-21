@@ -11,6 +11,10 @@ import { useMap } from '@/app/lib/MapContext'
 import { usePlayerState } from '@/app/lib/playerState'
 import { calculateDistance, type Coordinates } from '@/app/lib/proximity'
 import { useAnnounce } from '@/app/components/ui/LiveAnnouncer'
+import { useTimeOfDay, type LightPreset } from '@/app/hooks/useTimeOfDay'
+import { useIdleCameraDrift } from '@/app/hooks/useIdleCameraDrift'
+import { STANDARD_STYLE, SATELLITE_STYLE } from '@/app/hooks/useMapInitialization'
+import { track } from '@vercel/analytics'
 
 import { type SelectedEntity } from '../ui/EntityInfoPanel'
 
@@ -73,6 +77,16 @@ interface StateManagerReturn {
   selectedEntity: SelectedEntity | null
   setSelectedEntity: (entity: SelectedEntity | null) => void
   clearSelectedEntity: () => void
+
+  // Time of day
+  lightPreset: LightPreset
+  cycleTimeOfDay: () => void
+  timeOfDayIcon: string
+  timeOfDayLabel: string
+
+  // Satellite imagery toggle
+  isSatelliteView: boolean
+  toggleSatellite: () => void
 }
 
 export default function StateManager({ children }: StateManagerProps) {
@@ -87,6 +101,7 @@ export default function StateManager({ children }: StateManagerProps) {
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(false)
   const [isFlyMode, setIsFlyMode] = useState(false)
+  const [isSatelliteView, setIsSatelliteView] = useState(false)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const [showCompletion, setShowCompletion] = useState(false)
   const [lastCompletionState, setLastCompletionState] = useState({
@@ -108,6 +123,25 @@ export default function StateManager({ children }: StateManagerProps) {
   const { map } = useMap()
   const { state: playerState } = usePlayerState()
   const announce = useAnnounce()
+  const timeOfDay = useTimeOfDay('dusk')
+
+  // Gentle orbit when the user is idle — disabled in fly mode and while modals are open.
+  useIdleCameraDrift({ map, disabled: isFlyMode || isControlPanelOpen })
+
+  const toggleSatellite = useCallback(() => {
+    if (!map) return
+    setIsSatelliteView(prev => {
+      const next = !prev
+      map.setStyle(next ? SATELLITE_STYLE : STANDARD_STYLE)
+      track('satellite_toggled', { satellite: next })
+      return next
+    })
+  }, [map])
+
+  const cycleTimeOfDay = useCallback(() => {
+    timeOfDay.cycle()
+    track('time_of_day_cycled')
+  }, [timeOfDay])
 
   // Track map load state
   useEffect(() => {
@@ -174,6 +208,7 @@ export default function StateManager({ children }: StateManagerProps) {
         setIs3DView(true)
       }
       announce(newFlyMode ? 'Fly mode activated. Use WASD to move.' : 'Fly mode deactivated.')
+      track('fly_mode_toggled', { active: newFlyMode })
       return newFlyMode
     })
   }, [is3DView, announce])
@@ -195,6 +230,7 @@ export default function StateManager({ children }: StateManagerProps) {
     const landmark = landmarksState.getLandmarkById(landmarkId)
     if (landmark) {
       announce(`Landmark discovered: ${landmark.name}. Plus ${xpGained} XP.`)
+      track('landmark_discovered', { id: landmarkId, name: landmark.name, xp: xpGained })
       landmarksState.showDiscoveryAnimation(landmarkId)
 
       // Show achievement after discovery animation
@@ -380,7 +416,17 @@ export default function StateManager({ children }: StateManagerProps) {
     // Entity Selection
     selectedEntity,
     setSelectedEntity,
-    clearSelectedEntity
+    clearSelectedEntity,
+
+    // Time of day
+    lightPreset: timeOfDay.preset,
+    cycleTimeOfDay,
+    timeOfDayIcon: timeOfDay.icon,
+    timeOfDayLabel: timeOfDay.label,
+
+    // Satellite imagery
+    isSatelliteView,
+    toggleSatellite,
   }
 
   return <>{children(props)}</>
