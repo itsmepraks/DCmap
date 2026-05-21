@@ -196,9 +196,30 @@ export default function StateManager({ children }: StateManagerProps) {
     setCurrentSeason(season)
   }, [])
 
+  // Washington Monument — anchor point for the cinematic 3D entry.
+  const WASHINGTON_MONUMENT: [number, number] = [-77.0353, 38.8895]
+
   const handleToggle3D = useCallback(() => {
-    setIs3DView(prev => !prev)
-  }, [])
+    setIs3DView(prev => {
+      const next = !prev
+      if (map) {
+        if (next) {
+          map.flyTo({
+            center: WASHINGTON_MONUMENT,
+            zoom: 16.5,
+            pitch: 70,
+            bearing: -17.6,
+            duration: 2500,
+            essential: true,
+            curve: 1.4,
+          })
+        } else {
+          map.easeTo({ pitch: 0, bearing: 0, duration: 1500 })
+        }
+      }
+      return next
+    })
+  }, [map])
 
   const handleToggleFly = useCallback(() => {
     setIsFlyMode(prev => {
