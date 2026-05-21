@@ -305,22 +305,25 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
             layout: {
               'visibility': initialVisibility,
               'icon-image': `tree-icon-${season}`,
+              // Scaled down dramatically — Mapbox Standard already renders
+              // proper 3D tree models. These icons act as season-coloured
+              // accents on top, not as the primary tree representation.
               'icon-size': [
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                10, 1.0,
-                14, 1.5,
-                16, 2.0,
-                18, 2.5
+                12, 0.18,
+                14, 0.28,
+                16, 0.42,
+                18, 0.55,
               ],
               'icon-allow-overlap': true,
               'icon-ignore-placement': true,
-              'icon-pitch-alignment': 'viewport',
-              'icon-rotation-alignment': 'viewport'
+              'icon-pitch-alignment': 'map',
+              'icon-rotation-alignment': 'map'
             },
             paint: {
-              'icon-opacity': 1,
+              'icon-opacity': 0.85,
               'icon-halo-color': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
