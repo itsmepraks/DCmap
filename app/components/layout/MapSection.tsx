@@ -6,7 +6,7 @@ import ParticleEffect from '../map/effects/ParticleEffect'
 import DiscoveryRadius from '../map/effects/DiscoveryRadius'
 import BreadcrumbTrail from '../map/effects/BreadcrumbTrail'
 import MonumentLights from '../map/effects/MonumentLights'
-import WinterGround from '../map/effects/WinterGround'
+import SeasonalGround from '../map/effects/SeasonalGround'
 import WaypointLayer from '../map/WaypointLayer'
 import { useMap } from '@/app/lib/MapContext'
 
@@ -141,8 +141,8 @@ export default function MapSection({
       {/* Floodlit monuments at dusk and night */}
       <MonumentLights landmarks={landmarks} lightPreset={lightPreset} />
 
-      {/* Snow on the ground when winter is active */}
-      <WinterGround active={currentSeason === 'winter'} />
+      {/* Per-season ground tint — snow in winter, amber in fall, blossom-pink in spring */}
+      <SeasonalGround season={currentSeason} />
 
       {/* Breadcrumb Trail */}
       <BreadcrumbTrail

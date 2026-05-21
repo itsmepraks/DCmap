@@ -81,11 +81,20 @@ Switched from custom illustrated style to Mapbox Standard (photorealistic).
 - **F.8 Achievement overhaul** — specific snackable goals tied to tours
 - **F.6 Digital passport** — replace XP with stamps/stickers + shareable PDF
 
-### Phase 4 — AI Tour Guide (~2-3 sessions)
-- **F.1 AI tour guide** via Vercel AI SDK + AI Gateway
-  - Cmd+K chat that streams routes and narration
-  - TTS via OpenAI or ElevenLabs
-- **F.9 Cinematic onboarding** — auto-pilot camera demo with AI voiceover
+### Phase 4 — AI Tour Guide (next focused session, ~1-2 hours)
+**Scope locked. Decision: queued as a focused next session, not slotted in alongside other work.**
+
+Concrete plan:
+1. `pnpm add ai @ai-sdk/openai` — Vercel AI SDK + OpenAI provider
+2. New route `app/api/tour/route.ts` — streamText with system prompt scoped to DC landmarks
+3. Tool: `navigateToLandmark(name)` — returns `{ id, coordinates, blurb }`; client side, the assistant message renders a "Take me there" button that triggers the existing `handleNavigateToLandmark`
+4. Extend `SearchPalette` with an "Ask the guide" mode toggle (or split into a sibling component) — same Cmd+K shortcut, second tab
+5. Streaming markdown rendering via `useChat` hook
+6. Env: `OPENAI_API_KEY` documented in env.example
+7. (Optional, separate PR) TTS via OpenAI's tts-1-hd over a "Speak" button per message
+
+Stretch for the same session:
+- **F.9 Cinematic onboarding** voiceover via the same TTS endpoint — the "Show me around" tour gains narration synchronised with each flyTo stop.
 
 ### Phase 5 — Time Travel (~3-4 sessions)
 - **F.2 Time-travel slider** 1800 → 2026

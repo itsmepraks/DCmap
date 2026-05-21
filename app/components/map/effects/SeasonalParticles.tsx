@@ -148,23 +148,38 @@ export default function SeasonalParticles({ season }: { season: Season }) {
 
     let raf = 0
     let last = performance.now()
+    let elapsed = 0
+    // Wind speed and frequency vary per season. Spring and fall sway gently;
+    // winter gusts more dramatically; summer dust drifts almost imperceptibly.
+    const WIND_AMPLITUDE: Record<Season, number> = { spring: 18, summer: 6, fall: 28, winter: 22 }
+    const WIND_FREQ: Record<Season, number> = { spring: 0.6, summer: 0.3, fall: 0.8, winter: 1.1 }
+
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
+      elapsed += dt
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       const ps = particlesRef.current
       const h = window.innerHeight
       const w = window.innerWidth
+      // Global wind component (sine + cosine for organic gusts).
+      const wind =
+        Math.sin(elapsed * WIND_FREQ[season]) * WIND_AMPLITUDE[season] +
+        Math.cos(elapsed * WIND_FREQ[season] * 0.4) * (WIND_AMPLITUDE[season] * 0.4)
+
       for (let i = 0; i < ps.length; i++) {
         const p = ps[i]
-        p.x += p.vx * dt
+        // Each particle samples wind slightly off-phase so the swarm doesn't
+        // move in lockstep — produces a believable scatter pattern.
+        const phase = (i * 0.13) % (Math.PI * 2)
+        const localWind = wind + Math.sin(elapsed * WIND_FREQ[season] + phase) * 4
+        p.x += (p.vx + localWind) * dt
         p.y += p.vy * dt
-        p.rot += p.vr * dt
+        p.rot += p.vr * dt + Math.sin(elapsed + phase) * 0.6 * dt
         p.life -= dt * 10
 
-        // Respawn when off-screen.
-        if (p.y > h + 20 || p.x < -20 || p.x > w + 20) {
+        if (p.y > h + 20 || p.x < -30 || p.x > w + 30) {
           ps[i] = spawn(season)
         }
 
