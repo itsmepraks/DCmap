@@ -5,11 +5,14 @@ import Map from '../map/Map'
 import ParticleEffect from '../map/effects/ParticleEffect'
 import DiscoveryRadius from '../map/effects/DiscoveryRadius'
 import BreadcrumbTrail from '../map/effects/BreadcrumbTrail'
+import MonumentLights from '../map/effects/MonumentLights'
+import WinterGround from '../map/effects/WinterGround'
 import WaypointLayer from '../map/WaypointLayer'
 import { useMap } from '@/app/lib/MapContext'
 
 import type { Landmark } from '@/app/hooks/useLandmarks'
 import type { Coordinates } from '@/app/lib/proximity'
+import type { LightPreset } from '@/app/hooks/useTimeOfDay'
 
 import { type SelectedEntity } from '../ui/EntityInfoPanel'
 
@@ -46,6 +49,9 @@ interface MapSectionProps {
 
   // Progressive Waypoint System (NEW)
   playerPosition: Coordinates | null
+
+  // Cinematic
+  lightPreset: LightPreset
 }
 
 export default function MapSection({
@@ -64,7 +70,8 @@ export default function MapSection({
   gameProgress,
   landmarksState,
   playerPosition,
-  onSelectEntity
+  onSelectEntity,
+  lightPreset,
 }: MapSectionProps) {
   const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
   const { map } = useMap()
@@ -130,6 +137,12 @@ export default function MapSection({
           map={map}
         />
       )}
+
+      {/* Floodlit monuments at dusk and night */}
+      <MonumentLights landmarks={landmarks} lightPreset={lightPreset} />
+
+      {/* Snow on the ground when winter is active */}
+      <WinterGround active={currentSeason === 'winter'} />
 
       {/* Breadcrumb Trail */}
       <BreadcrumbTrail

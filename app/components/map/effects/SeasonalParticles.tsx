@@ -16,27 +16,28 @@ interface Particle {
 }
 
 const COUNT: Record<Season, number> = {
-  spring: 40, // cherry petals
-  summer: 25, // dust motes
-  fall: 35,   // leaves
-  winter: 80, // snowflakes
+  spring: 90,  // cherry petals
+  summer: 50,  // dust motes
+  fall: 80,    // leaves
+  winter: 180, // snowflakes
 }
 
-function seasonColor(season: Season): string {
+const FALL_PALETTE = ['#E0673F', '#C7421D', '#FFAA3B', '#A33B16', '#F0B860']
+function seasonColor(season: Season, idx: number): string {
   switch (season) {
-    case 'spring': return '#FFC2D1'
+    case 'spring': return idx % 3 === 0 ? '#FFE0EA' : '#FFC2D1'
     case 'summer': return '#FFF4C2'
-    case 'fall': return '#E0673F'
+    case 'fall': return FALL_PALETTE[idx % FALL_PALETTE.length]
     case 'winter': return '#FFFFFF'
   }
 }
 
-function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, season: Season) {
+function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, season: Season, idx: number) {
   ctx.save()
   ctx.translate(p.x, p.y)
   ctx.rotate(p.rot)
   ctx.globalAlpha = Math.min(1, p.life / 60)
-  ctx.fillStyle = seasonColor(season)
+  ctx.fillStyle = seasonColor(season, idx)
 
   switch (season) {
     case 'spring': {
@@ -133,10 +134,10 @@ export default function SeasonalParticles({ season }: { season: Season }) {
           : s === 'winter' ? 25 + Math.random() * 35
           : 5 + Math.random() * 10,
         size:
-          s === 'spring' ? 4 + Math.random() * 3
-          : s === 'fall' ? 6 + Math.random() * 4
-          : s === 'winter' ? 1.5 + Math.random() * 2
-          : 1.5 + Math.random() * 1,
+          s === 'spring' ? 5 + Math.random() * 4
+          : s === 'fall' ? 7 + Math.random() * 5
+          : s === 'winter' ? 2 + Math.random() * 2.5
+          : 1.8 + Math.random() * 1.2,
         rot: Math.random() * Math.PI * 2,
         vr: (Math.random() - 0.5) * (s === 'fall' ? 4 : 1.5),
         life: 60 + Math.random() * 60,
@@ -167,7 +168,7 @@ export default function SeasonalParticles({ season }: { season: Season }) {
           ps[i] = spawn(season)
         }
 
-        drawParticle(ctx, p, season)
+        drawParticle(ctx, p, season, i)
       }
 
       raf = requestAnimationFrame(tick)

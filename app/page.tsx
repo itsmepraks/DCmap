@@ -13,6 +13,10 @@ import GameOverlay from './components/ui/GameOverlay'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
 import FeedbackToastContainer from './components/ui/FeedbackToast'
 import SeasonalParticles from './components/map/effects/SeasonalParticles'
+import SeasonalGrade from './components/map/effects/SeasonalGrade'
+import TimeOfDayGrade from './components/map/effects/TimeOfDayGrade'
+import SearchPalette from './components/ui/SearchPalette'
+import MysteryCard from './components/game/MysteryCard'
 import FeedbackTriggers from './components/ui/FeedbackTriggers'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 
@@ -48,7 +52,12 @@ export default function Home() {
                     landmarksState={state.landmarksState}
                     playerPosition={state.playerPosition}
                     onSelectEntity={state.gameState.setSelectedEntity}
+                    lightPreset={state.lightPreset}
                   />
+
+                  {/* Cinematic color grading — time-of-day (under) + season (over). */}
+                  <TimeOfDayGrade preset={state.lightPreset} />
+                  <SeasonalGrade season={state.currentSeason} />
 
                   {/* Ambient seasonal particles (cherry petals / leaves / snow / dust) */}
                   <SeasonalParticles season={state.currentSeason} />
@@ -125,6 +134,20 @@ export default function Home() {
                   <GameOverlay />
                   <OnboardingTutorial />
                   <FeedbackToastContainer />
+
+                  {/* Cmd/Ctrl+K landmark + museum search */}
+                  <SearchPalette
+                    landmarks={state.landmarksState.landmarks}
+                    museums={state.museumsState?.museumsWithStatus || []}
+                    onNavigate={state.handleNavigateToLandmark}
+                  />
+
+                  {/* Daily mystery clue */}
+                  <MysteryCard
+                    landmarks={state.landmarksState.landmarks}
+                    visited={state.gameState.gameProgress.visitedLandmarks}
+                    onNavigate={state.handleNavigateToLandmark}
+                  />
 
                   {/* Contextual Feedback System */}
                   <FeedbackTriggers
