@@ -18,12 +18,22 @@ const TREE_POINT_LAYER_ID = 'dmv-tree-points-layer'
 const TREE_CLUSTER_LAYER_ID = 'dmv-tree-clusters'
 const TREE_CLUSTER_COUNT_LAYER_ID = 'dmv-tree-cluster-count'
 
+const TREE_AURA_LAYER_ID = 'dmv-tree-points-aura'
+
 // All layer IDs for this component
 const ALL_TREE_LAYERS = [
   TREE_CLUSTER_LAYER_ID,
   TREE_CLUSTER_COUNT_LAYER_ID,
+  TREE_AURA_LAYER_ID,
   TREE_POINT_LAYER_ID,
 ]
+
+const AURA_COLOR: Record<'spring' | 'summer' | 'fall' | 'winter', string> = {
+  spring: '#FFC2D1',
+  summer: '#A8D9A0',
+  fall: '#E0673F',
+  winter: '#D9E5EF',
+}
 
 /**
  * TreesLayer - Mixes DMV landcover shading with real tree/park data
@@ -235,11 +245,36 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
           })
         }
 
+        // Two-circle composition: a season-coloured aura sits underneath a
+        // small neutral-green core. The core reads as "tree", the aura reads
+        // as "season", and neither competes with Standard's 3D tree models.
+        if (!map.getLayer(TREE_AURA_LAYER_ID)) {
+          map.addLayer({
+            id: TREE_AURA_LAYER_ID,
+            type: 'circle',
+            source: TREE_POINT_SOURCE_ID,
+            filter: ['!', ['has', 'point_count']],
+            layout: { visibility: initialVisibility },
+            paint: {
+              'circle-color': AURA_COLOR[season],
+              'circle-blur': 0.8,
+              'circle-radius': [
+                'interpolate', ['linear'], ['zoom'],
+                12, 3,
+                15, 6,
+                17, 9,
+                19, 14,
+              ],
+              'circle-opacity': [
+                'interpolate', ['linear'], ['zoom'],
+                12, 0.25,
+                15, 0.45,
+                17, 0.55,
+              ],
+            },
+          })
+        }
         if (!map.getLayer(TREE_POINT_LAYER_ID)) {
-          // Replace symbol+icon with a small neutral circle. Standard's 3D
-          // tree models are the primary visual — this layer exists purely as
-          // a click target for the DMV inventory metadata (species, condition,
-          // diameter) and as a faint visual cue of inventoried locations.
           map.addLayer({
             id: TREE_POINT_LAYER_ID,
             type: 'circle',
@@ -247,25 +282,25 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
             filter: ['!', ['has', 'point_count']],
             layout: { visibility: initialVisibility },
             paint: {
-              'circle-color': '#3d6b3a',
+              'circle-color': '#2F5E2A',
               'circle-radius': [
                 'interpolate', ['linear'], ['zoom'],
-                12, 1.5,
-                15, 2.5,
-                18, 4,
+                12, 1.8,
+                15, 3,
+                18, 4.5,
               ],
-              'circle-opacity': 0.35,
+              'circle-opacity': 0.95,
               'circle-stroke-width': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
-                2.5,
-                0.5,
+                3,
+                1.2,
               ],
               'circle-stroke-color': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
                 '#FFD700',
-                'rgba(255,255,255,0.5)',
+                'rgba(255,255,255,0.85)',
               ],
             },
           })
@@ -342,8 +377,38 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
         map.on('click', TREE_POINT_LAYER_ID, handleTreeClick)
         map.on('click', TREE_CLUSTER_LAYER_ID, handleClusterClick)
 
-        map.on('mouseenter', TREE_POINT_LAYER_ID, () => { map.getCanvas().style.cursor = 'pointer' })
-        map.on('mouseleave', TREE_POINT_LAYER_ID, () => { map.getCanvas().style.cursor = '' })
+        // Hover popup — surfaces the DMV inventory data without requiring a
+        // click, so the affordance is discoverable.
+        const hoverPopup = new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 8,
+          className: 'tree-hover-popup',
+        })
+        map.on('mouseenter', TREE_POINT_LAYER_ID, (e) => {
+          map.getCanvas().style.cursor = 'pointer'
+          const f = e.features?.[0]
+          if (!f) return
+          const props = f.properties || {}
+          const name = props.COMMON_NAME || props.SPECIES || 'Tree'
+          const dbh = props.DBH ? `${props.DBH}"` : '–'
+          const condition = props.CONDITION || '–'
+          hoverPopup
+            .setLngLat((f.geometry as any).coordinates)
+            .setHTML(
+              `<div style="font: 600 12px ui-sans-serif; color:#1a2238; padding:6px 8px;">
+                ${name}
+                <div style="font-weight:400; color:#5a6878; margin-top:2px;">
+                  ${condition} · ${dbh} dia. · click for more
+                </div>
+              </div>`
+            )
+            .addTo(map)
+        })
+        map.on('mouseleave', TREE_POINT_LAYER_ID, () => {
+          map.getCanvas().style.cursor = ''
+          hoverPopup.remove()
+        })
 
         map.on('mouseenter', TREE_CLUSTER_LAYER_ID, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', TREE_CLUSTER_LAYER_ID, () => { map.getCanvas().style.cursor = '' })
@@ -385,9 +450,15 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
     })
   }, [map, visible])
 
-  // No season-driven recolor — tree dots stay neutral green to match Standard.
-  // Seasonal feel is handled by the SeasonalGrade overlay sitting above the
-  // map canvas, which tints everything (including Standard's trees) at once.
+  // Recolor only the aura halo on season change. The neutral-green core
+  // stays put so the markers always read as "trees", and the aura provides
+  // the seasonal cue at each inventoried location.
+  useEffect(() => {
+    if (!map || !isInitialized.current) return
+    if (map.getLayer(TREE_AURA_LAYER_ID)) {
+      map.setPaintProperty(TREE_AURA_LAYER_ID, 'circle-color', AURA_COLOR[season])
+    }
+  }, [map, season])
 
   return null
 }
