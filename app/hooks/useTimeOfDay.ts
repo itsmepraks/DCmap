@@ -21,15 +21,6 @@ const ICON: Record<LightPreset, string> = {
   night: '🌙',
 }
 
-// Fog tint per preset — matches Standard's sun position so the horizon feels
-// like an extension of the sky instead of a flat colour.
-const FOG: Record<LightPreset, { color: string; high: string; horizonBlend: number; spaceColor: string }> = {
-  dawn: { color: '#ffd9a8', high: '#9ec8ff', horizonBlend: 0.16, spaceColor: '#13243f' },
-  day: { color: '#d7e6fb', high: '#9ec8ff', horizonBlend: 0.04, spaceColor: '#0f1d35' },
-  dusk: { color: '#f3a76b', high: '#874b9d', horizonBlend: 0.2, spaceColor: '#1a0d2a' },
-  night: { color: '#1d2640', high: '#0a1230', horizonBlend: 0.25, spaceColor: '#02020a' },
-}
-
 function applyPreset(map: mapboxgl.Map | null, preset: LightPreset) {
   if (!map) return
   try {
@@ -37,19 +28,9 @@ function applyPreset(map: mapboxgl.Map | null, preset: LightPreset) {
   } catch {
     // Standard / config-aware styles only.
   }
-  try {
-    const fog = FOG[preset]
-    map.setFog({
-      range: [0.5, 8],
-      color: fog.color,
-      'high-color': fog.high,
-      'horizon-blend': fog.horizonBlend,
-      'space-color': fog.spaceColor,
-      'star-intensity': preset === 'night' ? 0.5 : preset === 'dusk' ? 0.2 : 0,
-    })
-  } catch {
-    // Some styles may not support setFog.
-  }
+  // NOTE: we deliberately do not call map.setFog here. Standard manages its
+  // own atmosphere bound to lightPreset; overriding it conflicts with the
+  // 3D model loader and produces "t.json.meshes is not iterable".
 }
 
 /** Manage time-of-day lighting on the Standard style. */

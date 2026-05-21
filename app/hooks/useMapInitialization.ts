@@ -78,18 +78,19 @@ export function useMapInitialization(
           // setConfigProperty only exists on Standard / config-aware styles.
         }
 
-        try {
-          if (!mapInstance.getSource('mapbox-dem')) {
-            mapInstance.addSource('mapbox-dem', {
-              type: 'raster-dem',
-              url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-              tileSize: 512,
-              maxzoom: 14,
+        // Standard doesn't expose a public 'composite' source; legacy custom
+        // layers (parks/roads/landcover overlays) need it. Bind the Mapbox
+        // Streets v8 vector tileset under that name so source-layer references
+        // resolve.
+        if (!mapInstance.getSource('composite')) {
+          try {
+            mapInstance.addSource('composite', {
+              type: 'vector',
+              url: 'mapbox://mapbox.mapbox-streets-v8',
             })
-            mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.3 })
+          } catch {
+            // Some style versions may already define 'composite' internally.
           }
-        } catch {
-          // Terrain can fail silently; not fatal.
         }
       }
       mapInstance.on('style.load', onStyleLoad)
