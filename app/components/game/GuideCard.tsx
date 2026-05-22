@@ -173,21 +173,36 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             ))}
           </div>
 
-          {/* Diagnostic strip — shows which voice is selected and offers a
-              fixed-phrase audio test. Helps isolate whether silent narration
-              is our bug or an OS/browser audio path issue. */}
+          {/* Diagnostic strip — isolates the bug to (a) our hook, (b) the
+              browser's TTS engine, or (c) the OS audio path. */}
           {supported && (
-            <div className="flex items-center justify-between gap-3 border-t border-white/5 px-4 pb-2 pt-1 text-[10px] text-white/35">
-              <span className="truncate">
+            <div className="flex flex-col gap-1 border-t border-white/5 px-4 pb-2 pt-1 text-[10px] text-white/35">
+              <div className="truncate">
                 Voice: <span className="text-white/55">{voiceName || 'system default'}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => speak('Audio test. If you hear this, narration works.')}
-                className="rounded px-2 py-0.5 text-amber-300/80 transition hover:bg-white/5 hover:text-amber-200"
-              >
-                🔈 Test voice
-              </button>
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // BARE-MINIMUM: no hook, no cancel, no setTimeout, no voice
+                    // override. If this doesn't play, the browser TTS engine
+                    // is broken at the OS level — nothing in our code matters.
+                    const u = new SpeechSynthesisUtterance('Bare test. One two three.')
+                    console.info('[guide] BARE test speaking:', u)
+                    window.speechSynthesis.speak(u)
+                  }}
+                  className="rounded px-2 py-0.5 text-white/45 transition hover:bg-white/5 hover:text-white"
+                >
+                  🔇 Bare test
+                </button>
+                <button
+                  type="button"
+                  onClick={() => speak('Audio test. If you hear this, narration works.')}
+                  className="rounded px-2 py-0.5 text-amber-300/80 transition hover:bg-white/5 hover:text-amber-200"
+                >
+                  🔈 Test voice
+                </button>
+              </div>
             </div>
           )}
 
