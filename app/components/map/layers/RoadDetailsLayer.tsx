@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useMap } from '@/app/lib/MapContext'
+import { STREETS_SOURCE } from '@/app/hooks/useMapInitialization'
 
 interface RoadDetailsLayerProps {
   visible: boolean
@@ -40,7 +41,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           map.addLayer({
             id: 'sidewalks-left',
             type: 'line',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'road',
             minzoom: 15, // Only render at zoom 15+ for performance
             filter: [
@@ -74,7 +75,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           map.addLayer({
             id: 'sidewalks-right',
             type: 'line',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'road',
             minzoom: 15, // Only render at zoom 15+ for performance
             filter: [
@@ -109,7 +110,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           map.addLayer({
             id: 'sidewalk-borders',
             type: 'line',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'road',
             minzoom: 16, // Only render at zoom 16+ for performance
             filter: [
@@ -136,7 +137,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           map.addLayer({
             id: 'zebra-crosswalks',
             type: 'line',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'road',
             minzoom: 16, // Only render at zoom 16+ for performance
             filter: [
@@ -165,7 +166,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           map.addLayer({
             id: 'road-center-lines',
             type: 'line',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'road',
             minzoom: 14, // Only render at zoom 14+ for performance
             filter: [
@@ -193,7 +194,7 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           map.addLayer({
             id: 'road-edge-lines',
             type: 'line',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'road',
             minzoom: 15, // Only render at zoom 15+ for performance
             filter: [

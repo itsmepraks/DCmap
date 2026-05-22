@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useMap } from '@/app/lib/MapContext'
+import { STREETS_SOURCE } from '@/app/hooks/useMapInitialization'
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter'
 
@@ -43,7 +44,7 @@ export default function SeasonalGround({ season }: Props) {
           map.addLayer({
             id: PARK_LAYER,
             type: 'fill',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'landuse',
             filter: ['in', ['get', 'class'], ['literal', ['park', 'cemetery', 'pitch', 'grass']]],
             paint: {

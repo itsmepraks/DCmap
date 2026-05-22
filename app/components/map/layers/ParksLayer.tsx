@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useMemo } from 'react'
 import { useMap } from '@/app/lib/MapContext'
+import { STREETS_SOURCE } from '@/app/hooks/useMapInitialization'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface ParksLayerProps {
@@ -92,7 +93,7 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
           map.addLayer({
             id: 'parks-seasonal',
             type: 'fill',
-            source: 'composite',
+            source: STREETS_SOURCE,
             'source-layer': 'landuse',
             filter: [
               'in',

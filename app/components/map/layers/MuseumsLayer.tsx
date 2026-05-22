@@ -126,6 +126,13 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
     }
 
     const initializeLayer = async () => {
+      // Wait for the style to finish loading before adding sources / layers.
+      // Without this guard, addSource throws "Style is not done loading" on
+      // first render when the Standard style is still streaming in.
+      if (!map.isStyleLoaded()) {
+        map.once('idle', initializeLayer)
+        return
+      }
       try {
         // Load museum icons (bronze for unvisited, gold for visited)
         const loadMuseumIcon = async (iconName: string, svgPath: string) => {

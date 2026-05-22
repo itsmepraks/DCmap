@@ -12,6 +12,10 @@ interface UseMapInitializationOptions {
 export const STANDARD_STYLE = 'mapbox://styles/mapbox/standard'
 export const SATELLITE_STYLE = 'mapbox://styles/mapbox/standard-satellite'
 
+// Our custom-bound source name for mapbox-streets-v8. Do NOT use 'composite'
+// (Standard reserves that name and breaks if we collide).
+export const STREETS_SOURCE = 'dc-streets'
+
 /**
  * Initialize the Mapbox map using the Standard style.
  *
@@ -78,18 +82,18 @@ export function useMapInitialization(
           // setConfigProperty only exists on Standard / config-aware styles.
         }
 
-        // Standard doesn't expose a public 'composite' source; legacy custom
-        // layers (parks/roads/landcover overlays) need it. Bind the Mapbox
-        // Streets v8 vector tileset under that name so source-layer references
-        // resolve.
-        if (!mapInstance.getSource('composite')) {
+        // Bind Mapbox Streets v8 under our own source id. Earlier versions
+        // tried to attach this as 'composite' but Standard reserves that
+        // name for its internal 3D model + tile system, and our override
+        // triggered "t.json.meshes is not iterable" runtime errors.
+        if (!mapInstance.getSource(STREETS_SOURCE)) {
           try {
-            mapInstance.addSource('composite', {
+            mapInstance.addSource(STREETS_SOURCE, {
               type: 'vector',
               url: 'mapbox://mapbox.mapbox-streets-v8',
             })
           } catch {
-            // Some style versions may already define 'composite' internally.
+            // Already attached; safe to ignore.
           }
         }
       }

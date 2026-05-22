@@ -26,26 +26,36 @@ export function useTourNarration() {
       return
     }
 
+    // Voices known to be either silent or produce non-speech on some
+    // platforms (macOS "novelty" voices, Windows whisper voices).
+    const BANNED_VOICES = /albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|junior|kathy|organ|princess|ralph|trinoids|whisper|zarvox/i
+
     const pickVoice = () => {
       const voices = window.speechSynthesis.getVoices()
       if (voices.length === 0) return
       voiceReadyRef.current = true
       console.info(`[guide] ${voices.length} TTS voices loaded`)
-      const preferOrder = [
-        (v: SpeechSynthesisVoice) => v.lang === 'en-US' && /natural|neural|samantha|aria|premium/i.test(v.name),
-        (v: SpeechSynthesisVoice) => v.lang === 'en-US' && !v.name.toLowerCase().includes('compact'),
-        (v: SpeechSynthesisVoice) => v.lang === 'en-US',
-        (v: SpeechSynthesisVoice) => v.lang.startsWith('en'),
+
+      const usable = voices.filter((v) => !BANNED_VOICES.test(v.name))
+      const preferOrder: Array<(v: SpeechSynthesisVoice) => boolean> = [
+        (v) => v.lang === 'en-US' && /(natural|neural|premium|enhanced)/i.test(v.name),
+        (v) => v.lang === 'en-US' && /samantha|aria|jenny|guy/i.test(v.name),
+        (v) => v.lang === 'en-US' && !v.name.toLowerCase().includes('compact'),
+        (v) => v.lang === 'en-US',
+        (v) => v.lang.startsWith('en') && !v.name.toLowerCase().includes('compact'),
+        (v) => v.lang.startsWith('en'),
       ]
       for (const test of preferOrder) {
-        const match = voices.find(test)
+        const match = usable.find(test)
         if (match) {
           console.info(`[guide] selected voice: ${match.name} (${match.lang})`)
           setVoiceState(match)
           return
         }
       }
-      setVoiceState(voices[0])
+      const fallback = usable[0] ?? voices[0]
+      console.info(`[guide] fallback voice: ${fallback?.name} (${fallback?.lang})`)
+      setVoiceState(fallback)
     }
 
     // Some browsers populate voices synchronously, others fire voiceschanged.
