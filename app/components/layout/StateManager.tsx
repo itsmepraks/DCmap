@@ -14,6 +14,10 @@ import { useAnnounce } from '@/app/components/ui/LiveAnnouncer'
 import { useTimeOfDay, type LightPreset } from '@/app/hooks/useTimeOfDay'
 import { useIdleCameraDrift } from '@/app/hooks/useIdleCameraDrift'
 import { STANDARD_STYLE, SATELLITE_STYLE } from '@/app/hooks/useMapInitialization'
+import { useGuideMode } from '@/app/hooks/useGuideMode'
+
+// Washington Monument — anchor point for the cinematic 3D entry.
+const WASHINGTON_MONUMENT: [number, number] = [-77.0353, 38.8895]
 import { track } from '@vercel/analytics'
 
 import { type SelectedEntity } from '../ui/EntityInfoPanel'
@@ -87,6 +91,9 @@ interface StateManagerReturn {
   // Satellite imagery toggle
   isSatelliteView: boolean
   toggleSatellite: () => void
+
+  // Guide Mode
+  guide: ReturnType<typeof useGuideMode>
 }
 
 export default function StateManager({ children }: StateManagerProps) {
@@ -143,6 +150,12 @@ export default function StateManager({ children }: StateManagerProps) {
     track('time_of_day_cycled')
   }, [timeOfDay])
 
+  // Audio tour guide — proximity-driven, no API.
+  const guide = useGuideMode({
+    nearbyLandmarks: landmarksState.nearbyLandmarks || [],
+    disabled: isFlyMode === false ? false : false, // always enabled; could pause in fly mode if it gets noisy
+  })
+
   // Track map load state
   useEffect(() => {
     if (!map) return
@@ -195,9 +208,6 @@ export default function StateManager({ children }: StateManagerProps) {
   const handleSeasonChange = useCallback((season: 'spring' | 'summer' | 'fall' | 'winter') => {
     setCurrentSeason(season)
   }, [])
-
-  // Washington Monument — anchor point for the cinematic 3D entry.
-  const WASHINGTON_MONUMENT: [number, number] = [-77.0353, 38.8895]
 
   const handleToggle3D = useCallback(() => {
     setIs3DView(prev => {
@@ -448,6 +458,9 @@ export default function StateManager({ children }: StateManagerProps) {
     // Satellite imagery
     isSatelliteView,
     toggleSatellite,
+
+    // Guide
+    guide,
   }
 
   return <>{children(props)}</>

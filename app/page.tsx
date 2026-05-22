@@ -17,6 +17,8 @@ import SeasonalGrade from './components/map/effects/SeasonalGrade'
 import TimeOfDayGrade from './components/map/effects/TimeOfDayGrade'
 import SearchPalette from './components/ui/SearchPalette'
 import MysteryCard from './components/game/MysteryCard'
+import GuideCard from './components/game/GuideCard'
+import GuideOptInPrompt from './components/game/GuideOptInPrompt'
 import FeedbackTriggers from './components/ui/FeedbackTriggers'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 
@@ -148,6 +150,21 @@ export default function Home() {
                     visited={state.gameState.gameProgress.visitedLandmarks}
                     onNavigate={state.handleNavigateToLandmark}
                   />
+
+                  {/* Audio tour — opt-in prompt the first time, then auto-narrates on approach */}
+                  {state.guide.showOptIn && state.guide.pendingLandmark && (
+                    <GuideOptInPrompt
+                      landmarkName={state.guide.pendingLandmark.name}
+                      onAccept={state.guide.acceptOptIn}
+                      onDismiss={state.guide.dismissOptIn}
+                    />
+                  )}
+                  {state.guide.activeTour && (
+                    <GuideCard
+                      tour={state.guide.activeTour}
+                      onClose={state.guide.closeTour}
+                    />
+                  )}
 
                   {/* Contextual Feedback System */}
                   <FeedbackTriggers
