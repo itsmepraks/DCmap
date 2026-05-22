@@ -172,5 +172,14 @@ export function useTourNarration() {
   // Belt-and-braces cancel on unmount.
   useEffect(() => () => stop(), [stop])
 
-  return { state, speak, pause, resume, stop, supported: state !== 'unsupported' }
+  return {
+    state,
+    speak,
+    pause,
+    resume,
+    stop,
+    supported: state !== 'unsupported',
+    /** Currently selected voice (for diagnostic display). */
+    voiceName: voice?.name ?? null,
+  }
 }

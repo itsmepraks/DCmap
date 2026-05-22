@@ -98,7 +98,15 @@ export function useMapInitialization(
         }
       }
       mapInstance.on('style.load', onStyleLoad)
-      mapInstance.on('error', (e) => console.error('Map error:', e.error))
+      mapInstance.on('error', (e) => {
+        // Suppress a known Mapbox Standard internal 3D-model loader error
+        // ("t.json.meshes is not iterable") that fires when a specific 3D
+        // model tile is missing meshes data. It's cosmetic — does not affect
+        // rendering — and we can't fix it from our side.
+        const msg = e.error?.message || ''
+        if (msg.includes('meshes is not iterable')) return
+        console.error('Map error:', e.error)
+      })
     } catch (error) {
       console.error('Error creating map:', error)
     }
