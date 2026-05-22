@@ -58,65 +58,75 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
   }
   map.addSource(SOURCE_ID, { type: 'geojson', data: geo })
 
-  // 1. Skyline halo — huge soft glow visible from far zooms. This is what
-  //    gives DC the city-of-lights feel when you're looking at the whole Mall.
+  // Three stacked circle layers compose a stadium-floodlight effect:
+  //   skyline (huge soft halo) + glow (medium warm wash) + core (bright
+  //   white spotlight pool). Sit flat on the map plane so they read as
+  //   light pooling on the ground around each monument.
+
+  // 1. Skyline halo — biggest, softest. Gives DC the city-of-lights feel
+  //    even at very wide zooms (z9–z12 view-the-whole-Mall).
   map.addLayer({
     id: SKYLINE_LAYER,
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-color': '#FFC774',
-      'circle-blur': 1.8,
+      'circle-color': '#FFD688',
+      'circle-blur': 2.0,
+      'circle-pitch-alignment': 'map',
       'circle-radius': [
-        'interpolate', ['exponential', 1.6], ['zoom'],
-        9, 22,
-        11, 42,
-        13, 70,
-        15, 120,
-        17, 200,
-        19, 320,
-      ],
-      'circle-opacity': 0, // animated via setPaintProperty
-    },
-  })
-
-  // 2. Medium ambient halo
-  map.addLayer({
-    id: GLOW_LAYER,
-    type: 'circle',
-    source: SOURCE_ID,
-    paint: {
-      'circle-color': '#FFD58A',
-      'circle-blur': 1.2,
-      'circle-radius': [
-        'interpolate', ['exponential', 1.6], ['zoom'],
-        9, 8,
-        11, 16,
-        13, 28,
-        15, 52,
-        17, 90,
-        19, 150,
+        'interpolate', ['exponential', 1.5], ['zoom'],
+        9, 35,
+        11, 65,
+        13, 110,
+        15, 180,
+        17, 280,
+        19, 420,
       ],
       'circle-opacity': 0,
     },
   })
 
-  // 3. Hot core — bright, focused
+  // 2. Medium warm halo — fills the gap between the bright core and the
+  //    diffuse skyline halo.
+  map.addLayer({
+    id: GLOW_LAYER,
+    type: 'circle',
+    source: SOURCE_ID,
+    paint: {
+      'circle-color': '#FFE4A0',
+      'circle-blur': 1.0,
+      'circle-pitch-alignment': 'map',
+      'circle-radius': [
+        'interpolate', ['exponential', 1.6], ['zoom'],
+        9, 14,
+        11, 28,
+        13, 48,
+        15, 85,
+        17, 140,
+        19, 220,
+      ],
+      'circle-opacity': 0,
+    },
+  })
+
+  // 3. Hot core — pure white spotlight pool, looks like the real floodlit
+  //    base of the Washington Monument or Lincoln Memorial.
   map.addLayer({
     id: CORE_LAYER,
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-color': '#FFF1C4',
-      'circle-blur': 0.6,
+      'circle-color': '#FFFFFF',
+      'circle-blur': 0.4,
+      'circle-pitch-alignment': 'map',
       'circle-radius': [
         'interpolate', ['exponential', 1.5], ['zoom'],
-        9, 3,
-        11, 6,
-        13, 12,
-        15, 22,
-        17, 38,
-        19, 60,
+        9, 6,
+        11, 12,
+        13, 24,
+        15, 42,
+        17, 70,
+        19, 110,
       ],
       'circle-opacity': 0,
     },
@@ -139,9 +149,11 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
         map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
         map.setPaintProperty(GLOW_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
         map.setPaintProperty(CORE_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
-        map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', target * 0.35)
-        map.setPaintProperty(GLOW_LAYER, 'circle-opacity', target * 0.6)
-        map.setPaintProperty(CORE_LAYER, 'circle-opacity', target * 0.95)
+        // At night: bright opaque spotlight pools + warm halo + diffuse skyline.
+        // At day: zero.
+        map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', target * 0.55)
+        map.setPaintProperty(GLOW_LAYER, 'circle-opacity', target * 0.85)
+        map.setPaintProperty(CORE_LAYER, 'circle-opacity', target * 1.0)
       } catch {
         // Layers may not be ready before style.load; the style.load handler retries.
       }
@@ -151,8 +163,7 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
     map.on('style.load', apply)
 
     // Subtle slow pulse on the skyline halo at night — makes the monuments
-    // feel alive rather than statically lit. Pulse is much weaker (or off)
-    // during the day so it doesn't draw the eye when it shouldn't.
+    // feel alive rather than statically lit.
     const pulseAmplitude = lightPreset === 'night' ? 0.18 : lightPreset === 'dusk' ? 0.08 : 0
     if (pulseAmplitude > 0) {
       let t = 0
@@ -160,7 +171,7 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
         if (!map.isStyleLoaded()) return
         t += 0.05
         try {
-          const base = glowFor(lightPreset) * 0.35
+          const base = glowFor(lightPreset) * 0.55
           const opacity = Math.max(0, base + Math.sin(t) * pulseAmplitude * base)
           map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', opacity)
         } catch {}

@@ -150,11 +150,8 @@ export default function StateManager({ children }: StateManagerProps) {
     track('time_of_day_cycled')
   }, [timeOfDay])
 
-  // Audio tour guide — proximity-driven, no API.
-  const guide = useGuideMode({
-    nearbyLandmarks: landmarksState.nearbyLandmarks || [],
-    disabled: isFlyMode === false ? false : false, // always enabled; could pause in fly mode if it gets noisy
-  })
+  // (guide proximity + hook are wired further down — they need playerPosition,
+  // which is computed from flyControllerState below.)
 
   // Track map load state
   useEffect(() => {
@@ -346,6 +343,26 @@ export default function StateManager({ children }: StateManagerProps) {
 
     return nearest
   }, [playerPosition, landmarksState.landmarks, gameState.gameProgress.visitedLandmarks])
+
+  // Audio tour guide proximity — independent of the `nearbyLandmarks` list
+  // (that one filters visited landmarks, which would silently disable the
+  // guide once you finish a tour). Includes ALL landmarks so users can
+  // re-listen to places they have already discovered.
+  const guideNearby = useMemo(() => {
+    if (!playerPosition || !landmarksState.landmarks?.length) return []
+    return landmarksState.landmarks
+      .map((l: { id: string; name: string; coordinates: [number, number] }) => ({
+        id: l.id,
+        name: l.name,
+        distance: calculateDistance(playerPosition, {
+          lng: l.coordinates[0],
+          lat: l.coordinates[1],
+        }),
+      }))
+      .sort((a: { distance: number }, b: { distance: number }) => a.distance - b.distance)
+  }, [playerPosition, landmarksState.landmarks])
+
+  const guide = useGuideMode({ nearbyLandmarks: guideNearby })
 
   // Check completion status
   const allLandmarksVisited = landmarksState.landmarks.length > 0 &&
