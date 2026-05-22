@@ -9,8 +9,6 @@ export const STORAGE_KEYS = {
   quests: 'dc-explorer-quests',
   challenges: 'dc-daily-challenges',
   streak: 'dc-streak',
-  guideMode: 'dc-guide-mode',
-  guideOptInShown: 'dc-guide-opt-in-shown',
 } as const
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]

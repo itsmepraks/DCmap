@@ -169,6 +169,8 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
       let t = 0
       pulseInterval = window.setInterval(() => {
         if (!map.isStyleLoaded()) return
+        // Layer might not exist yet on the very first style.load tick.
+        if (!map.getLayer(SKYLINE_LAYER)) return
         t += 0.05
         try {
           const base = glowFor(lightPreset) * 0.55

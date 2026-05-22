@@ -1,10 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { STORAGE_KEYS } from '@/app/lib/storageKeys'
+import { useCallback, useMemo, useState } from 'react'
 import { getTour, type Tour } from '@/app/lib/tours'
 
-const PROXIMITY_M = 150 // metres — close enough to be "at" the landmark
+const PROXIMITY_M = 200 // metres — close enough to qualify as "at" the landmark
 
 interface NearbyLandmark {
   id: string
@@ -13,111 +12,68 @@ interface NearbyLandmark {
 }
 
 interface UseGuideModeOpts {
-  /** Sorted nearest-first by useLandmarks. */
+  /** Sorted nearest-first. */
   nearbyLandmarks: NearbyLandmark[]
-  /** Disable guide while certain modals/modes are active. */
+  /** Disable while certain modes are active (e.g. modal flows). */
   disabled?: boolean
 }
 
 interface GuideState {
-  /** User has explicitly enabled the audio guide. */
-  enabled: boolean
-  /** Toggle on/off (persisted). */
-  toggle: () => void
-  /** True if we should show the "Try the Guide" opt-in prompt right now. */
-  showOptIn: boolean
-  /** Landmark the opt-in / active tour is about. */
-  pendingLandmark: { id: string; name: string } | null
-  /** Active tour shown in GuideCard, if any. */
+  /** Tour for the nearest landmark we have content for, or null. */
+  availableTour: Tour | null
+  /** Active tour currently shown to the user, or null. */
   activeTour: Tour | null
-  /** Accept the opt-in: enable mode + open the pending landmark's tour. */
-  acceptOptIn: () => void
-  /** Dismiss the opt-in (silently — same landmark won't re-prompt). */
-  dismissOptIn: () => void
-  /** Close the active tour without disabling guide mode. */
+  /** Open the tour that's currently available. */
+  openTour: () => void
+  /** Close the active tour. */
   closeTour: () => void
+  /** Dismiss the pill for this landmark in this session. */
+  dismissAvailable: () => void
 }
 
+/**
+ * Surfaces an "audio tour available" affordance when the user reaches a
+ * landmark we have content for. Click-to-open only — never auto-opens.
+ * Dismissed tours stay dismissed for the rest of the session for that
+ * specific landmark.
+ */
 export function useGuideMode({ nearbyLandmarks, disabled }: UseGuideModeOpts): GuideState {
-  const [enabled, setEnabled] = useState(false)
-  const [optInShown, setOptInShown] = useState(false)
-  const [showOptIn, setShowOptIn] = useState(false)
-  const [pendingLandmark, setPendingLandmark] = useState<{ id: string; name: string } | null>(null)
-  const [activeTourId, setActiveTourId] = useState<string | null>(null)
-  const [seenSession, setSeenSession] = useState<Set<string>>(() => new Set())
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set())
 
-  // Hydrate persisted flags.
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    setEnabled(localStorage.getItem(STORAGE_KEYS.guideMode) === 'true')
-    setOptInShown(localStorage.getItem(STORAGE_KEYS.guideOptInShown) === 'true')
+  // Closest landmark in range that we have a tour for and that hasn't been
+  // dismissed in this session.
+  const candidate = useMemo(() => {
+    if (disabled) return null
+    for (const l of nearbyLandmarks) {
+      if (l.distance >= PROXIMITY_M) break // sorted, so we can stop
+      if (dismissed.has(l.id)) continue
+      if (!getTour(l.id)) continue
+      return l
+    }
+    return null
+  }, [nearbyLandmarks, dismissed, disabled])
+
+  const availableTour = candidate ? getTour(candidate.id) ?? null : null
+  const activeTour = activeId ? getTour(activeId) ?? null : null
+
+  const openTour = useCallback(() => {
+    if (candidate) setActiveId(candidate.id)
+  }, [candidate])
+
+  const closeTour = useCallback(() => {
+    setActiveId(null)
   }, [])
 
-  // Closest landmark that is actually close enough to qualify.
-  const nearest = useMemo(() => {
-    return nearbyLandmarks.find((l) => l.distance < PROXIMITY_M) || null
-  }, [nearbyLandmarks])
-
-  // Proximity trigger: drives both the opt-in prompt and the active tour.
-  useEffect(() => {
-    if (disabled) return
-    if (!nearest) return
-    if (!getTour(nearest.id)) return // Only landmarks we have curated content for.
-    if (seenSession.has(nearest.id)) return // Don't re-trigger within this session.
-
-    setSeenSession((prev) => new Set(prev).add(nearest.id))
-
-    if (enabled) {
-      // Guide is on — open the tour directly.
-      setActiveTourId(nearest.id)
-    } else if (!optInShown) {
-      // First time a landmark is in range — offer the guide.
-      setPendingLandmark({ id: nearest.id, name: nearest.name })
-      setShowOptIn(true)
+  const dismissAvailable = useCallback(() => {
+    if (candidate) {
+      setDismissed((prev) => {
+        const next = new Set(prev)
+        next.add(candidate.id)
+        return next
+      })
     }
-  }, [nearest, enabled, optInShown, seenSession, disabled])
+  }, [candidate])
 
-  const toggle = useCallback(() => {
-    setEnabled((prev) => {
-      const next = !prev
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.guideMode, String(next))
-      }
-      return next
-    })
-  }, [])
-
-  const acceptOptIn = useCallback(() => {
-    setEnabled(true)
-    setOptInShown(true)
-    setShowOptIn(false)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.guideMode, 'true')
-      localStorage.setItem(STORAGE_KEYS.guideOptInShown, 'true')
-    }
-    if (pendingLandmark) setActiveTourId(pendingLandmark.id)
-  }, [pendingLandmark])
-
-  const dismissOptIn = useCallback(() => {
-    setOptInShown(true)
-    setShowOptIn(false)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.guideOptInShown, 'true')
-    }
-  }, [])
-
-  const closeTour = useCallback(() => setActiveTourId(null), [])
-
-  const activeTour = activeTourId ? getTour(activeTourId) ?? null : null
-
-  return {
-    enabled,
-    toggle,
-    showOptIn,
-    pendingLandmark,
-    activeTour,
-    acceptOptIn,
-    dismissOptIn,
-    closeTour,
-  }
+  return { availableTour, activeTour, openTour, closeTour, dismissAvailable }
 }

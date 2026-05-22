@@ -18,7 +18,7 @@ import TimeOfDayGrade from './components/map/effects/TimeOfDayGrade'
 import SearchPalette from './components/ui/SearchPalette'
 import MysteryCard from './components/game/MysteryCard'
 import GuideCard from './components/game/GuideCard'
-import GuideOptInPrompt from './components/game/GuideOptInPrompt'
+import GuideAvailablePill from './components/game/GuideAvailablePill'
 import FeedbackTriggers from './components/ui/FeedbackTriggers'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 
@@ -151,12 +151,12 @@ export default function Home() {
                     onNavigate={state.handleNavigateToLandmark}
                   />
 
-                  {/* Audio tour — opt-in prompt the first time, then auto-narrates on approach */}
-                  {state.guide.showOptIn && state.guide.pendingLandmark && (
-                    <GuideOptInPrompt
-                      landmarkName={state.guide.pendingLandmark.name}
-                      onAccept={state.guide.acceptOptIn}
-                      onDismiss={state.guide.dismissOptIn}
+                  {/* Audio tour — click-to-open pill while in range, then GuideCard plays narration on demand. */}
+                  {state.guide.availableTour && !state.guide.activeTour && (
+                    <GuideAvailablePill
+                      landmarkName={state.guide.availableTour.name}
+                      onOpen={state.guide.openTour}
+                      onDismiss={state.guide.dismissAvailable}
                     />
                   )}
                   {state.guide.activeTour && (
