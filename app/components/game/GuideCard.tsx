@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useTourNarration } from '@/app/hooks/useTourNarration'
 import type { Tour, TourCard } from '@/app/lib/tours'
@@ -26,10 +26,7 @@ const KIND_ICON: Record<TourCard['kind'], string> = {
 
 export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const [idx, setIdx] = useState(0)
-  // Browsers block speechSynthesis until the user makes a gesture on this
-  // page session. Track whether the user has clicked Play at least once;
-  // only then do we auto-advance with narration.
-  const [userStarted, setUserStarted] = useState(false)
+  const [started, setStarted] = useState(false)
   const reduceMotion = useReducedMotion()
   const { speak, pause, resume, stop, state, supported } = useTourNarration()
 
@@ -37,18 +34,31 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const isLast = idx === tour.cards.length - 1
   const isFirst = idx === 0
 
-  // Auto-advance narration once the user has initiated playback once.
-  useEffect(() => {
-    if (!userStarted || reduceMotion || !supported || !card) return
-    speak(card.voice, {
-      onEnd: () => {
-        if (!isLast) {
-          window.setTimeout(() => setIdx((i) => Math.min(tour.cards.length - 1, i + 1)), 600)
-        }
-      },
-    })
-    return () => stop()
-  }, [idx, card, userStarted, speak, stop, isLast, reduceMotion, supported, tour.cards.length])
+  // Speak a specific card by index. Auto-advances to the next card on
+  // utterance end. Called exclusively from event handlers (button clicks,
+  // onEnd callbacks) — never from useEffect — so speechSynthesis.cancel()
+  // can't race with a second speak() in the same microtask.
+  const speakCard = useCallback(
+    (cardIdx: number) => {
+      const next = tour.cards[cardIdx]
+      if (!next) return
+      console.info(`[guide] speaking card ${cardIdx} of ${tour.cards.length}`)
+      speak(next.voice, {
+        onEnd: () => {
+          if (cardIdx < tour.cards.length - 1) {
+            window.setTimeout(() => {
+              setIdx(cardIdx + 1)
+              speakCard(cardIdx + 1)
+            }, 600)
+          }
+        },
+      })
+    },
+    [tour.cards, speak]
+  )
+
+  // Stop narration when the card unmounts.
+  useEffect(() => () => stop(), [stop])
 
   const handleClose = () => {
     stop()
@@ -58,18 +68,31 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const togglePlay = () => {
     if (state === 'speaking') {
       pause()
-    } else if (state === 'paused') {
-      resume()
-    } else if (card) {
-      setUserStarted(true)
-      speak(card.voice, {
-        onEnd: () => {
-          if (!isLast) {
-            window.setTimeout(() => setIdx((i) => Math.min(tour.cards.length - 1, i + 1)), 600)
-          }
-        },
-      })
+      return
     }
+    if (state === 'paused') {
+      resume()
+      return
+    }
+    if (!started) setStarted(true)
+    speakCard(idx)
+  }
+
+  const goNext = () => {
+    if (isLast) {
+      handleClose()
+      return
+    }
+    const newIdx = idx + 1
+    setIdx(newIdx)
+    if (started) speakCard(newIdx)
+  }
+
+  const goBack = () => {
+    if (isFirst) return
+    const newIdx = idx - 1
+    setIdx(newIdx)
+    if (started) speakCard(newIdx)
   }
 
   return (
@@ -92,7 +115,6 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
           role="dialog"
           aria-label={`Tour guide: ${tour.name}`}
         >
-          {/* Header */}
           <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
@@ -129,7 +151,6 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             </div>
           </div>
 
-          {/* Body */}
           <div className="px-4 py-4">
             <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-white/40">
               <span aria-hidden="true">{KIND_ICON[card.kind]}</span>
@@ -139,7 +160,6 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             <p className="text-sm leading-relaxed text-white/75">{card.display}</p>
           </div>
 
-          {/* Progress dots */}
           <div className="flex justify-center gap-1.5 pb-2">
             {tour.cards.map((_, i) => (
               <div
@@ -153,10 +173,9 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             ))}
           </div>
 
-          {/* Controls */}
           <div className="flex items-center justify-between border-t border-white/10 px-3 py-2">
             <button
-              onClick={() => setIdx((i) => Math.max(0, i - 1))}
+              onClick={goBack}
               disabled={isFirst}
               className="rounded-md px-3 py-1.5 text-xs font-medium text-white/60 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
             >
@@ -168,30 +187,28 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
                 onClick={togglePlay}
                 aria-label={state === 'speaking' ? 'Pause narration' : 'Play narration'}
                 animate={
-                  !userStarted && state !== 'speaking'
+                  !started && state !== 'speaking'
                     ? { scale: [1, 1.06, 1] }
                     : { scale: 1 }
                 }
                 transition={
-                  !userStarted ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.15 }
+                  !started ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.15 }
                 }
                 className={
                   'rounded-full px-5 py-2 text-xs font-semibold text-stone-900 transition ' +
-                  (!userStarted
+                  (!started
                     ? 'bg-amber-400 shadow-lg shadow-amber-300/40 ring-2 ring-amber-300/50 hover:bg-amber-300'
                     : 'bg-amber-400/90 hover:bg-amber-300')
                 }
               >
-                {state === 'speaking' ? '⏸ Pause' : state === 'paused' ? '▶ Resume' : !userStarted ? '🔊 Listen' : '▶ Play'}
+                {state === 'speaking' ? '⏸ Pause' : state === 'paused' ? '▶ Resume' : !started ? '🔊 Listen' : '▶ Play'}
               </motion.button>
             ) : (
               <span className="text-xs text-white/30">No voice on this browser</span>
             )}
 
             <button
-              onClick={() =>
-                isLast ? handleClose() : setIdx((i) => Math.min(tour.cards.length - 1, i + 1))
-              }
+              onClick={goNext}
               className="rounded-md px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/5"
             >
               {isLast ? 'Done' : 'Next →'}

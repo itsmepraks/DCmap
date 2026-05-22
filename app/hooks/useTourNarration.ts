@@ -6,16 +6,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  * Wraps the browser's free SpeechSynthesis API to narrate tour cards. No API
  * keys, no network calls — uses the on-device voices installed in the OS.
  *
- * Cleanup is critical: leaving an utterance running across remounts (e.g.
- * React Strict Mode) leaves the browser's TTS queue stuck. We cancel on
- * unmount and whenever a new utterance is requested.
+ * Designed to be called from event handlers only (button clicks, onEnd
+ * callbacks). Calling speak() from a useEffect can race with the cancel()
+ * inside the next speak() call and produce silent failures.
  */
 export type NarrationState = 'idle' | 'speaking' | 'paused' | 'unsupported'
 
 export function useTourNarration() {
   const [state, setState] = useState<NarrationState>('idle')
   const [voice, setVoiceState] = useState<SpeechSynthesisVoice | null>(null)
+  const voiceReadyRef = useRef(false)
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const keepAliveRef = useRef<number | null>(null)
 
   // Detect support + auto-pick a pleasant default voice.
   useEffect(() => {
@@ -27,16 +29,18 @@ export function useTourNarration() {
     const pickVoice = () => {
       const voices = window.speechSynthesis.getVoices()
       if (voices.length === 0) return
-      // Prefer en-US, then any English, with a slight bias toward natural/
-      // neural voices that tend to score highest on common platforms.
+      voiceReadyRef.current = true
+      console.info(`[guide] ${voices.length} TTS voices loaded`)
       const preferOrder = [
-        (v: SpeechSynthesisVoice) => v.lang === 'en-US' && /natural|neural|samantha|aria/i.test(v.name),
+        (v: SpeechSynthesisVoice) => v.lang === 'en-US' && /natural|neural|samantha|aria|premium/i.test(v.name),
+        (v: SpeechSynthesisVoice) => v.lang === 'en-US' && !v.name.toLowerCase().includes('compact'),
         (v: SpeechSynthesisVoice) => v.lang === 'en-US',
         (v: SpeechSynthesisVoice) => v.lang.startsWith('en'),
       ]
       for (const test of preferOrder) {
         const match = voices.find(test)
         if (match) {
+          console.info(`[guide] selected voice: ${match.name} (${match.lang})`)
           setVoiceState(match)
           return
         }
@@ -44,16 +48,14 @@ export function useTourNarration() {
       setVoiceState(voices[0])
     }
 
+    // Some browsers populate voices synchronously, others fire voiceschanged.
     pickVoice()
-    // voiceschanged fires when the OS loads its voice list asynchronously.
     window.speechSynthesis.addEventListener('voiceschanged', pickVoice)
     return () => {
       window.speechSynthesis.removeEventListener('voiceschanged', pickVoice)
       window.speechSynthesis.cancel()
     }
   }, [])
-
-  const keepAliveRef = useRef<number | null>(null)
 
   const stopKeepAlive = useCallback(() => {
     if (keepAliveRef.current !== null) {
@@ -62,40 +64,36 @@ export function useTourNarration() {
     }
   }, [])
 
-  const speak = useCallback(
-    (text: string, opts?: { rate?: number; pitch?: number; onEnd?: () => void }) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-        console.warn('speechSynthesis not available in this browser')
-        return
-      }
-      window.speechSynthesis.cancel()
-      stopKeepAlive()
-
+  const doSpeak = useCallback(
+    (text: string, opts?: { rate?: number; pitch?: number; onEnd?: () => void }, voiceArg?: SpeechSynthesisVoice | null) => {
       const u = new SpeechSynthesisUtterance(text)
-      if (voice) u.voice = voice
+      const v = voiceArg ?? voice
+      if (v) u.voice = v
       u.rate = opts?.rate ?? 0.95
       u.pitch = opts?.pitch ?? 1.05
       u.volume = 1
-      u.onstart = () => setState('speaking')
+      u.onstart = () => {
+        console.info('[guide] utterance started')
+        setState('speaking')
+      }
       u.onpause = () => setState('paused')
       u.onresume = () => setState('speaking')
       u.onend = () => {
+        console.info('[guide] utterance ended')
         setState('idle')
         stopKeepAlive()
         opts?.onEnd?.()
       }
       u.onerror = (e) => {
-        // Surface the error so silent failures are debuggable.
-        console.warn('speechSynthesis error:', e.error || e)
+        console.warn('[guide] speechSynthesis error:', (e as SpeechSynthesisErrorEvent).error || e)
         setState('idle')
         stopKeepAlive()
       }
       utterRef.current = u
       window.speechSynthesis.speak(u)
 
-      // Chrome auto-pauses speechSynthesis after ~15s for no good reason.
-      // Tickling pause/resume on a 5s cadence keeps it talking through long
-      // utterances. Harmless in browsers that don't have the bug.
+      // Chrome auto-pauses speechSynthesis after ~15s. Tickle pause/resume
+      // every 5s to keep it talking through long utterances.
       keepAliveRef.current = window.setInterval(() => {
         if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
           window.speechSynthesis.pause()
@@ -104,6 +102,37 @@ export function useTourNarration() {
       }, 5000)
     },
     [voice, stopKeepAlive]
+  )
+
+  const speak = useCallback(
+    (text: string, opts?: { rate?: number; pitch?: number; onEnd?: () => void }) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        console.warn('[guide] speechSynthesis not available in this browser')
+        return
+      }
+      const synth = window.speechSynthesis
+
+      // If something is already speaking/queued, cancel first. Some browsers
+      // (notably Safari + older Chrome) drop a new speak() if it's called
+      // in the same microtask as cancel(); defer the new utterance one tick.
+      const wasBusy = synth.speaking || synth.pending
+      if (wasBusy) synth.cancel()
+      stopKeepAlive()
+
+      // If voices haven't been enumerated yet, give them one tick to load.
+      if (!voiceReadyRef.current) {
+        console.info('[guide] voices not loaded yet, waiting briefly...')
+        setTimeout(() => doSpeak(text, opts), 120)
+        return
+      }
+
+      if (wasBusy) {
+        setTimeout(() => doSpeak(text, opts), 80)
+      } else {
+        doSpeak(text, opts)
+      }
+    },
+    [doSpeak, stopKeepAlive]
   )
 
   const pause = useCallback(() => {
