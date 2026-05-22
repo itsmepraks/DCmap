@@ -12,14 +12,16 @@ interface Props {
 const LANDCOVER_LAYER = 'seasonal-ground-landcover'
 const PARK_LAYER = 'seasonal-ground-parks'
 
-// Per-season tint for park / grass / forest polygons that sit on the ground.
-// Standard renders these summer-green year-round; this overlay paints them
-// the right colour without recoloring Standard's 3D tree models above.
+// Per-season tint for park / grass / forest polygons. Subtle by design —
+// Standard's parks are already a credible summer green, and overpainting them
+// in one uniform colour reads as theatrical instead of realistic. Spring is
+// barely-tinted blossom; fall is warm amber that lets the green peek through;
+// winter is a thin snow wash, not pure white.
 const PALETTE: Record<Season, { landcover: string; park: string; landOp: number; parkOp: number }> = {
-  spring: { landcover: '#F5DCE6', park: '#FCE1EA', landOp: 0.32, parkOp: 0.45 },
-  summer: { landcover: '#FFFFFF', park: '#FFFFFF', landOp: 0, parkOp: 0 }, // pass through Standard's green
-  fall:   { landcover: '#D67932', park: '#E0823A', landOp: 0.55, parkOp: 0.65 },
-  winter: { landcover: '#F8FAFD', park: '#FFFFFF', landOp: 0.65, parkOp: 0.78 },
+  spring: { landcover: '#EFD2DE', park: '#F4D7E1', landOp: 0.12, parkOp: 0.18 },
+  summer: { landcover: '#FFFFFF', park: '#FFFFFF', landOp: 0, parkOp: 0 },
+  fall:   { landcover: '#BF7233', park: '#C77A37', landOp: 0.25, parkOp: 0.32 },
+  winter: { landcover: '#E8EEF6', park: '#F0F4FA', landOp: 0.38, parkOp: 0.5 },
 }
 
 /**

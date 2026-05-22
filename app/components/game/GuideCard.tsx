@@ -26,6 +26,10 @@ const KIND_ICON: Record<TourCard['kind'], string> = {
 
 export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const [idx, setIdx] = useState(0)
+  // Browsers block speechSynthesis until the user makes a gesture on this
+  // page session. Track whether the user has clicked Play at least once;
+  // only then do we auto-advance with narration.
+  const [userStarted, setUserStarted] = useState(false)
   const reduceMotion = useReducedMotion()
   const { speak, pause, resume, stop, state, supported } = useTourNarration()
 
@@ -33,21 +37,18 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const isLast = idx === tour.cards.length - 1
   const isFirst = idx === 0
 
-  // Auto-speak each card as it advances (unless reduced motion is set —
-  // the OS-level intent there is "minimize unsolicited motion/audio").
+  // Auto-advance narration once the user has initiated playback once.
   useEffect(() => {
-    if (reduceMotion || !supported || !card) return
+    if (!userStarted || reduceMotion || !supported || !card) return
     speak(card.voice, {
       onEnd: () => {
-        // Auto-advance only if user hasn't paused or closed the card.
         if (!isLast) {
-          // Small breath before next card.
           window.setTimeout(() => setIdx((i) => Math.min(tour.cards.length - 1, i + 1)), 600)
         }
       },
     })
     return () => stop()
-  }, [idx, card, speak, stop, isLast, reduceMotion, supported, tour.cards.length])
+  }, [idx, card, userStarted, speak, stop, isLast, reduceMotion, supported, tour.cards.length])
 
   const handleClose = () => {
     stop()
@@ -55,9 +56,20 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   }
 
   const togglePlay = () => {
-    if (state === 'speaking') pause()
-    else if (state === 'paused') resume()
-    else if (card) speak(card.voice)
+    if (state === 'speaking') {
+      pause()
+    } else if (state === 'paused') {
+      resume()
+    } else if (card) {
+      setUserStarted(true)
+      speak(card.voice, {
+        onEnd: () => {
+          if (!isLast) {
+            window.setTimeout(() => setIdx((i) => Math.min(tour.cards.length - 1, i + 1)), 600)
+          }
+        },
+      })
+    }
   }
 
   return (
@@ -81,10 +93,20 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
           aria-label={`Tour guide: ${tour.name}`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <div className="min-w-0">
+          <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255, 200, 130, 0.25), rgba(255, 200, 130, 0.05))',
+                border: '1px solid rgba(255, 200, 130, 0.4)',
+              }}
+              aria-hidden="true"
+            >
+              <span className="text-lg">🎧</span>
+            </div>
+            <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase tracking-[0.3em] text-amber-300/80">
-                Your guide
+                Audio guide
               </div>
               <div className="truncate text-sm font-semibold text-white">{tour.name}</div>
             </div>
@@ -142,13 +164,26 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             </button>
 
             {supported ? (
-              <button
+              <motion.button
                 onClick={togglePlay}
                 aria-label={state === 'speaking' ? 'Pause narration' : 'Play narration'}
-                className="rounded-full bg-amber-400/90 px-4 py-1.5 text-xs font-semibold text-stone-900 transition hover:bg-amber-300"
+                animate={
+                  !userStarted && state !== 'speaking'
+                    ? { scale: [1, 1.06, 1] }
+                    : { scale: 1 }
+                }
+                transition={
+                  !userStarted ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.15 }
+                }
+                className={
+                  'rounded-full px-5 py-2 text-xs font-semibold text-stone-900 transition ' +
+                  (!userStarted
+                    ? 'bg-amber-400 shadow-lg shadow-amber-300/40 ring-2 ring-amber-300/50 hover:bg-amber-300'
+                    : 'bg-amber-400/90 hover:bg-amber-300')
+                }
               >
-                {state === 'speaking' ? '⏸ Pause' : '▶ Play'}
-              </button>
+                {state === 'speaking' ? '⏸ Pause' : state === 'paused' ? '▶ Resume' : !userStarted ? '🔊 Listen' : '▶ Play'}
+              </motion.button>
             ) : (
               <span className="text-xs text-white/30">No voice on this browser</span>
             )}
