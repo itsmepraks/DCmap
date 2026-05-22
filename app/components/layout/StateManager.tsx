@@ -299,17 +299,37 @@ export default function StateManager({ children }: StateManagerProps) {
     }
   })
 
-  // Compute player position from fly controller or map center
-  const playerPosition = useMemo((): Coordinates | null => {
-    if (flyControllerState.position) {
-      return flyControllerState.position
-    }
-    if (map) {
+  // Track the live map center so that anything depending on player position
+  // (proximity hints, audio guide, recommendations) actually updates when the
+  // user pans. Throttled to ~5Hz so this doesn't trigger a render storm.
+  const [mapCenter, setMapCenter] = useState<Coordinates | null>(null)
+  useEffect(() => {
+    if (!map) return
+    const c = map.getCenter()
+    setMapCenter({ lng: c.lng, lat: c.lat })
+
+    let last = 0
+    const onMove = () => {
+      const now = performance.now()
+      if (now - last < 200) return
+      last = now
       const center = map.getCenter()
-      return { lng: center.lng, lat: center.lat }
+      setMapCenter({ lng: center.lng, lat: center.lat })
     }
-    return null
-  }, [flyControllerState.position, map])
+    map.on('move', onMove)
+    map.on('moveend', onMove)
+    return () => {
+      map.off('move', onMove)
+      map.off('moveend', onMove)
+    }
+  }, [map])
+
+  // Player position prefers the fly-controller (sub-frame accurate) but
+  // falls back to the live map centre when fly mode is off.
+  const playerPosition = useMemo((): Coordinates | null => {
+    if (flyControllerState.position) return flyControllerState.position
+    return mapCenter
+  }, [flyControllerState.position, mapCenter])
 
   // Compute nearest undiscovered landmark for HUD (single source for both
   // the "nearest undiscovered" card and the "recommended" card).

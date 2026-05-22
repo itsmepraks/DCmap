@@ -15,9 +15,14 @@ export function useMuseums(visitedLandmarks: Set<string>) {
 
   // Load museums data
   useEffect(() => {
-    fetch('/data/museums.geojson')
-      .then(res => res.json())
+    const ac = new AbortController()
+    fetch('/data/museums.geojson', { signal: ac.signal })
+      .then(res => {
+        if (!res.ok) throw new Error(`museums: HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
+        if (!data?.features) return
         setMuseums(data.features.map((f: any, index: number) => ({
           id: f.properties.NAME || `museum-${index}`,
           name: f.properties.NAME || 'Unknown Museum',
@@ -26,7 +31,11 @@ export function useMuseums(visitedLandmarks: Set<string>) {
           coordinates: f.geometry.coordinates
         })))
       })
-      .catch(err => console.error('Failed to load museums:', err))
+      .catch(err => {
+        if (err.name === 'AbortError') return
+        console.warn('Failed to load museums:', err)
+      })
+    return () => ac.abort()
   }, [])
 
   // Calculate visited count (using the same visitedLandmarks set)

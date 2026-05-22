@@ -33,9 +33,14 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
 
   // Load landmarks data
   useEffect(() => {
-    fetch('/data/landmarks.geojson')
-      .then(res => res.json())
+    const ac = new AbortController()
+    fetch('/data/landmarks.geojson', { signal: ac.signal })
+      .then(res => {
+        if (!res.ok) throw new Error(`landmarks: HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
+        if (!data?.features) return
         setLandmarks(data.features.map((f: any) => ({
           id: f.properties.id,
           name: f.properties.name,
@@ -46,7 +51,11 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
           coordinates: f.geometry.coordinates
         })))
       })
-      .catch(err => console.error('Failed to load landmarks:', err))
+      .catch(err => {
+        if (err.name === 'AbortError') return
+        console.warn('Failed to load landmarks:', err)
+      })
+    return () => ac.abort()
   }, [])
 
   // Recompute proximity when the map moves or the fly-mode position changes.
