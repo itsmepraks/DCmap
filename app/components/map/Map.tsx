@@ -72,16 +72,17 @@ export default function Map({
 
     if (is3DView) {
       map.easeTo({
-        pitch: 60,
-        duration: 1500,
-        easing: (t) => t * (2 - t)
+        pitch: 64,
+        bearing: -23,
+        duration: 1800,
+        easing: (t) => 1 - Math.pow(1 - t, 3)
       })
     } else {
       map.easeTo({
         pitch: 0,
         bearing: 0,
-        duration: 1500,
-        easing: (t) => t * (2 - t)
+        duration: 1400,
+        easing: (t) => 1 - Math.pow(1 - t, 3)
       })
     }
   }, [map, is3DView])

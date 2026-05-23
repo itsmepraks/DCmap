@@ -54,8 +54,8 @@ export function useMapInitialization(
         style: styleUrl || STANDARD_STYLE,
         center: DC_CENTER,
         zoom: ZOOM_LEVELS.default,
-        pitch: 60,
-        bearing: -17.6,
+        pitch: 64,
+        bearing: -23,
         antialias: true,
         maxPitch: 85,
         minZoom: ZOOM_LEVELS.min,
@@ -73,7 +73,7 @@ export function useMapInitialization(
       const onStyleLoad = () => {
         if (!mapInstance || cancelled) return
         try {
-          mapInstance.setConfigProperty('basemap', 'lightPreset', 'dusk')
+          mapInstance.setConfigProperty('basemap', 'lightPreset', 'day')
           mapInstance.setConfigProperty('basemap', 'show3dObjects', true)
           mapInstance.setConfigProperty('basemap', 'showPedestrianRoads', true)
           mapInstance.setConfigProperty('basemap', 'showPointOfInterestLabels', false)

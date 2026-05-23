@@ -29,10 +29,10 @@ const ALL_TREE_LAYERS = [
 ]
 
 const AURA_COLOR: Record<'spring' | 'summer' | 'fall' | 'winter', string> = {
-  spring: '#FFC2D1',
-  summer: '#A8D9A0',
-  fall: '#E0673F',
-  winter: '#D9E5EF',
+  spring: '#E8B7C4',
+  summer: '#A7D29B',
+  fall: '#B46D39',
+  winter: '#D7E2E8',
 }
 
 /**
@@ -260,16 +260,16 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
               'circle-blur': 0.8,
               'circle-radius': [
                 'interpolate', ['linear'], ['zoom'],
-                12, 3,
-                15, 6,
-                17, 9,
-                19, 14,
+                12, 2.5,
+                15, 5,
+                17, 7,
+                19, 10,
               ],
               'circle-opacity': [
                 'interpolate', ['linear'], ['zoom'],
-                12, 0.25,
-                15, 0.45,
-                17, 0.55,
+                12, 0.18,
+                15, 0.32,
+                17, 0.42,
               ],
             },
           })
@@ -344,7 +344,7 @@ export default function TreesLayer({ visible, season = 'summer', onSelect, onTre
               id: String(feature.id || Math.random()),
               type: 'tree',
               name: properties.COMMON_NAME || 'Unknown Tree',
-              description: `A ${properties.CONDITION || 'healthy'} ${properties.SPECIES || 'tree'} in Washington DC.`,
+              description: `A real DC street-tree inventory point. ${properties.CONDITION || 'Recorded'} condition, ${properties.SPECIES || 'species not listed'}${properties.DBH ? `, ${properties.DBH} inch trunk diameter` : ''}. Seasonal color is shown as a subtle local cue; the 3D tree models stay close to Mapbox's real basemap instead of turning every tree one fake color.`,
               coordinates: coordinates,
               metadata: {
                 species: properties.SPECIES,

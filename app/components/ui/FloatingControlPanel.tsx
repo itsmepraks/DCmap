@@ -30,10 +30,10 @@ export default function FloatingControlPanel({
   onToggleSatellite,
 }: FloatingControlPanelProps) {
   const seasons = [
-    { value: 'spring' as const, label: 'Spring', icon: '🌸', color: '#FFB7C5' },
-    { value: 'summer' as const, label: 'Summer', icon: '☀️', color: '#FFD700' },
-    { value: 'fall' as const, label: 'Fall', icon: '🍂', color: '#FF8C00' },
-    { value: 'winter' as const, label: 'Winter', icon: '❄️', color: '#87CEEB' }
+    { value: 'spring' as const, label: 'Spring', icon: '🌸', color: '#D79CAA' },
+    { value: 'summer' as const, label: 'Summer', icon: '☀️', color: '#8FB66B' },
+    { value: 'fall' as const, label: 'Fall', icon: '🍂', color: '#B66F38' },
+    { value: 'winter' as const, label: 'Winter', icon: '❄️', color: '#A9BBC4' }
   ]
 
   const layers = [
@@ -349,12 +349,12 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
       onClick={onClick}
       className="flex flex-col items-center justify-center py-2 sm:py-3 rounded-xl transition-all relative overflow-hidden min-h-[60px] sm:min-h-[70px]"
       style={{
-        background: isActive 
-          ? `linear-gradient(135deg, ${color}, ${color}CC)`
+        background: isActive
+          ? `linear-gradient(135deg, ${color}70, ${color}38)`
           : 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))',
-        border: `2px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(139, 69, 19, 0.2)'}`,
+        border: `2px solid ${isActive ? color : 'rgba(139, 69, 19, 0.2)'}`,
         boxShadow: isActive
-          ? `0 6px 16px ${color}60, inset 0 1px 0 rgba(255,255,255,0.3)`
+          ? `0 6px 16px ${color}35, inset 0 1px 0 rgba(255,255,255,0.45)`
           : '0 2px 8px rgba(0,0,0,0.1)'
       }}
     >
@@ -362,9 +362,9 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
       {isActive && (
         <motion.div
           className="absolute inset-0 pointer-events-none"
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          animate={{ opacity: [0.12, 0.28, 0.12] }}
           transition={{ duration: 2, repeat: Infinity }}
-          style={{ background: `radial-gradient(circle at center, ${color}80, transparent)` }}
+          style={{ background: `radial-gradient(circle at center, ${color}70, transparent)` }}
         />
       )}
 
@@ -372,9 +372,9 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
       <span 
         className="text-xs sm:text-xs font-bold uppercase relative z-10"
         style={{ 
-          color: isActive ? 'white' : minecraftTheme.colors.text.secondary,
+          color: minecraftTheme.colors.text.primary,
           fontFamily: 'monospace',
-          textShadow: isActive ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+          textShadow: isActive ? '0 1px 0 rgba(255,255,255,0.45)' : 'none'
         }}
       >
         {label}
@@ -386,9 +386,9 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(255,255,255,0.3)' }}
+          style={{ background: 'rgba(255,255,255,0.48)' }}
         >
-          <span className="text-white text-xs">✓</span>
+          <span className="text-stone-700 text-xs">✓</span>
         </motion.div>
       )}
 
@@ -400,4 +400,3 @@ function SeasonButton({ icon, label, color, isActive, onClick }: SeasonButtonPro
     </motion.button>
   )
 }
-

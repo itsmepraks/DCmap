@@ -20,6 +20,7 @@ const SOURCE_ID = 'monument-lights-source'
 const SKYLINE_LAYER = 'monument-lights-skyline' // huge soft halo visible from afar
 const GLOW_LAYER = 'monument-lights-glow'        // medium ambient glow
 const CORE_LAYER = 'monument-lights-core'         // bright hot core
+const BEACON_LAYER = 'monument-lights-beacon'     // screen-space sparkle so lights read from distance
 
 /**
  * Floodlit monument effect. At dusk and night, every landmark gets a warm
@@ -33,8 +34,8 @@ const CORE_LAYER = 'monument-lights-core'         // bright hot core
 function glowFor(preset: LightPreset): number {
   switch (preset) {
     case 'day': return 0
-    case 'dawn': return 0.35
-    case 'dusk': return 0.65
+    case 'dawn': return 0.25
+    case 'dusk': return 0.75
     case 'night': return 1
   }
 }
@@ -71,7 +72,7 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
     source: SOURCE_ID,
     paint: {
       'circle-color': '#FFD688',
-      'circle-blur': 2.0,
+      'circle-blur': 1.7,
       'circle-pitch-alignment': 'map',
       'circle-radius': [
         'interpolate', ['exponential', 1.5], ['zoom'],
@@ -83,6 +84,7 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
         19, 420,
       ],
       'circle-opacity': 0,
+      'circle-emissive-strength': 1,
     },
   })
 
@@ -94,7 +96,7 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
     source: SOURCE_ID,
     paint: {
       'circle-color': '#FFE4A0',
-      'circle-blur': 1.0,
+      'circle-blur': 0.85,
       'circle-pitch-alignment': 'map',
       'circle-radius': [
         'interpolate', ['exponential', 1.6], ['zoom'],
@@ -106,6 +108,7 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
         19, 220,
       ],
       'circle-opacity': 0,
+      'circle-emissive-strength': 1,
     },
   })
 
@@ -117,7 +120,7 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
     source: SOURCE_ID,
     paint: {
       'circle-color': '#FFFFFF',
-      'circle-blur': 0.4,
+      'circle-blur': 0.25,
       'circle-pitch-alignment': 'map',
       'circle-radius': [
         'interpolate', ['exponential', 1.5], ['zoom'],
@@ -129,6 +132,32 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
         19, 110,
       ],
       'circle-opacity': 0,
+      'circle-emissive-strength': 1,
+    },
+  })
+
+  // 4. Beacon — viewport-aligned bright pin of light. At high pitch, flat
+  // ground circles can slide behind 3D geometry; this layer keeps lit
+  // landmarks readable from a tourist's-eye camera angle.
+  map.addLayer({
+    id: BEACON_LAYER,
+    type: 'circle',
+    source: SOURCE_ID,
+    paint: {
+      'circle-color': '#FFF7D0',
+      'circle-blur': 0.7,
+      'circle-pitch-alignment': 'viewport',
+      'circle-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        9, 2.5,
+        12, 4,
+        15, 7,
+        18, 11,
+      ],
+      'circle-stroke-width': 1.2,
+      'circle-stroke-color': 'rgba(255,255,255,0.92)',
+      'circle-opacity': 0,
+      'circle-emissive-strength': 1,
     },
   })
 }
@@ -149,11 +178,13 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
         map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
         map.setPaintProperty(GLOW_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
         map.setPaintProperty(CORE_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
+        map.setPaintProperty(BEACON_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
         // At night: bright opaque spotlight pools + warm halo + diffuse skyline.
         // At day: zero.
-        map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', target * 0.55)
-        map.setPaintProperty(GLOW_LAYER, 'circle-opacity', target * 0.85)
-        map.setPaintProperty(CORE_LAYER, 'circle-opacity', target * 1.0)
+        map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', target * 0.72)
+        map.setPaintProperty(GLOW_LAYER, 'circle-opacity', target * 0.92)
+        map.setPaintProperty(CORE_LAYER, 'circle-opacity', target)
+        map.setPaintProperty(BEACON_LAYER, 'circle-opacity', target * 0.9)
       } catch {
         // Layers may not be ready before style.load; the style.load handler retries.
       }
@@ -173,9 +204,12 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
         if (!map.getLayer(SKYLINE_LAYER)) return
         t += 0.05
         try {
-          const base = glowFor(lightPreset) * 0.55
+          const base = glowFor(lightPreset) * 0.72
           const opacity = Math.max(0, base + Math.sin(t) * pulseAmplitude * base)
           map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', opacity)
+          if (map.getLayer(BEACON_LAYER)) {
+            map.setPaintProperty(BEACON_LAYER, 'circle-opacity', Math.max(0, glowFor(lightPreset) * 0.9 + Math.sin(t + 1) * 0.05))
+          }
         } catch {}
       }, 80)
     }

@@ -23,10 +23,20 @@ export function useTourNarration() {
 
   const cleanup = useCallback(() => {
     const a = audioRef.current
+    onEndRef.current = null
     if (!a) return
+    a.onplay = null
+    a.onpause = null
+    a.onended = null
+    a.onerror = null
+    a.onloadstart = null
+    a.oncanplay = null
+    a.onplaying = null
+    a.onwaiting = null
     a.pause()
     a.src = ''
     a.load()
+    a.remove()
     audioRef.current = null
   }, [])
 
@@ -35,29 +45,49 @@ export function useTourNarration() {
       cleanup()
       onEndRef.current = opts?.onEnd ?? null
 
-      const audio = new Audio(src)
+      const audio = document.createElement('audio')
+      const setCurrentState = (next: NarrationState) => {
+        if (audioRef.current === audio) setState(next)
+      }
+      audio.src = src
       audio.preload = 'auto'
-      audio.onplay = () => setState('playing')
+      audio.setAttribute('playsinline', 'true')
+      audio.dataset.tourAudio = 'active'
+      audio.onplay = () => setCurrentState('playing')
+      audio.onplaying = () => setCurrentState('playing')
+      audio.oncanplay = () => {
+        if (!audio.paused) setCurrentState('playing')
+      }
+      audio.onwaiting = () => setCurrentState('loading')
       audio.onpause = () => {
         // pause can also fire on .pause() right before src=''; only flip
         // state if there's still audio queued.
-        if (audio.src) setState('paused')
+        if (audio.src) setCurrentState('paused')
       }
       audio.onended = () => {
+        if (audioRef.current !== audio) return
         setState('ended')
-        onEndRef.current?.()
+        const onEnd = onEndRef.current
+        onEndRef.current = null
+        onEnd?.()
       }
       audio.onerror = () => {
+        if (audioRef.current !== audio) return
         console.warn('[guide] audio load failed:', src)
         setState('error')
       }
-      audio.onloadstart = () => setState('loading')
+      audio.onloadstart = () => setCurrentState('loading')
 
+      document.body.appendChild(audio)
       audioRef.current = audio
-      audio.play().catch((err) => {
-        console.warn('[guide] audio.play() rejected:', err)
-        setState('error')
-      })
+      audio
+        .play()
+        .then(() => setCurrentState('playing'))
+        .catch((err) => {
+          if (audioRef.current !== audio) return
+          console.warn('[guide] audio.play() rejected:', err)
+          setState('error')
+        })
     },
     [cleanup]
   )

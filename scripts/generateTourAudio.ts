@@ -8,7 +8,7 @@
  * Both binaries ship with macOS by default. Voice = Samantha (system default).
  * Run once after editing tour text: `pnpm run build:tour-audio`.
  *
- * Output: public/audio/<tour-id>-<card-kind>.m4a (~10 KB per ~30s clip).
+ * Output: public/audio/<tour-id>-<card-kind>.m4a (~40-90 KB per clip).
  */
 
 import { execFileSync } from 'node:child_process'
@@ -23,7 +23,7 @@ const outDir = resolve(repoRoot, 'public', 'audio')
 const tmpDir = resolve(repoRoot, '.tmp-audio')
 
 const VOICE = process.env.TOUR_VOICE || 'Samantha'
-const RATE = process.env.TOUR_RATE || '180' // words per minute; 180 is "natural pace"
+const RATE = process.env.TOUR_RATE || '168' // a calmer guide pace than the macOS default
 
 mkdirSync(outDir, { recursive: true })
 mkdirSync(tmpDir, { recursive: true })

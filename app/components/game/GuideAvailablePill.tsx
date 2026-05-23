@@ -23,29 +23,31 @@ export default function GuideAvailablePill({ landmarkName, onOpen, onDismiss }: 
         animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
         exit={reduceMotion ? { opacity: 0 } : { y: 30, opacity: 0 }}
         transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', damping: 24, stiffness: 280 }}
-        className="fixed left-1/2 bottom-32 z-40 -translate-x-1/2"
+        className="pointer-events-none fixed inset-x-0 bottom-32 z-40 flex justify-center px-3 sm:bottom-36"
       >
         <div
           role="region"
           aria-label={`Audio tour available for ${landmarkName}`}
-          className="flex items-center gap-2 rounded-full border border-amber-300/40 px-2 py-1.5 shadow-xl"
+          className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-full border px-1.5 py-1.5 shadow-xl"
           style={{
             background:
-              'linear-gradient(180deg, rgba(28, 22, 14, 0.95) 0%, rgba(18, 14, 8, 0.95) 100%)',
-            backdropFilter: 'blur(8px)',
+              'linear-gradient(180deg, rgba(255, 249, 235, 0.96) 0%, rgba(242, 222, 184, 0.95) 100%)',
+            borderColor: 'rgba(126, 86, 41, 0.26)',
+            boxShadow: '0 12px 36px rgba(31, 22, 9, 0.24), inset 0 1px 0 rgba(255,255,255,0.72)',
+            backdropFilter: 'blur(12px)',
           }}
         >
           <button
             onClick={onOpen}
-            className="flex items-center gap-2 rounded-full bg-amber-400 px-3 py-1.5 text-xs font-semibold text-stone-900 transition hover:bg-amber-300"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-amber-400 px-3 py-1.5 text-xs font-black text-stone-950 shadow-sm transition hover:bg-amber-300 active:scale-[0.96]"
           >
             <span aria-hidden="true">🎧</span>
-            <span>Listen to tour: {landmarkName}</span>
+            <span className="truncate">Tour: {landmarkName}</span>
           </button>
           <button
             onClick={onDismiss}
             aria-label="Dismiss tour offer"
-            className="rounded-full px-2 py-1 text-xs text-white/45 transition hover:text-white"
+            className="min-h-10 rounded-full px-2.5 py-1 text-xs text-stone-500 transition hover:bg-stone-900/5 hover:text-stone-900 active:scale-[0.96]"
           >
             ✕
           </button>

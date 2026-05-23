@@ -44,9 +44,9 @@ export default function UnifiedHUD({
   onNavigateToUndiscovered
 }: UnifiedHUDProps) {
   const [showFlyControls, setShowFlyControls] = useState(true)
-  const [showRecommendation, setShowRecommendation] = useState(true)
+  const [showRecommendation, setShowRecommendation] = useState(false)
   const [showQuestCard, setShowQuestCard] = useState(true)
-  const [showNearestCard, setShowNearestCard] = useState(true)
+  const [showNearestCard, setShowNearestCard] = useState(false)
 
   const getCardinalDirection = (bearing: number) => {
     const normalized = ((bearing % 360) + 360) % 360

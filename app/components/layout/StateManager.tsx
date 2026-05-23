@@ -101,12 +101,12 @@ export default function StateManager({ children }: StateManagerProps) {
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false)
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
-    trees: false,
+    trees: true,
     landmarks: true,
-    parks: false
+    parks: true
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
-  const [is3DView, setIs3DView] = useState(false)
+  const [is3DView, setIs3DView] = useState(true)
   const [isFlyMode, setIsFlyMode] = useState(false)
   const [isSatelliteView, setIsSatelliteView] = useState(false)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
@@ -130,7 +130,7 @@ export default function StateManager({ children }: StateManagerProps) {
   const { map } = useMap()
   const { state: playerState } = usePlayerState()
   const announce = useAnnounce()
-  const timeOfDay = useTimeOfDay('dusk')
+  const timeOfDay = useTimeOfDay('day')
 
   // Gentle orbit when the user is idle — disabled in fly mode and while modals are open.
   useIdleCameraDrift({ map, disabled: isFlyMode || isControlPanelOpen })
@@ -215,7 +215,7 @@ export default function StateManager({ children }: StateManagerProps) {
             center: WASHINGTON_MONUMENT,
             zoom: 16.5,
             pitch: 70,
-            bearing: -17.6,
+            bearing: -23,
             duration: 2500,
             essential: true,
             curve: 1.4,

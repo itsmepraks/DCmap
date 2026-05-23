@@ -8,9 +8,9 @@ export type LightPreset = 'dawn' | 'day' | 'dusk' | 'night'
 export const LIGHT_PRESETS: LightPreset[] = ['dawn', 'day', 'dusk', 'night']
 
 const LABEL: Record<LightPreset, string> = {
-  dawn: 'Dawn',
-  day: 'Day',
-  dusk: 'Dusk',
+  dawn: 'Morning',
+  day: 'Midday',
+  dusk: 'Sunset',
   night: 'Night',
 }
 
@@ -34,7 +34,7 @@ function applyPreset(map: mapboxgl.Map | null, preset: LightPreset) {
 }
 
 /** Manage time-of-day lighting on the Standard style. */
-export function useTimeOfDay(initial: LightPreset = 'dusk') {
+export function useTimeOfDay(initial: LightPreset = 'day') {
   const { map } = useMap()
   const [preset, setPreset] = useState<LightPreset>(initial)
 

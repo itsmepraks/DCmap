@@ -79,10 +79,10 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
         
         // Color mapping for seasons
         const seasonColors = {
-          spring: { fill: '#FFCDD2', outline: '#F8BBD9' },  // Cherry blossom PINK
-          summer: { fill: '#3E7E3E', outline: '#2D5A27' },  // Lush green
-          fall: { fill: '#FFCC80', outline: '#FFB74D' },    // Warm orange/amber
-          winter: { fill: '#B0BEC5', outline: '#90A4AE' }   // Cool grey
+          spring: { fill: '#F4DDE3', outline: '#C98492' },
+          summer: { fill: '#3F7C45', outline: '#2D5A35' },
+          fall: { fill: '#A56B3A', outline: '#7E4E2A' },
+          winter: { fill: '#DCE5EA', outline: '#94A5AE' }
         }
         const colors = seasonColors[season]
 
@@ -110,7 +110,9 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
             },
             paint: {
               'fill-color': colors.fill,
-              'fill-opacity': 0.6,
+              'fill-opacity': 0.42,
+              'fill-opacity-transition': { duration: 1400, delay: 0 },
+              'fill-color-transition': { duration: 1400, delay: 0 },
               'fill-outline-color': colors.outline
             }
           }, beforeId) // Place BEFORE buildings
@@ -140,10 +142,10 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
             type: 'tree', // Using tree type for green space consistency
             name: parkName,
             description: `A ${parkNames[parkClass]?.toLowerCase() || 'green space'} in Washington DC. ${
-              currentSeason === 'spring' ? 'Beautiful cherry blossoms bloom in spring!' :
-              currentSeason === 'fall' ? 'Gorgeous fall foliage colors!' :
-              currentSeason === 'winter' ? 'Peaceful winter scenery.' :
-              'Lush green foliage in summer.'
+              currentSeason === 'spring' ? 'Spring adds early blossoms and fresh canopy color around DC.' :
+              currentSeason === 'fall' ? 'Fall brings mixed amber, rust, and green canopy color rather than one flat orange.' :
+              currentSeason === 'winter' ? 'Winter opens up longer sightlines through the trees and across the lawns.' :
+              'Summer is the fullest green season for shade and park lawns.'
             }`,
             coordinates: coords,
             metadata: {
@@ -211,10 +213,10 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
     
     // Color mapping for seasons - matches tree colors
     const seasonColors = {
-      spring: { fill: '#FFCDD2', outline: '#F8BBD9' },  // Cherry blossom PINK for spring
-      summer: { fill: '#3E7E3E', outline: '#2D5A27' },  // Lush green
-      fall: { fill: '#FFCC80', outline: '#FFB74D' },    // Warm orange/amber
-      winter: { fill: '#B0BEC5', outline: '#90A4AE' }   // Cool grey
+      spring: { fill: '#F4DDE3', outline: '#C98492' },
+      summer: { fill: '#3F7C45', outline: '#2D5A35' },
+      fall: { fill: '#A56B3A', outline: '#7E4E2A' },
+      winter: { fill: '#DCE5EA', outline: '#94A5AE' }
     }
 
     const colors = seasonColors[season]
@@ -253,4 +255,3 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
 
   return null
 }
-
