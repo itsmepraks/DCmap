@@ -97,12 +97,6 @@ export function getXPFromLandmark(): number {
   return XP_FROM_LANDMARK
 }
 
-export const XP_FROM_TREE = 10
-
-export function getXPFromTree(): number {
-  return XP_FROM_TREE
-}
-
 export function resetExperience(): ExperienceData {
   const newData: ExperienceData = {
     totalXP: 0,
@@ -113,4 +107,3 @@ export function resetExperience(): ExperienceData {
   saveExperience(newData)
   return newData
 }
-

@@ -34,6 +34,13 @@ export default function FloatingControlPanel({
     { value: 'winter' as const, label: 'Winter', icon: '❄️', color: '#A9BBC4' }
   ]
 
+  const seasonNotes = {
+    spring: 'Cherry blossom atmosphere near the Mall and Tidal Basin, with softer morning light.',
+    summer: 'Clean green canopy and bright midday clarity for normal DC exploration.',
+    fall: 'Warmer canopy tones and amber light, closer to late October on the National Mall.',
+    winter: 'Cooler air, quieter color, and light snow ambience without hiding the city.',
+  } as const
+
   const layers = [
     { key: 'museums' as const, label: 'Museums', icon: '🏛️', color: '#5DA5DB' },
     { key: 'landmarks' as const, label: 'Landmarks', icon: '⭐', color: '#FFD700' },
@@ -190,6 +197,16 @@ export default function FloatingControlPanel({
                       />
                     ))}
                   </div>
+                  <p
+                    className="mt-3 rounded-lg px-3 py-2 text-xs leading-relaxed"
+                    style={{
+                      background: 'rgba(255,255,255,0.42)',
+                      border: '1px solid rgba(126, 86, 41, 0.16)',
+                      color: minecraftTheme.colors.text.secondary,
+                    }}
+                  >
+                    {seasonNotes[currentSeason]}
+                  </p>
                 </div>
 
                 {onToggleSatellite && (

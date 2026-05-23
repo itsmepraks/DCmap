@@ -44,7 +44,6 @@ export default function Home() {
                     landmarks={state.landmarksState.landmarks}
                     visitedLandmarks={state.gameState.gameProgress.visitedLandmarks}
                     onLandmarkDiscovered={state.handleLandmarkDiscovered}
-                    onTreeDiscovered={state.handleTreeDiscovered}
                     onNavigateToLandmark={state.handleNavigateToLandmark}
                     waypoints={state.waypointSystem.waypoints}
                     activeWaypointId={state.waypointSystem.activeWaypointId}
@@ -81,6 +80,7 @@ export default function Home() {
                     onCloseEntityPanel={state.gameState.clearSelectedEntity}
                     onSelectEntity={state.gameState.setSelectedEntity}
                     layersVisible={state.layersVisible}
+                    suppressProximityHint={!!state.guide.availableTour || !!state.guide.activeTour}
                   />
 
                   {/* HUD and Controls */}

@@ -112,8 +112,6 @@ graph TD
 
     LL["LandmarksLayer"]
     MuL["MuseumsLayer"]
-    TL["TreesLayer"]
-    PL["ParksLayer"]
     RL["RoadDetailsLayer"]
     DR["DiscoveryRadius"]
 
@@ -273,8 +271,6 @@ dc-map/
 │       │   └── layers/               # Data layers
 │       │       ├── LandmarksLayer.tsx
 │       │       ├── MuseumsLayer.tsx
-│       │       ├── TreesLayer.tsx
-│       │       ├── ParksLayer.tsx
 │       │       └── RoadDetailsLayer.tsx
 │       ├── ui/                       # UI components
 │       │   ├── EntityInfoPanel.tsx   # Entity details display
@@ -363,7 +359,7 @@ dc-map/
 
 ### Experience and Progression
 
-- XP awarded for discoveries (50 XP per landmark, 10 XP per tree)
+- XP awarded for landmark discoveries
 - Level progression system (100 XP per level)
 - Achievement unlocks
 - Persistent progress via localStorage
@@ -371,14 +367,11 @@ dc-map/
 ### Seasonal Variations
 
 - Four seasons: Spring, Summer, Fall, Winter
-- Dynamic color palette changes
-- Seasonal tree icon variations
-- Month slider for previewing variations
+- Cinematic seasonal atmosphere: blossom, summer clarity, fall warmth, and winter snow
+- Mapbox Standard keeps real 3D trees and buildings visible beneath seasonal effects
 
 ### Additional Features
 
-- Tree layer with DMV tree inventory data
-- Parks layer with seasonal coloring
 - Road detail layer with glow effects
 - User waypoint system
 - World boundary warnings

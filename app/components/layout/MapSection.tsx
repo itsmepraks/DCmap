@@ -6,6 +6,7 @@ import ParticleEffect from '../map/effects/ParticleEffect'
 import DiscoveryRadius from '../map/effects/DiscoveryRadius'
 import BreadcrumbTrail from '../map/effects/BreadcrumbTrail'
 import MonumentLights from '../map/effects/MonumentLights'
+import SeasonalCanopyHighlights from '../map/effects/SeasonalCanopyHighlights'
 import WaypointLayer from '../map/WaypointLayer'
 import { useMap } from '@/app/lib/MapContext'
 
@@ -30,7 +31,6 @@ interface MapSectionProps {
 
   // Callbacks
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onNavigateToLandmark: (coordinates: [number, number]) => void
   onSelectEntity?: (entity: SelectedEntity | null) => void
 
@@ -58,7 +58,6 @@ export default function MapSection({
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
-  onTreeDiscovered,
   onNavigateToLandmark,
   waypoints,
   activeWaypointId,
@@ -101,7 +100,6 @@ export default function MapSection({
             })
           }
         }}
-        onTreeDiscovered={onTreeDiscovered}
       />
 
       {/* Legacy manual waypoints - DISABLED to prevent duplicate blue markers
@@ -137,6 +135,9 @@ export default function MapSection({
 
       {/* Floodlit monuments at dusk and night */}
       <MonumentLights landmarks={landmarks} lightPreset={lightPreset} />
+
+      {/* Localized seasonal canopy zones: visible seasonal mood without fake tree dots. */}
+      <SeasonalCanopyHighlights map={map} season={currentSeason} />
 
       {/* Breadcrumb Trail */}
       <BreadcrumbTrail

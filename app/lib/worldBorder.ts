@@ -72,7 +72,6 @@ export function applyWorldBorder(map: mapboxgl.Map): void {
   map.setMinZoom(ZOOM_LEVELS.min)
   map.setMaxZoom(ZOOM_LEVELS.max)
   
-  console.log('🌍 World border activated: DC Metro Area')
 }
 
 /**
@@ -82,4 +81,3 @@ export function isWithinBounds(lng: number, lat: number): boolean {
   const [[minLng, minLat], [maxLng, maxLat]] = DC_BOUNDS
   return lng >= minLng && lng <= maxLng && lat >= minLat && lat <= maxLat
 }
-

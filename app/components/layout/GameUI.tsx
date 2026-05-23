@@ -38,6 +38,7 @@ interface GameUIProps {
     museums: boolean
     landmarks: boolean
   }
+  suppressProximityHint?: boolean
 }
 
 export default function GameUI({
@@ -55,7 +56,8 @@ export default function GameUI({
   selectedEntity,
   onCloseEntityPanel,
   onSelectEntity,
-  layersVisible
+  layersVisible,
+  suppressProximityHint = false
 }: GameUIProps) {
   // Create wrapper function for ProximityHint that takes landmarkId and calls coordinate-based function
   const handleNavigateToLandmark = (landmarkId: string) => {
@@ -97,11 +99,13 @@ export default function GameUI({
       />
 
       {/* Proximity Hints - Show nearby landmarks (Centered bottom pill) */}
-      <ProximityHint
-        nearbyLandmarks={nearbyLandmarks}
-        visitedLandmarks={visitedLandmarks}
-        onNavigate={handleNavigateToLandmark}
-      />
+      {!suppressProximityHint && (
+        <ProximityHint
+          nearbyLandmarks={nearbyLandmarks}
+          visitedLandmarks={visitedLandmarks}
+          onNavigate={handleNavigateToLandmark}
+        />
+      )}
 
       {/* Discovery Animation - Full screen celebration */}
       <DiscoveryAnimation

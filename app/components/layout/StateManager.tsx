@@ -8,7 +8,6 @@ import { useFlyController } from '@/app/hooks/useFlyController'
 import { useWaypointSystem } from '@/app/hooks/useWaypointSystem'
 import { useExperience } from '@/app/hooks/useExperience'
 import { useMap } from '@/app/lib/MapContext'
-import { usePlayerState } from '@/app/lib/playerState'
 import { calculateDistance, type Coordinates } from '@/app/lib/proximity'
 import { useAnnounce } from '@/app/components/ui/LiveAnnouncer'
 import { useTimeOfDay, type LightPreset } from '@/app/hooks/useTimeOfDay'
@@ -65,7 +64,6 @@ interface StateManagerReturn {
   isOrbiting360: boolean
   handleToggleFly: () => void
   handleLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  handleTreeDiscovered: (treeId: string, treeData: any) => void
   handleNavigateToLandmark: (coordinates: [number, number]) => void
   handleResetProgress: () => void
 
@@ -130,7 +128,6 @@ export default function StateManager({ children }: StateManagerProps) {
   const experience = useExperience()
 
   const { map } = useMap()
-  const { state: playerState } = usePlayerState()
   const announce = useAnnounce()
   const timeOfDay = useTimeOfDay('day')
 
@@ -342,16 +339,6 @@ export default function StateManager({ children }: StateManagerProps) {
 
   }, [gameState, landmarksState, experience, announce])
 
-  // Handle tree discovery (for Fly Mode and Map interaction)
-  const handleTreeDiscovered = useCallback((treeId: string, treeData: any) => {
-    // Check if new tree
-    const isNewVisit = gameState.handleVisitTree(treeId)
-
-    if (isNewVisit) {
-      experience.awardTreeXP()
-    }
-  }, [gameState, experience])
-
   // Fly mode controller
   const flyControllerState = useFlyController({
     map,
@@ -359,7 +346,6 @@ export default function StateManager({ children }: StateManagerProps) {
     landmarks: landmarksState.landmarks,
     visitedLandmarks: gameState.gameProgress.visitedLandmarks,
     onLandmarkDiscovered: handleLandmarkDiscovered,
-    onTreeDiscovered: handleTreeDiscovered,
     onPositionChange: (pos) => {
       // Update landmarks hook with real-time fly position for accurate distance calculations
       if (pos && pos.lng && pos.lat) {
@@ -540,7 +526,6 @@ export default function StateManager({ children }: StateManagerProps) {
     isOrbiting360,
     handleToggleFly,
     handleLandmarkDiscovered,
-    handleTreeDiscovered,
     handleNavigateToLandmark,
     handleResetProgress,
 

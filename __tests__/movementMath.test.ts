@@ -19,10 +19,10 @@ describe('movement math helpers', () => {
     })
     expect(result.moving).toBe(true)
     expect(result.deltaLat).toBeCloseTo(0.001, 6)
-    expect(result.deltaLng).toBeCloseTo(0.001, 6)
+    // Facing north, "left" means west, and west is negative longitude.
+    expect(result.deltaLng).toBeCloseTo(-0.001, 6)
   })
 })
-
 
 
 

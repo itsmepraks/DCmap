@@ -83,7 +83,6 @@ export default function LandmarksLayer({
                 if (!map.hasImage(iconName)) {
                   map.addImage(iconName, imageData, { sdf: false })
                 }
-                console.log(`✅ ${iconName} icon loaded`)
               }
               resolve()
             }
@@ -284,8 +283,6 @@ export default function LandmarksLayer({
             }
           }
 
-          console.log(`📍 Selected landmark: ${properties.name}`)
-
           if (onSelectRef.current) {
             onSelectRef.current({
               id: properties.id,
@@ -339,10 +336,9 @@ export default function LandmarksLayer({
           map.getCanvas().style.cursor = ''
         })
 
-        console.log('✅ Dynamic landmarks layer initialized')
         isInitialized.current = true
       } catch (error) {
-        console.error('❌ Error initializing LandmarksLayer:', error)
+        console.error('Error initializing landmarks layer:', error)
       }
     }
 
@@ -376,7 +372,6 @@ export default function LandmarksLayer({
           features: updatedFeatures
         })
 
-        console.log(`✅ Updated landmark visited status (${visitedLandmarks.size} visited)`)
       } catch (error) {
         console.warn('Failed to update landmark visited status:', error)
       }
@@ -401,4 +396,3 @@ export default function LandmarksLayer({
 
   return null
 }
-

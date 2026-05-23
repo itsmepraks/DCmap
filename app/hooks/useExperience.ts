@@ -6,7 +6,6 @@ import {
   addXP,
   resetExperience,
   getXPFromLandmark,
-  getXPFromTree,
   type ExperienceData
 } from '@/app/lib/experienceSystem'
 
@@ -16,12 +15,6 @@ export function useExperience() {
   const awardLandmarkXP = () => {
     const xp = getXPFromLandmark()
     setExperience(prev => addXP(xp, 'landmark', prev))
-    return xp
-  }
-
-  const awardTreeXP = () => {
-    const xp = getXPFromTree()
-    setExperience(prev => addXP(xp, 'tree', prev))
     return xp
   }
 
@@ -37,7 +30,6 @@ export function useExperience() {
   return {
     experience,
     awardLandmarkXP,
-    awardTreeXP,
     awardCustomXP,
     reset
   }

@@ -52,11 +52,10 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         drag
         dragMomentum={false}
-        className="fixed z-40 pointer-events-auto max-w-sm sm:max-w-none mx-auto cursor-move"
-        style={{ bottom: '5rem', left: '50%', x: '-50%' }}
+        className="fixed bottom-36 left-1/2 z-40 mx-auto max-w-[calc(100vw-1.5rem)] -translate-x-1/2 cursor-move pointer-events-auto sm:bottom-24 sm:max-w-none"
       >
         {/* Grip Handle */}
-        <div className="w-full flex justify-center mb-1 opacity-0 hover:opacity-100 transition-opacity">
+        <div className="mb-1 hidden w-full justify-center opacity-0 transition-opacity hover:opacity-100 sm:flex">
           <div className="px-2 py-0.5 rounded bg-black/20 text-xs font-bold text-white backdrop-blur-sm">
             ⋮⋮ DRAG
           </div>

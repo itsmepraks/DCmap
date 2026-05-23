@@ -18,7 +18,6 @@ interface MapProps {
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onSelect?: (entity: SelectedEntity | null) => void
 }
 
@@ -30,7 +29,6 @@ export default function Map({
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
-  onTreeDiscovered,
   onSelect
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -104,7 +102,6 @@ export default function Map({
           currentSeason={currentSeason}
           visitedLandmarks={visitedLandmarks}
           onLandmarkDiscovered={onLandmarkDiscovered}
-          onTreeDiscovered={onTreeDiscovered}
           onSelectEntity={onSelect}
         />
       )}

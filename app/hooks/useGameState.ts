@@ -5,7 +5,6 @@ import {
   loadGameProgress,
   resetGameProgress,
   visitLandmark,
-  visitTree,
   type GameProgress
 } from '@/app/lib/gameState'
 
@@ -28,15 +27,6 @@ export function useGameState() {
     const newProgress = visitLandmark(landmarkId, gameProgress)
     setGameProgress(newProgress)
     return true // Successfully visited
-  }
-
-  const handleVisitTree = (treeId: string) => {
-    if (gameProgress.visitedTrees && gameProgress.visitedTrees.has(treeId)) {
-      return false
-    }
-    const newProgress = visitTree(treeId, gameProgress)
-    setGameProgress(newProgress)
-    return true
   }
 
   const showAchievement = (landmarkData: Achievement) => {
@@ -66,7 +56,6 @@ export function useGameState() {
     achievement,
     showStatsModal,
     handleVisitLandmark,
-    handleVisitTree,
     showAchievement,
     dismissAchievement,
     openStatsModal,

@@ -20,13 +20,6 @@ export interface MuseumProperties {
   URL?: string
 }
 
-export interface TreeProperties {
-  COMMON_NAME?: string
-  SPECIES?: string
-  DBH?: number
-  CONDITION?: string
-}
-
 export interface GeoJSONFeature<T = Record<string, unknown>> {
   type: 'Feature'
   geometry: {

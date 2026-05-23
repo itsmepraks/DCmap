@@ -12,7 +12,6 @@ export interface VisitedLandmark {
 export interface GameProgress {
   visitedLandmarks: Set<string>
   visitedLandmarksWithTime: VisitedLandmark[]
-  visitedTrees: Set<string> // Track visited trees by hashed ID or cluster ID
   timestamp: number
 }
 
@@ -31,7 +30,6 @@ export function loadGameProgress(): GameProgress {
     return {
       visitedLandmarks: new Set(),
       visitedLandmarksWithTime: [],
-      visitedTrees: new Set(),
       timestamp: Date.now()
     }
   }
@@ -43,7 +41,6 @@ export function loadGameProgress(): GameProgress {
       return {
         visitedLandmarks: new Set(data.visited || []),
         visitedLandmarksWithTime: data.visitedWithTime || [],
-        visitedTrees: new Set(data.visitedTrees || []),
         timestamp: data.timestamp || Date.now()
       }
     }
@@ -54,7 +51,6 @@ export function loadGameProgress(): GameProgress {
   return {
     visitedLandmarks: new Set(),
     visitedLandmarksWithTime: [],
-    visitedTrees: new Set(),
     timestamp: Date.now()
   }
 }
@@ -67,7 +63,6 @@ export function saveGameProgress(progress: GameProgress): void {
     const data = {
       visited: Array.from(progress.visitedLandmarks),
       visitedWithTime: progress.visitedLandmarksWithTime,
-      visitedTrees: Array.from(progress.visitedTrees),
       timestamp: progress.timestamp
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
@@ -87,24 +82,6 @@ export function visitLandmark(landmarkId: string, currentProgress: GameProgress)
     visitedLandmarksWithTime: alreadyVisited
       ? currentProgress.visitedLandmarksWithTime
       : [...currentProgress.visitedLandmarksWithTime, { id: landmarkId, visitedAt: Date.now() }],
-    visitedTrees: currentProgress.visitedTrees,
-    timestamp: Date.now()
-  }
-
-  saveGameProgress(newProgress)
-  return newProgress
-}
-
-// Mark a tree as visited
-export function visitTree(treeId: string, currentProgress: GameProgress): GameProgress {
-  const newVisitedTrees = new Set(currentProgress.visitedTrees)
-  if (newVisitedTrees.has(treeId)) return currentProgress // No change
-
-  newVisitedTrees.add(treeId)
-
-  const newProgress = {
-    ...currentProgress,
-    visitedTrees: newVisitedTrees,
     timestamp: Date.now()
   }
 
@@ -147,7 +124,6 @@ export function resetGameProgress(): GameProgress {
   const newProgress = {
     visitedLandmarks: new Set<string>(),
     visitedLandmarksWithTime: [],
-    visitedTrees: new Set<string>(),
     timestamp: Date.now()
   }
   saveGameProgress(newProgress)

@@ -71,7 +71,7 @@ export default function UnifiedHUD({
         style={{ top: 80, right: 16 }}
       >
         {/* Grip Handle */}
-        <div className="w-full flex justify-end mb-1 opacity-0 hover:opacity-100 transition-opacity">
+        <div className="mb-1 hidden w-full justify-end opacity-0 transition-opacity hover:opacity-100 sm:flex">
           <div className="px-2 py-0.5 rounded bg-black/20 text-xs font-bold text-white backdrop-blur-sm">
             ⋮⋮ DRAG
           </div>

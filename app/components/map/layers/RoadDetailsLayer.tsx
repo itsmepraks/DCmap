@@ -24,7 +24,10 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
           return
         }
 
-        console.log('🛣️ Initializing Road Details Layer...')
+        if (!map.getSource(STREETS_SOURCE)) {
+          map.once('idle', () => initializeLayer())
+          return
+        }
 
         // Find first symbol layer to insert before
         const layers = map.getStyle().layers
@@ -238,9 +241,8 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
         }
 
         isInitialized.current = true
-        console.log('✅ Road Details Layer initialized')
       } catch (error) {
-        console.error('❌ Error initializing Road Details Layer:', error)
+        console.error('Error initializing road details layer:', error)
       }
     }
 
@@ -274,4 +276,3 @@ export default function RoadDetailsLayer({ visible }: RoadDetailsLayerProps) {
 
   return null
 }
-

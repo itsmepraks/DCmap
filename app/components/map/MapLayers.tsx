@@ -1,6 +1,7 @@
 import { memo, useEffect } from 'react'
 import type mapboxgl from 'mapbox-gl'
 import type { LayerVisibility } from '@/app/types/map'
+import BuildingsLayer from './layers/BuildingsLayer'
 import MuseumsLayer from './layers/MuseumsLayer'
 import RoadDetailsLayer from './layers/RoadDetailsLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
@@ -12,7 +13,6 @@ interface MapLayersProps {
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onSelectEntity?: (entity: SelectedEntity | null) => void
 }
 
@@ -22,7 +22,6 @@ export const MapLayers = memo(function MapLayers({
   currentSeason,
   visitedLandmarks,
   onLandmarkDiscovered,
-  onTreeDiscovered,
   onSelectEntity
 }: MapLayersProps) {
   useEffect(() => {
@@ -32,6 +31,7 @@ export const MapLayers = memo(function MapLayers({
 
   return (
     <>
+      <BuildingsLayer />
       <RoadDetailsLayer visible={true} />
       <MuseumsLayer
         visible={layersVisible.museums}

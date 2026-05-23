@@ -53,16 +53,17 @@ export default function ControlDock({
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       whileHover={{ opacity: 1, y: -2 }}
-      className="fixed bottom-4 right-2 sm:bottom-8 sm:right-8 z-50"
+      className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:block sm:px-0"
     >
       <div 
-        className="flex max-w-[calc(100vw-1rem)] items-center gap-1.5 overflow-x-auto p-1.5 sm:gap-3 sm:p-3 rounded-lg sm:rounded-2xl relative shadow-2xl"
+        className="relative flex max-w-full items-center gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1.5 shadow-2xl sm:gap-3 sm:rounded-2xl sm:p-3"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}FF 0%, ${minecraftTheme.colors.beige.light}FF 100%)`,
           border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
           boxShadow: `0 4px 0 ${minecraftTheme.colors.terracotta.dark}88, 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1)`,
           backdropFilter: 'blur(12px)',
           imageRendering: minecraftTheme.minecraft.imageRendering,
+          scrollbarWidth: 'none',
         }}
       >
         {/* Layers Button */}
@@ -178,7 +179,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       onClick={onClick}
       aria-label={label}
       aria-pressed={isActive}
-      className="relative flex shrink-0 flex-col items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl transition-all group overflow-hidden"
+      className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg transition-all group sm:h-16 sm:w-16 sm:rounded-xl"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${activeColor || color}, ${color})`
@@ -204,18 +205,18 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       )}
       
       <span 
-        className="text-2xl mb-0.5 sm:mb-1 relative z-10 transition-all"
+        className="relative z-10 mb-0.5 text-xl transition-all sm:mb-1 sm:text-2xl"
         style={{ 
           filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'grayscale(80%) opacity(0.7)',
           transform: isActive ? 'scale(1.1)' : 'scale(1)',
-          fontSize: icon === '+' || icon === '−' || icon === '↻' ? '1.85rem' : undefined,
+          fontSize: icon === '+' || icon === '−' || icon === '↻' ? 'clamp(1.55rem, 2vw, 1.85rem)' : undefined,
           lineHeight: icon === '+' || icon === '−' || icon === '↻' ? 1 : undefined,
         }}
       >
         {icon}
       </span>
       <span 
-        className="text-xs font-bold font-mono tracking-wider uppercase relative z-10"
+        className="relative z-10 max-w-full px-0.5 text-center font-mono text-[10px] font-bold uppercase leading-none tracking-wide sm:text-xs sm:tracking-wider"
         style={{ 
           color: isActive ? '#FFF' : '#5D4037', 
           textShadow: isActive ? '0 1px 2px rgba(0,0,0,0.5)' : 'none' 

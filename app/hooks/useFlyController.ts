@@ -11,7 +11,6 @@ interface UseFlyControllerOptions {
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
-  onTreeDiscovered?: (treeId: string, treeData: any) => void
   onPositionChange?: (position: { lng: number; lat: number; bearing: number }) => void
 }
 
@@ -76,8 +75,7 @@ function getBuildingHeightAtPosition(
     })
 
     return maxHeight
-  } catch (error) {
-    console.debug('Building height query failed:', error)
+  } catch {
     return 0
   }
 }
@@ -88,7 +86,6 @@ export function useFlyController({
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
-  onTreeDiscovered,
   onPositionChange
 }: UseFlyControllerOptions) {
   const { updatePose } = usePlayerState()
@@ -102,7 +99,6 @@ export function useFlyController({
 
   // Use refs for callbacks and changing data to prevent effect re-runs
   const landmarkCallbackRef = useRef(onLandmarkDiscovered)
-  const treeCallbackRef = useRef(onTreeDiscovered)
   const positionCallbackRef = useRef(onPositionChange)
   const landmarksRef = useRef(landmarks)
   const visitedLandmarksRef = useRef(visitedLandmarks)
@@ -111,8 +107,7 @@ export function useFlyController({
   // Keep refs in sync with latest values
   useEffect(() => {
     landmarkCallbackRef.current = onLandmarkDiscovered
-    treeCallbackRef.current = onTreeDiscovered
-  }, [onLandmarkDiscovered, onTreeDiscovered])
+  }, [onLandmarkDiscovered])
 
   useEffect(() => {
     positionCallbackRef.current = onPositionChange
@@ -385,27 +380,6 @@ export function useFlyController({
           }
         })
 
-        // 2. Check Trees (using map query instead of calculating distance to thousands of trees)
-        // Only trigger if we have a callback AND the layer exists
-        if (treeCallbackRef.current && map.getLayer('dmv-tree-points-layer')) {
-          try {
-            const point = map.project(position)
-            const treeFeatures = map.queryRenderedFeatures(
-              [[point.x - 10, point.y - 10], [point.x + 10, point.y + 10]],
-              { layers: ['dmv-tree-points-layer'] }
-            )
-
-            if (treeFeatures.length > 0) {
-              // Just take the first one or a random one nearby
-              const feature = treeFeatures[0]
-              if (feature.id) {
-                treeCallbackRef.current(String(feature.id), feature.properties)
-              }
-            }
-          } catch (e) {
-            // Silently ignore if layer isn't ready yet
-          }
-        }
       }
 
       animationFrameId = requestAnimationFrame(animate)

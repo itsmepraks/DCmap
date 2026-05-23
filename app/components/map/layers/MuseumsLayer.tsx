@@ -45,8 +45,6 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
       return
     }
 
-    console.log('🏛️ Initializing museums layer with clustering...')
-
     const handleClick = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
       if (!e.features || e.features.length === 0) return
 
@@ -150,7 +148,6 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
             if (!map.hasImage(iconName)) {
               map.addImage(iconName, imageData, { sdf: false })
-              console.log(`✅ ${iconName} loaded`)
             }
           } else if (!map.hasImage(iconName)) {
             map.addImage(iconName, iconImage)
@@ -340,10 +337,9 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
         map.on('mouseleave', CLUSTER_LAYER_ID, onMouseLeave)
 
         layerInitialized.current = true
-        console.log(`✅ Museums layer initialized (visibility: ${initialVisibility})`)
 
       } catch (error) {
-        console.error('❌ Error initializing museums layer:', error)
+        console.error('Error initializing museums layer:', error)
       }
     }
 
