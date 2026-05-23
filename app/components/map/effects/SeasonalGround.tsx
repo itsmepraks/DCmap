@@ -21,10 +21,10 @@ const PARK_LAYER = 'seasonal-ground-parks'
 // it produces a console error. 'landuse' covers the parks + grass polygons
 // that matter for DC's monumental core.
 const PALETTE: Record<Season, { park: string; parkOp: number }> = {
-  spring: { park: '#F8DEE6', parkOp: 0.14 },
-  summer: { park: '#FFFFFF', parkOp: 0.04 },
-  fall:   { park: '#B56E38', parkOp: 0.20 },
-  winter: { park: '#EDF2F6', parkOp: 0.30 },
+  spring: { park: '#F8DEE6', parkOp: 0.05 },
+  summer: { park: '#FFFFFF', parkOp: 0 },
+  fall:   { park: '#B56E38', parkOp: 0.08 },
+  winter: { park: '#EDF2F6', parkOp: 0.10 },
 }
 
 /**

@@ -77,12 +77,13 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
         const firstSymbolId = layers.find((layer) => layer.type === 'symbol')?.id
         const beforeId = buildingLayerId || firstSymbolId
         
-        // Color mapping for seasons
+        // Optional info layer only. Keep it extremely light so the Standard
+        // 3D basemap remains the visual source of truth.
         const seasonColors = {
-          spring: { fill: '#F4DDE3', outline: '#C98492' },
-          summer: { fill: '#3F7C45', outline: '#2D5A35' },
-          fall: { fill: '#A56B3A', outline: '#7E4E2A' },
-          winter: { fill: '#DCE5EA', outline: '#94A5AE' }
+          spring: { fill: '#F4DDE3', outline: '#B9808C', opacity: 0.12 },
+          summer: { fill: '#5F8C5D', outline: '#3D6540', opacity: 0.10 },
+          fall: { fill: '#A56B3A', outline: '#7E4E2A', opacity: 0.11 },
+          winter: { fill: '#DCE5EA', outline: '#94A5AE', opacity: 0.13 }
         }
         const colors = seasonColors[season]
 
@@ -110,7 +111,7 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
             },
             paint: {
               'fill-color': colors.fill,
-              'fill-opacity': 0.42,
+              'fill-opacity': colors.opacity,
               'fill-opacity-transition': { duration: 1400, delay: 0 },
               'fill-color-transition': { duration: 1400, delay: 0 },
               'fill-outline-color': colors.outline
@@ -211,12 +212,12 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
   useEffect(() => {
     if (!map || !isInitialized.current) return
     
-    // Color mapping for seasons - matches tree colors
+    // Color mapping for seasons - subtle info tint, not a blanket overlay.
     const seasonColors = {
-      spring: { fill: '#F4DDE3', outline: '#C98492' },
-      summer: { fill: '#3F7C45', outline: '#2D5A35' },
-      fall: { fill: '#A56B3A', outline: '#7E4E2A' },
-      winter: { fill: '#DCE5EA', outline: '#94A5AE' }
+      spring: { fill: '#F4DDE3', outline: '#B9808C', opacity: 0.12 },
+      summer: { fill: '#5F8C5D', outline: '#3D6540', opacity: 0.10 },
+      fall: { fill: '#A56B3A', outline: '#7E4E2A', opacity: 0.11 },
+      winter: { fill: '#DCE5EA', outline: '#94A5AE', opacity: 0.13 }
     }
 
     const colors = seasonColors[season]
@@ -226,6 +227,7 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
         const layer = map.getLayer('parks-seasonal')
         if (layer) {
           map.setPaintProperty('parks-seasonal', 'fill-color', colors.fill)
+          map.setPaintProperty('parks-seasonal', 'fill-opacity', colors.opacity)
           map.setPaintProperty('parks-seasonal', 'fill-outline-color', colors.outline)
           console.log(`✅ Park colors changed to: ${colors.fill} (${season})`)
         } else {
@@ -235,6 +237,7 @@ export default function ParksLayer({ visible, season = 'summer', onSelect }: Par
             const retryLayer = map.getLayer('parks-seasonal')
             if (retryLayer) {
               map.setPaintProperty('parks-seasonal', 'fill-color', colors.fill)
+              map.setPaintProperty('parks-seasonal', 'fill-opacity', colors.opacity)
               map.setPaintProperty('parks-seasonal', 'fill-outline-color', colors.outline)
               console.log(`✅ Park colors changed to: ${colors.fill} (${season}) after retry`)
             }

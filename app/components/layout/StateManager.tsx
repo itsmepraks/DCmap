@@ -101,9 +101,9 @@ export default function StateManager({ children }: StateManagerProps) {
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false)
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
-    trees: true,
+    trees: false,
     landmarks: true,
-    parks: true
+    parks: false
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(true)
