@@ -52,16 +52,29 @@ export function useMapInitialization(
       mapInstance = new mapboxgl.Map({
         container,
         style: styleUrl || STANDARD_STYLE,
-        center: DC_CENTER,
-        zoom: ZOOM_LEVELS.default,
-        pitch: 64,
-        bearing: -23,
+        center: [-77.0353, 38.8895],
+        zoom: 16.25,
+        pitch: 68,
+        bearing: -28,
         antialias: true,
         maxPitch: 85,
         minZoom: ZOOM_LEVELS.min,
         maxZoom: ZOOM_LEVELS.max,
         renderWorldCopies: false,
         attributionControl: true,
+        config: {
+          basemap: {
+            lightPreset: 'day',
+            show3dObjects: true,
+            show3dBuildings: true,
+            show3dTrees: true,
+            show3dLandmarks: true,
+            show3dFacades: true,
+            showPedestrianRoads: true,
+            showPointOfInterestLabels: false,
+            showTransitLabels: false,
+          },
+        } as any,
       })
 
       // Make available to consumers immediately; downstream hooks gate work on
@@ -75,6 +88,10 @@ export function useMapInitialization(
         try {
           mapInstance.setConfigProperty('basemap', 'lightPreset', 'day')
           mapInstance.setConfigProperty('basemap', 'show3dObjects', true)
+          mapInstance.setConfigProperty('basemap', 'show3dBuildings', true)
+          mapInstance.setConfigProperty('basemap', 'show3dTrees', true)
+          mapInstance.setConfigProperty('basemap', 'show3dLandmarks', true)
+          mapInstance.setConfigProperty('basemap', 'show3dFacades', true)
           mapInstance.setConfigProperty('basemap', 'showPedestrianRoads', true)
           mapInstance.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
           mapInstance.setConfigProperty('basemap', 'showTransitLabels', false)

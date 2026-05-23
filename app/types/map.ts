@@ -7,9 +7,7 @@ export interface MapContextValue {
 
 export interface LayerVisibility {
   museums: boolean
-  trees: boolean
   landmarks: boolean
-  parks: boolean
 }
 
 export type LayerId = keyof LayerVisibility
@@ -49,4 +47,3 @@ export interface LayerConfig {
   description?: string
   enabled: boolean
 }
-

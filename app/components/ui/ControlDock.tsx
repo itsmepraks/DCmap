@@ -7,6 +7,10 @@ import { minecraftTheme } from '@/app/lib/theme'
 interface ControlDockProps {
   is3D: boolean
   onToggle3D: () => void
+  onZoomIn: () => void
+  onZoomOut: () => void
+  onOrbit360: () => void
+  isOrbiting360: boolean
   isFlying: boolean
   onToggleFly: () => void
   onToggleLayers: () => void
@@ -32,6 +36,10 @@ function useIsKeyboardCapable() {
 export default function ControlDock({
   is3D,
   onToggle3D,
+  onZoomIn,
+  onZoomOut,
+  onOrbit360,
+  isOrbiting360,
   isFlying,
   onToggleFly,
   onToggleLayers,
@@ -48,7 +56,7 @@ export default function ControlDock({
       className="fixed bottom-4 right-2 sm:bottom-8 sm:right-8 z-50"
     >
       <div 
-        className="flex items-center gap-1.5 sm:gap-3 p-1.5 sm:p-3 rounded-lg sm:rounded-2xl relative shadow-2xl"
+        className="flex max-w-[calc(100vw-1rem)] items-center gap-1.5 overflow-x-auto p-1.5 sm:gap-3 sm:p-3 rounded-lg sm:rounded-2xl relative shadow-2xl"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}FF 0%, ${minecraftTheme.colors.beige.light}FF 100%)`,
           border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -68,6 +76,24 @@ export default function ControlDock({
 
         <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
 
+        <DockButton
+          icon="−"
+          label="OUT"
+          isActive={false}
+          onClick={onZoomOut}
+          color="#8C6A46"
+        />
+
+        <DockButton
+          icon="+"
+          label="IN"
+          isActive={false}
+          onClick={onZoomIn}
+          color="#8C6A46"
+        />
+
+        <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+
         {/* 3D Toggle */}
         <DockButton
           icon="🧊"
@@ -76,6 +102,15 @@ export default function ControlDock({
           onClick={onToggle3D}
           color="#D4501E"
           activeColor="#D4501E"
+        />
+
+        <DockButton
+          icon="↻"
+          label="360"
+          isActive={isOrbiting360}
+          onClick={onOrbit360}
+          color="#197A7A"
+          activeColor="#24A2A2"
         />
 
         {onCycleTimeOfDay && timeOfDayIcon && timeOfDayLabel && (
@@ -143,7 +178,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       onClick={onClick}
       aria-label={label}
       aria-pressed={isActive}
-      className="relative flex flex-col items-center justify-center w-16 h-16 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl transition-all group overflow-hidden"
+      className="relative flex shrink-0 flex-col items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl transition-all group overflow-hidden"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${activeColor || color}, ${color})`
@@ -172,7 +207,9 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
         className="text-2xl mb-0.5 sm:mb-1 relative z-10 transition-all"
         style={{ 
           filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'grayscale(80%) opacity(0.7)',
-          transform: isActive ? 'scale(1.1)' : 'scale(1)'
+          transform: isActive ? 'scale(1.1)' : 'scale(1)',
+          fontSize: icon === '+' || icon === '−' || icon === '↻' ? '1.85rem' : undefined,
+          lineHeight: icon === '+' || icon === '−' || icon === '↻' ? 1 : undefined,
         }}
       >
         {icon}

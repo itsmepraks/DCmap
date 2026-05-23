@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGameState } from '@/app/hooks/useGameState'
 import { useLandmarks } from '@/app/hooks/useLandmarks'
 import { useMuseums } from '@/app/hooks/useMuseums'
@@ -28,9 +28,7 @@ interface StateManagerProps {
 
 type LayerVisibility = {
   museums: boolean
-  trees: boolean
   landmarks: boolean
-  parks: boolean
 }
 
 interface StateManagerReturn {
@@ -61,6 +59,10 @@ interface StateManagerReturn {
   handleToggleLayer: (layerId: keyof LayerVisibility) => void
   handleSeasonChange: (season: 'spring' | 'summer' | 'fall' | 'winter') => void
   handleToggle3D: () => void
+  handleZoomIn: () => void
+  handleZoomOut: () => void
+  handleOrbit360: () => void
+  isOrbiting360: boolean
   handleToggleFly: () => void
   handleLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
   handleTreeDiscovered: (treeId: string, treeData: any) => void
@@ -101,14 +103,14 @@ export default function StateManager({ children }: StateManagerProps) {
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false)
   const [layersVisible, setLayersVisible] = useState({
     museums: false,
-    trees: false,
     landmarks: true,
-    parks: false
   })
   const [currentSeason, setCurrentSeason] = useState<'spring' | 'summer' | 'fall' | 'winter'>('summer')
   const [is3DView, setIs3DView] = useState(true)
   const [isFlyMode, setIsFlyMode] = useState(false)
   const [isSatelliteView, setIsSatelliteView] = useState(false)
+  const [isOrbiting360, setIsOrbiting360] = useState(false)
+  const orbitRafRef = useRef<number | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const [showCompletion, setShowCompletion] = useState(false)
   const [lastCompletionState, setLastCompletionState] = useState({
@@ -131,6 +133,16 @@ export default function StateManager({ children }: StateManagerProps) {
   const { state: playerState } = usePlayerState()
   const announce = useAnnounce()
   const timeOfDay = useTimeOfDay('day')
+
+  const stopOrbit360 = useCallback(() => {
+    if (orbitRafRef.current !== null) {
+      window.cancelAnimationFrame(orbitRafRef.current)
+      orbitRafRef.current = null
+    }
+    setIsOrbiting360(false)
+  }, [])
+
+  useEffect(() => () => stopOrbit360(), [stopOrbit360])
 
   // Gentle orbit when the user is idle — disabled in fly mode and while modals are open.
   useIdleCameraDrift({ map, disabled: isFlyMode || isControlPanelOpen })
@@ -207,18 +219,19 @@ export default function StateManager({ children }: StateManagerProps) {
   }, [])
 
   const handleToggle3D = useCallback(() => {
+    stopOrbit360()
     setIs3DView(prev => {
       const next = !prev
       if (map) {
         if (next) {
           map.flyTo({
             center: WASHINGTON_MONUMENT,
-            zoom: 16.5,
-            pitch: 70,
-            bearing: -23,
-            duration: 2500,
+            zoom: 16.35,
+            pitch: 68,
+            bearing: -28,
+            duration: 1800,
             essential: true,
-            curve: 1.4,
+            curve: 1.25,
           })
         } else {
           map.easeTo({ pitch: 0, bearing: 0, duration: 1500 })
@@ -226,9 +239,65 @@ export default function StateManager({ children }: StateManagerProps) {
       }
       return next
     })
-  }, [map])
+  }, [map, stopOrbit360])
+
+  const handleZoomIn = useCallback(() => {
+    stopOrbit360()
+    map?.zoomIn({ duration: 450 })
+  }, [map, stopOrbit360])
+
+  const handleZoomOut = useCallback(() => {
+    stopOrbit360()
+    map?.zoomOut({ duration: 450 })
+  }, [map, stopOrbit360])
+
+  const handleOrbit360 = useCallback(() => {
+    if (!map) return
+    if (orbitRafRef.current !== null) {
+      stopOrbit360()
+      return
+    }
+
+    setIs3DView(true)
+    setIsOrbiting360(true)
+    map.flyTo({
+      center: WASHINGTON_MONUMENT,
+      zoom: 16.25,
+      pitch: 68,
+      bearing: map.getBearing(),
+      duration: 1200,
+      essential: true,
+      curve: 1.15,
+    })
+
+    const startBearing = map.getBearing()
+    const start = performance.now() + 950
+    const duration = 22000
+
+    const tick = (now: number) => {
+      if (now >= start) {
+        const t = Math.min((now - start) / duration, 1)
+        map.jumpTo({
+          center: WASHINGTON_MONUMENT,
+          zoom: 16.25,
+          pitch: 68,
+          bearing: startBearing + t * 360,
+        })
+        if (t >= 1) {
+          orbitRafRef.current = null
+          setIsOrbiting360(false)
+          return
+        }
+      }
+      orbitRafRef.current = window.requestAnimationFrame(tick)
+    }
+
+    orbitRafRef.current = window.requestAnimationFrame(tick)
+    track('orbit_360_started')
+  }, [map, stopOrbit360])
 
   const handleToggleFly = useCallback(() => {
+    stopOrbit360()
     setIsFlyMode(prev => {
       const newFlyMode = !prev
       // When activating fly mode, ensure 3D view is enabled
@@ -239,7 +308,7 @@ export default function StateManager({ children }: StateManagerProps) {
       track('fly_mode_toggled', { active: newFlyMode })
       return newFlyMode
     })
-  }, [is3DView, announce])
+  }, [is3DView, announce, stopOrbit360])
 
   // Handle landmark discovery
   const handleLandmarkDiscovered = useCallback((landmarkId: string, landmarkData: any) => {
@@ -465,6 +534,10 @@ export default function StateManager({ children }: StateManagerProps) {
     handleToggleLayer,
     handleSeasonChange,
     handleToggle3D,
+    handleZoomIn,
+    handleZoomOut,
+    handleOrbit360,
+    isOrbiting360,
     handleToggleFly,
     handleLandmarkDiscovered,
     handleTreeDiscovered,

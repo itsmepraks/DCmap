@@ -8,9 +8,7 @@ interface FloatingControlPanelProps {
   onClose: () => void
   layersVisible: {
     museums: boolean
-    trees: boolean
     landmarks: boolean
-    parks: boolean
   }
   onToggleLayer: (layer: keyof FloatingControlPanelProps['layersVisible']) => void
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
@@ -38,9 +36,7 @@ export default function FloatingControlPanel({
 
   const layers = [
     { key: 'museums' as const, label: 'Museums', icon: '🏛️', color: '#5DA5DB' },
-    { key: 'trees' as const, label: 'Trees', icon: '🌳', color: '#7ED957' },
     { key: 'landmarks' as const, label: 'Landmarks', icon: '⭐', color: '#FFD700' },
-    { key: 'parks' as const, label: 'Parks', icon: '🌲', color: '#7ED957' }
   ]
 
   return (

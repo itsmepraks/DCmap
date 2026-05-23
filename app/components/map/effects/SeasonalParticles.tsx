@@ -16,10 +16,10 @@ interface Particle {
 }
 
 const COUNT: Record<Season, number> = {
-  spring: 90,  // cherry petals
-  summer: 50,  // dust motes
-  fall: 80,    // leaves
-  winter: 180, // snowflakes
+  spring: 42,  // cherry petals
+  summer: 0,   // leave the clean 3D basemap alone
+  fall: 54,    // leaves
+  winter: 78,  // snowflakes
 }
 
 const FALL_PALETTE = ['#E0673F', '#C7421D', '#FFAA3B', '#A33B16', '#F0B860']
@@ -110,6 +110,10 @@ export default function SeasonalParticles({ season }: { season: Season }) {
     // Seed particles.
     const seed = () => {
       const count = COUNT[season]
+      if (count === 0) {
+        particlesRef.current = []
+        return
+      }
       const arr: Particle[] = []
       for (let i = 0; i < count; i++) {
         arr.push(spawn(season, true))

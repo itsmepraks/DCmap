@@ -3,9 +3,7 @@ import type mapboxgl from 'mapbox-gl'
 import type { LayerVisibility } from '@/app/types/map'
 import MuseumsLayer from './layers/MuseumsLayer'
 import RoadDetailsLayer from './layers/RoadDetailsLayer'
-import TreesLayer from './layers/TreesLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
-import ParksLayer from './layers/ParksLayer'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
 interface MapLayersProps {
@@ -34,13 +32,6 @@ export const MapLayers = memo(function MapLayers({
 
   return (
     <>
-      <ParksLayer visible={layersVisible.parks} season={currentSeason} onSelect={onSelectEntity} />
-      <TreesLayer
-        visible={layersVisible.trees}
-        season={currentSeason}
-        onSelect={onSelectEntity}
-        onTreeDiscovered={onTreeDiscovered}
-      />
       <RoadDetailsLayer visible={true} />
       <MuseumsLayer
         visible={layersVisible.museums}

@@ -36,9 +36,7 @@ interface GameUIProps {
   // Layer State
   layersVisible: {
     museums: boolean
-    trees: boolean
     landmarks: boolean
-    parks: boolean
   }
 }
 

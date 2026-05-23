@@ -9,9 +9,7 @@ import MapLoadingSkeleton from '../ui/MapLoadingSkeleton'
 
 type LayerVisibility = {
   museums: boolean
-  trees: boolean
   landmarks: boolean
-  parks: boolean
 }
 
 interface HUDSystemProps {
@@ -30,6 +28,10 @@ interface HUDSystemProps {
   // Control dock
   is3D: boolean
   onToggle3D: () => void
+  onZoomIn: () => void
+  onZoomOut: () => void
+  onOrbit360: () => void
+  isOrbiting360: boolean
   isFlying: boolean
   onToggleFly: () => void
   onToggleLayers: () => void
@@ -73,6 +75,10 @@ export default function HUDSystem({
   onOpenStats,
   is3D,
   onToggle3D,
+  onZoomIn,
+  onZoomOut,
+  onOrbit360,
+  isOrbiting360,
   isFlying,
   onToggleFly,
   onToggleLayers,
@@ -116,6 +122,10 @@ export default function HUDSystem({
       <ControlDock
         is3D={is3D}
         onToggle3D={onToggle3D}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
+        onOrbit360={onOrbit360}
+        isOrbiting360={isOrbiting360}
         isFlying={isFlying}
         onToggleFly={onToggleFly}
         onToggleLayers={onToggleLayers}

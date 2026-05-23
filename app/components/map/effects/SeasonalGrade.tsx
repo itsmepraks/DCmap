@@ -18,8 +18,8 @@ type Season = 'spring' | 'summer' | 'fall' | 'winter'
 const GRADES: Record<Season, { color: string; opacity: number; blend: string }> = {
   spring: {
     color:
-      'radial-gradient(ellipse at 50% 25%, rgba(255, 210, 220, 0.18) 0%, rgba(255, 239, 225, 0.08) 62%, transparent 100%)',
-    opacity: 0.22,
+      'radial-gradient(ellipse at 50% 25%, rgba(255, 206, 220, 0.28) 0%, rgba(255, 238, 225, 0.12) 62%, transparent 100%)',
+    opacity: 0.30,
     blend: 'soft-light',
   },
   summer: {
@@ -30,14 +30,14 @@ const GRADES: Record<Season, { color: string; opacity: number; blend: string }> 
   },
   fall: {
     color:
-      'linear-gradient(180deg, rgba(218, 135, 74, 0.18) 0%, rgba(168, 99, 52, 0.10) 54%, rgba(108, 78, 48, 0.08) 100%)',
-    opacity: 0.28,
+      'linear-gradient(180deg, rgba(224, 129, 58, 0.26) 0%, rgba(170, 88, 38, 0.16) 54%, rgba(86, 56, 33, 0.12) 100%)',
+    opacity: 0.36,
     blend: 'soft-light',
   },
   winter: {
     color:
-      'linear-gradient(180deg, rgba(196, 219, 240, 0.20) 0%, rgba(218, 228, 238, 0.14) 50%, rgba(238, 241, 243, 0.16) 100%)',
-    opacity: 0.30,
+      'linear-gradient(180deg, rgba(196, 219, 240, 0.28) 0%, rgba(218, 228, 238, 0.18) 50%, rgba(238, 241, 243, 0.22) 100%)',
+    opacity: 0.38,
     blend: 'soft-light',
   },
 }

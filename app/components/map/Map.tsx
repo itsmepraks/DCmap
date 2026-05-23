@@ -11,9 +11,7 @@ interface MapProps {
   mapContainerId?: string
   layersVisible: {
     museums: boolean
-    trees: boolean
     landmarks: boolean
-    parks: boolean
   }
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   is3DView: boolean
@@ -71,11 +69,15 @@ export default function Map({
     if (!map) return
 
     if (is3DView) {
-      map.easeTo({
-        pitch: 64,
-        bearing: -23,
+      map.flyTo({
+        center: [-77.0353, 38.8895],
+        zoom: Math.max(map.getZoom(), 16.25),
+        pitch: 68,
+        bearing: -28,
         duration: 1800,
-        easing: (t) => 1 - Math.pow(1 - t, 3)
+        essential: true,
+        curve: 1.25,
+        easing: (t) => 1 - Math.pow(1 - t, 3),
       })
     } else {
       map.easeTo({

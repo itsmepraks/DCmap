@@ -6,23 +6,23 @@ import type { LightPreset } from '@/app/hooks/useTimeOfDay'
 const TINT: Record<LightPreset, { color: string; opacity: number }> = {
   dawn: {
     color:
-      'linear-gradient(180deg, rgba(255, 188, 126, 0.24) 0%, rgba(255, 219, 176, 0.14) 45%, rgba(255,255,255,0.03) 100%)',
-    opacity: 0.42,
+      'linear-gradient(180deg, rgba(255, 190, 116, 0.20) 0%, rgba(255, 225, 186, 0.08) 48%, transparent 100%)',
+    opacity: 0.34,
   },
   day: {
     color:
       'linear-gradient(180deg, rgba(255, 252, 238, 0.08) 0%, transparent 55%, rgba(255,255,255,0.03) 100%)',
-    opacity: 0.18,
+    opacity: 0.08,
   },
   dusk: {
     color:
-      'linear-gradient(180deg, rgba(255, 132, 76, 0.30) 0%, rgba(223, 113, 122, 0.20) 42%, rgba(91, 80, 142, 0.16) 100%)',
-    opacity: 0.50,
+      'linear-gradient(180deg, rgba(255, 128, 76, 0.20) 0%, rgba(148, 80, 128, 0.14) 45%, rgba(28, 41, 82, 0.18) 100%)',
+    opacity: 0.38,
   },
   night: {
     color:
-      'radial-gradient(ellipse at 50% 22%, rgba(44, 58, 98, 0.18) 0%, rgba(13, 23, 46, 0.22) 48%, rgba(5, 11, 24, 0.34) 100%)',
-    opacity: 0.46,
+      'linear-gradient(180deg, rgba(7, 45, 103, 0.24) 0%, rgba(3, 17, 43, 0.22) 58%, rgba(1, 7, 20, 0.26) 100%)',
+    opacity: 0.42,
   },
 }
 
@@ -42,7 +42,7 @@ export default function TimeOfDayGrade({ preset }: { preset: LightPreset }) {
       transition={{ duration: 1.9, ease: [0.22, 1, 0.36, 1] }}
       style={{
         background: tint.color,
-        mixBlendMode: preset === 'night' ? 'soft-light' : 'multiply',
+        mixBlendMode: preset === 'night' ? 'overlay' : 'multiply',
       }}
     />
   )

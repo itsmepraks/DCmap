@@ -95,6 +95,10 @@ export default function Home() {
                     onOpenStats={state.gameState.openStatsModal}
                     is3D={state.is3DView}
                     onToggle3D={state.handleToggle3D}
+                    onZoomIn={state.handleZoomIn}
+                    onZoomOut={state.handleZoomOut}
+                    onOrbit360={state.handleOrbit360}
+                    isOrbiting360={state.isOrbiting360}
                     isFlying={state.isFlyMode}
                     onToggleFly={state.handleToggleFly}
                     timeOfDayIcon={state.timeOfDayIcon}
