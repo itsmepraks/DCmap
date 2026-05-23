@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "build:walk-graph": "tsx scripts/buildWalkGraph.ts",
+    "build:tour-audio": "tsx scripts/generateTourAudio.ts",
     "test": "jest"
   },
   "dependencies": {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useTourNarration } from '@/app/hooks/useTourNarration'
+import { useTourNarration, tourAudioSrc } from '@/app/hooks/useTourNarration'
 import type { Tour, TourCard } from '@/app/lib/tours'
 
 interface GuideCardProps {
@@ -28,36 +28,33 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const [idx, setIdx] = useState(0)
   const [started, setStarted] = useState(false)
   const reduceMotion = useReducedMotion()
-  const { speak, pause, resume, stop, state, supported, voiceName } = useTourNarration()
+  const { play, pause, resume, stop, state, isPlaying, isPaused } = useTourNarration()
 
   const card = tour.cards[idx]
   const isLast = idx === tour.cards.length - 1
   const isFirst = idx === 0
 
-  // Speak a specific card by index. Auto-advances to the next card on
-  // utterance end. Called exclusively from event handlers (button clicks,
-  // onEnd callbacks) — never from useEffect — so speechSynthesis.cancel()
-  // can't race with a second speak() in the same microtask.
-  const speakCard = useCallback(
+  // Play a specific card by index. Auto-advances at end of clip.
+  const playCard = useCallback(
     (cardIdx: number) => {
       const next = tour.cards[cardIdx]
       if (!next) return
-      console.info(`[guide] speaking card ${cardIdx} of ${tour.cards.length}`)
-      speak(next.voice, {
+      const src = tourAudioSrc(tour.id, next.kind)
+      play(src, {
         onEnd: () => {
           if (cardIdx < tour.cards.length - 1) {
             window.setTimeout(() => {
               setIdx(cardIdx + 1)
-              speakCard(cardIdx + 1)
-            }, 600)
+              playCard(cardIdx + 1)
+            }, 500)
           }
         },
       })
     },
-    [tour.cards, speak]
+    [tour, play]
   )
 
-  // Stop narration when the card unmounts.
+  // Stop narration on unmount.
   useEffect(() => () => stop(), [stop])
 
   const handleClose = () => {
@@ -66,16 +63,16 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   }
 
   const togglePlay = () => {
-    if (state === 'speaking') {
+    if (isPlaying) {
       pause()
       return
     }
-    if (state === 'paused') {
+    if (isPaused) {
       resume()
       return
     }
     if (!started) setStarted(true)
-    speakCard(idx)
+    playCard(idx)
   }
 
   const goNext = () => {
@@ -85,15 +82,22 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
     }
     const newIdx = idx + 1
     setIdx(newIdx)
-    if (started) speakCard(newIdx)
+    if (started) playCard(newIdx)
   }
 
   const goBack = () => {
     if (isFirst) return
     const newIdx = idx - 1
     setIdx(newIdx)
-    if (started) speakCard(newIdx)
+    if (started) playCard(newIdx)
   }
+
+  const playLabel =
+    state === 'loading' ? '⏳ Loading'
+      : isPlaying ? '⏸ Pause'
+      : isPaused ? '▶ Resume'
+      : !started ? '🔊 Listen'
+      : '▶ Play'
 
   return (
     <AnimatePresence>
@@ -133,7 +137,7 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
               <div className="truncate text-sm font-semibold text-white">{tour.name}</div>
             </div>
             <div className="flex items-center gap-2">
-              {state === 'speaking' && (
+              {isPlaying && (
                 <motion.span
                   aria-hidden="true"
                   className="h-2 w-2 rounded-full bg-amber-300"
@@ -173,39 +177,6 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             ))}
           </div>
 
-          {/* Diagnostic strip — isolates the bug to (a) our hook, (b) the
-              browser's TTS engine, or (c) the OS audio path. */}
-          {supported && (
-            <div className="flex flex-col gap-1 border-t border-white/5 px-4 pb-2 pt-1 text-[10px] text-white/35">
-              <div className="truncate">
-                Voice: <span className="text-white/55">{voiceName || 'system default'}</span>
-              </div>
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    // BARE-MINIMUM: no hook, no cancel, no setTimeout, no voice
-                    // override. If this doesn't play, the browser TTS engine
-                    // is broken at the OS level — nothing in our code matters.
-                    const u = new SpeechSynthesisUtterance('Bare test. One two three.')
-                    console.info('[guide] BARE test speaking:', u)
-                    window.speechSynthesis.speak(u)
-                  }}
-                  className="rounded px-2 py-0.5 text-white/45 transition hover:bg-white/5 hover:text-white"
-                >
-                  🔇 Bare test
-                </button>
-                <button
-                  type="button"
-                  onClick={() => speak('Audio test. If you hear this, narration works.')}
-                  className="rounded px-2 py-0.5 text-amber-300/80 transition hover:bg-white/5 hover:text-amber-200"
-                >
-                  🔈 Test voice
-                </button>
-              </div>
-            </div>
-          )}
-
           <div className="flex items-center justify-between border-t border-white/10 px-3 py-2">
             <button
               onClick={goBack}
@@ -215,30 +186,20 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
               ← Back
             </button>
 
-            {supported ? (
-              <motion.button
-                onClick={togglePlay}
-                aria-label={state === 'speaking' ? 'Pause narration' : 'Play narration'}
-                animate={
-                  !started && state !== 'speaking'
-                    ? { scale: [1, 1.06, 1] }
-                    : { scale: 1 }
-                }
-                transition={
-                  !started ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.15 }
-                }
-                className={
-                  'rounded-full px-5 py-2 text-xs font-semibold text-stone-900 transition ' +
-                  (!started
-                    ? 'bg-amber-400 shadow-lg shadow-amber-300/40 ring-2 ring-amber-300/50 hover:bg-amber-300'
-                    : 'bg-amber-400/90 hover:bg-amber-300')
-                }
-              >
-                {state === 'speaking' ? '⏸ Pause' : state === 'paused' ? '▶ Resume' : !started ? '🔊 Listen' : '▶ Play'}
-              </motion.button>
-            ) : (
-              <span className="text-xs text-white/30">No voice on this browser</span>
-            )}
+            <motion.button
+              onClick={togglePlay}
+              aria-label={isPlaying ? 'Pause narration' : 'Play narration'}
+              animate={!started && !isPlaying ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+              transition={!started ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.15 }}
+              className={
+                'rounded-full px-5 py-2 text-xs font-semibold text-stone-900 transition ' +
+                (!started
+                  ? 'bg-amber-400 shadow-lg shadow-amber-300/40 ring-2 ring-amber-300/50 hover:bg-amber-300'
+                  : 'bg-amber-400/90 hover:bg-amber-300')
+              }
+            >
+              {playLabel}
+            </motion.button>
 
             <button
               onClick={goNext}
