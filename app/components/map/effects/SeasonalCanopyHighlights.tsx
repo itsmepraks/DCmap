@@ -13,11 +13,11 @@ interface Props {
 const SOURCE_ID = 'seasonal-canopy-source'
 const LAYER_ID = 'seasonal-canopy-highlights'
 
-const SEASON_STOPS: Record<Season, { color: string; opacity: number; blur: number }> = {
-  spring: { color: '#F2A9BD', opacity: 0.34, blur: 0.82 },
-  summer: { color: '#62A768', opacity: 0.16, blur: 0.9 },
-  fall: { color: '#B8662C', opacity: 0.30, blur: 0.78 },
-  winter: { color: '#DDEAF2', opacity: 0.24, blur: 0.86 },
+const SEASON_STOPS: Record<Season, { color: string; opacity: number; blur: number; stroke: string }> = {
+  spring: { color: '#F3A8BC', opacity: 0.50, blur: 0.66, stroke: '#FFE2EA' },
+  summer: { color: '#5FA867', opacity: 0.24, blur: 0.82, stroke: '#B9D98F' },
+  fall: { color: '#B7642C', opacity: 0.48, blur: 0.58, stroke: '#E8A14F' },
+  winter: { color: '#DCE9EF', opacity: 0.38, blur: 0.70, stroke: '#FFFFFF' },
 }
 
 const FEATURE_COLLECTION: GeoJSON.FeatureCollection = {
@@ -48,6 +48,21 @@ const FEATURE_COLLECTION: GeoJSON.FeatureCollection = {
       properties: { zone: 'Ellipse and White House grounds', weight: 0.75 },
       geometry: { type: 'Point', coordinates: [-77.0365, 38.8951] },
     },
+    {
+      type: 'Feature',
+      properties: { zone: 'West Potomac Park', weight: 1.05 },
+      geometry: { type: 'Point', coordinates: [-77.0488, 38.8896] },
+    },
+    {
+      type: 'Feature',
+      properties: { zone: 'Smithsonian gardens', weight: 0.7 },
+      geometry: { type: 'Point', coordinates: [-77.0258, 38.8883] },
+    },
+    {
+      type: 'Feature',
+      properties: { zone: 'Capitol grounds', weight: 0.85 },
+      geometry: { type: 'Point', coordinates: [-77.0089, 38.8899] },
+    },
   ],
 }
 
@@ -76,14 +91,23 @@ export default function SeasonalCanopyHighlights({ map, season }: Props) {
               'interpolate',
               ['exponential', 1.4],
               ['zoom'],
-              11, ['*', ['get', 'weight'], 30],
-              13, ['*', ['get', 'weight'], 60],
-              15, ['*', ['get', 'weight'], 115],
-              17, ['*', ['get', 'weight'], 190],
+              11, ['*', ['get', 'weight'], 52],
+              13, ['*', ['get', 'weight'], 94],
+              15, ['*', ['get', 'weight'], 172],
+              17, ['*', ['get', 'weight'], 270],
             ],
             'circle-color': SEASON_STOPS[season].color,
             'circle-blur': SEASON_STOPS[season].blur,
             'circle-opacity': SEASON_STOPS[season].opacity,
+            'circle-stroke-color': SEASON_STOPS[season].stroke,
+            'circle-stroke-opacity': 0.18,
+            'circle-stroke-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              12, 1,
+              17, 5,
+            ],
           },
         })
       }
@@ -91,6 +115,7 @@ export default function SeasonalCanopyHighlights({ map, season }: Props) {
       const next = SEASON_STOPS[season]
       map.setPaintProperty(LAYER_ID, 'circle-color', next.color)
       map.setPaintProperty(LAYER_ID, 'circle-blur', next.blur)
+      map.setPaintProperty(LAYER_ID, 'circle-stroke-color', next.stroke)
       map.setPaintProperty(LAYER_ID, 'circle-opacity-transition', { duration: 1400, delay: 0 } as any)
       map.setPaintProperty(LAYER_ID, 'circle-opacity', next.opacity)
     }

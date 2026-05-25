@@ -255,28 +255,29 @@ export default function StateManager({ children }: StateManagerProps) {
       return
     }
 
+    const startCenter = map.getCenter()
+    const startZoom = Math.max(map.getZoom(), 15.6)
     setIs3DView(true)
     setIsOrbiting360(true)
-    map.flyTo({
-      center: WASHINGTON_MONUMENT,
-      zoom: 16.25,
-      pitch: 68,
+    map.easeTo({
+      center: startCenter,
+      zoom: startZoom,
+      pitch: Math.max(map.getPitch(), 66),
       bearing: map.getBearing(),
-      duration: 1200,
+      duration: 650,
       essential: true,
-      curve: 1.15,
     })
 
     const startBearing = map.getBearing()
-    const start = performance.now() + 950
+    const start = performance.now() + 450
     const duration = 22000
 
     const tick = (now: number) => {
       if (now >= start) {
         const t = Math.min((now - start) / duration, 1)
         map.jumpTo({
-          center: WASHINGTON_MONUMENT,
-          zoom: 16.25,
+          center: startCenter,
+          zoom: startZoom,
           pitch: 68,
           bearing: startBearing + t * 360,
         })

@@ -16,17 +16,17 @@ interface Particle {
 }
 
 const COUNT: Record<Season, number> = {
-  spring: 42,  // cherry petals
-  summer: 0,   // leave the clean 3D basemap alone
-  fall: 54,    // leaves
-  winter: 78,  // snowflakes
+  spring: 74,  // cherry petals
+  summer: 18,  // sunlit dust/pollen in the air
+  fall: 84,    // leaves
+  winter: 96,  // snowflakes
 }
 
 const FALL_PALETTE = ['#E0673F', '#C7421D', '#FFAA3B', '#A33B16', '#F0B860']
 function seasonColor(season: Season, idx: number): string {
   switch (season) {
     case 'spring': return idx % 3 === 0 ? '#FFE0EA' : '#FFC2D1'
-    case 'summer': return '#FFF4C2'
+    case 'summer': return idx % 2 === 0 ? '#FFF4C2' : '#DDF0A4'
     case 'fall': return FALL_PALETTE[idx % FALL_PALETTE.length]
     case 'winter': return '#FFFFFF'
   }
