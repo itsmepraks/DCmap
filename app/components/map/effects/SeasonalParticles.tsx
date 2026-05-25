@@ -16,10 +16,10 @@ interface Particle {
 }
 
 const COUNT: Record<Season, number> = {
-  spring: 74,  // cherry petals
-  summer: 18,  // sunlit dust/pollen in the air
-  fall: 84,    // leaves
-  winter: 96,  // snowflakes
+  spring: 34,  // cherry petals
+  summer: 8,   // sunlit dust/pollen in the air
+  fall: 34,    // leaves
+  winter: 24,  // light snow, not a whiteout
 }
 
 const FALL_PALETTE = ['#E0673F', '#C7421D', '#FFAA3B', '#A33B16', '#F0B860']
@@ -36,7 +36,13 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, season: Season
   ctx.save()
   ctx.translate(p.x, p.y)
   ctx.rotate(p.rot)
-  ctx.globalAlpha = Math.min(1, p.life / 60)
+  const alphaBySeason: Record<Season, number> = {
+    spring: 0.62,
+    summer: 0.28,
+    fall: 0.58,
+    winter: 0.42,
+  }
+  ctx.globalAlpha = Math.min(1, p.life / 60) * alphaBySeason[season]
   ctx.fillStyle = seasonColor(season, idx)
 
   switch (season) {
@@ -59,11 +65,11 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, season: Season
       break
     }
     case 'winter': {
-      // snowflake — small circle with halo
+      // snowflake - small circle with a restrained halo
       ctx.beginPath()
       ctx.arc(0, 0, p.size, 0, Math.PI * 2)
       ctx.fill()
-      ctx.globalAlpha *= 0.3
+      ctx.globalAlpha *= 0.18
       ctx.beginPath()
       ctx.arc(0, 0, p.size * 2.2, 0, Math.PI * 2)
       ctx.fill()
@@ -138,9 +144,9 @@ export default function SeasonalParticles({ season }: { season: Season }) {
           : s === 'winter' ? 25 + Math.random() * 35
           : 5 + Math.random() * 10,
         size:
-          s === 'spring' ? 5 + Math.random() * 4
-          : s === 'fall' ? 7 + Math.random() * 5
-          : s === 'winter' ? 2 + Math.random() * 2.5
+          s === 'spring' ? 4 + Math.random() * 3
+          : s === 'fall' ? 5 + Math.random() * 3.5
+          : s === 'winter' ? 1.6 + Math.random() * 1.8
           : 1.8 + Math.random() * 1.2,
         rot: Math.random() * Math.PI * 2,
         vr: (Math.random() - 0.5) * (s === 'fall' ? 4 : 1.5),

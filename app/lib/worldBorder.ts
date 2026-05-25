@@ -17,9 +17,9 @@ export const DC_CENTER: [number, number] = [-77.0365, 38.8895]
 
 // Optimal zoom levels
 export const ZOOM_LEVELS = {
-  min: 11,      // Can't zoom out beyond metro view
+  min: 12.5,    // Keep the experience inside a legible DC overview
   max: 20,      // Street-level detail
-  default: 13,  // Good overview of DC
+  default: 13.6, // Good overview of DC
   landmark: 17  // Close-up for landmarks
 }
 

@@ -219,10 +219,10 @@ export default function StateManager({ children }: StateManagerProps) {
   useEffect(() => {
     if (!map) return
     try {
-      // Keep Mapbox's real 3D trees whenever leafy trees make sense. Winter
-      // is the only season where the always-green native meshes become more
-      // misleading than useful.
-      map.setConfigProperty('basemap', 'show3dTrees', currentSeason !== 'winter')
+      // Keep the real Mapbox vegetation visible. Hiding it for winter made
+      // the scene feel empty and broken until we have a proper seasonal 3D
+      // vegetation system.
+      map.setConfigProperty('basemap', 'show3dTrees', true)
     } catch {
       // Non-Standard styles do not expose basemap config.
     }
@@ -258,8 +258,18 @@ export default function StateManager({ children }: StateManagerProps) {
 
   const handleZoomOut = useCallback(() => {
     stopOrbit360()
-    map?.zoomOut({ duration: 450 })
-  }, [map, stopOrbit360])
+    if (!map) return
+
+    const nextZoom = map.getZoom() - 1
+    const min3DZoom = 14.35
+    const minOverviewZoom = 12.75
+
+    map.easeTo({
+      zoom: Math.max(nextZoom, is3DView ? min3DZoom : minOverviewZoom),
+      duration: 450,
+      essential: true,
+    })
+  }, [is3DView, map, stopOrbit360])
 
   const handleOrbit360 = useCallback(() => {
     if (!map) return
