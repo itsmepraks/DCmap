@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import type mapboxgl from 'mapbox-gl'
-import { STREETS_SOURCE } from '@/app/hooks/useMapInitialization'
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter'
 
@@ -11,137 +10,152 @@ interface Props {
   season: Season
 }
 
-const LANDUSE_LAYER = 'seasonal-landuse-canopy'
-const BLOSSOM_SOURCE = 'seasonal-blossom-source'
-const BLOSSOM_LAYER = 'seasonal-blossom-accents'
+const SOURCE_ID = 'seasonal-vegetation-source'
+const LAYER_ID = 'seasonal-vegetation-layer'
 
-const PARK_CLASSES = ['park', 'wood', 'grass', 'cemetery', 'golf_course', 'pitch']
-
-const SEASON_PAINT: Record<Season, { fill: string; opacity: number; outline: string; blossomOpacity: number }> = {
-  spring: {
-    fill: '#7FAE73',
-    opacity: 0.34,
-    outline: '#DFA5B8',
-    blossomOpacity: 0.30,
-  },
-  summer: {
-    fill: '#5E9E5D',
-    opacity: 0.26,
-    outline: '#9BC779',
-    blossomOpacity: 0,
-  },
-  fall: {
-    fill: '#A96A31',
-    opacity: 0.42,
-    outline: '#D79A43',
-    blossomOpacity: 0.08,
-  },
-  winter: {
-    fill: '#C9C1B2',
-    opacity: 0.38,
-    outline: '#E9ECEC',
-    blossomOpacity: 0,
-  },
+type Zone = {
+  center: [number, number]
+  radiusLng: number
+  radiusLat: number
+  count: number
 }
 
-const BLOSSOMS: GeoJSON.FeatureCollection = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: { weight: 1.3 },
-      geometry: { type: 'Point', coordinates: [-77.0397, 38.8846] },
-    },
-    {
-      type: 'Feature',
-      properties: { weight: 0.9 },
-      geometry: { type: 'Point', coordinates: [-77.0444, 38.884] },
-    },
-    {
-      type: 'Feature',
-      properties: { weight: 0.8 },
-      geometry: { type: 'Point', coordinates: [-77.0334, 38.8837] },
-    },
-    {
-      type: 'Feature',
-      properties: { weight: 0.55 },
-      geometry: { type: 'Point', coordinates: [-77.036, 38.8884] },
-    },
-  ],
+const ZONES: Zone[] = [
+  { center: [-77.0397, 38.8846], radiusLng: 0.009, radiusLat: 0.0045, count: 24 }, // Tidal Basin
+  { center: [-77.0353, 38.8895], radiusLng: 0.010, radiusLat: 0.0038, count: 22 }, // Washington Monument grounds
+  { center: [-77.0232, 38.8895], radiusLng: 0.012, radiusLat: 0.0035, count: 22 }, // National Mall
+  { center: [-77.0488, 38.8896], radiusLng: 0.009, radiusLat: 0.0038, count: 18 }, // West Potomac Park
+  { center: [-77.0365, 38.8951], radiusLng: 0.006, radiusLat: 0.0036, count: 14 }, // Ellipse
+  { center: [-77.0089, 38.8899], radiusLng: 0.006, radiusLat: 0.0038, count: 12 }, // Capitol grounds
+]
+
+function seeded(seed: number) {
+  const x = Math.sin(seed * 999.13) * 10000
+  return x - Math.floor(x)
 }
 
-function setPaint(map: mapboxgl.Map, season: Season) {
-  const paint = SEASON_PAINT[season]
-  if (map.getLayer(LANDUSE_LAYER)) {
-    map.setPaintProperty(LANDUSE_LAYER, 'fill-color', paint.fill)
-    map.setPaintProperty(LANDUSE_LAYER, 'fill-opacity-transition', { duration: 900, delay: 0 } as any)
-    map.setPaintProperty(LANDUSE_LAYER, 'fill-opacity', paint.opacity)
-    map.setPaintProperty(LANDUSE_LAYER, 'fill-outline-color', paint.outline)
+function buildFeatures(season: Season): GeoJSON.Feature[] {
+  if (season === 'summer') return []
+
+  const features: GeoJSON.Feature[] = []
+  let seed = 1
+  for (const zone of ZONES) {
+    const count =
+      season === 'spring' && zone.center[0] < -77.032 ? Math.round(zone.count * 0.75)
+        : season === 'spring' ? Math.round(zone.count * 0.35)
+        : season === 'winter' ? Math.round(zone.count * 0.72)
+        : zone.count
+
+    for (let i = 0; i < count; i++) {
+      seed += 1
+      const angle = seeded(seed) * Math.PI * 2
+      const radius = Math.sqrt(seeded(seed + 100))
+      const lng = zone.center[0] + Math.cos(angle) * radius * zone.radiusLng
+      const lat = zone.center[1] + Math.sin(angle) * radius * zone.radiusLat
+
+      features.push({
+        type: 'Feature',
+        properties: {
+          icon: `seasonal-tree-${season}`,
+          rotate: Math.round(seeded(seed + 200) * 40 - 20),
+          size: 0.86 + seeded(seed + 300) * 0.34,
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [lng, lat],
+        },
+      })
+    }
   }
 
-  if (map.getLayer(BLOSSOM_LAYER)) {
-    map.setPaintProperty(BLOSSOM_LAYER, 'circle-opacity-transition', { duration: 900, delay: 0 } as any)
-    map.setPaintProperty(BLOSSOM_LAYER, 'circle-opacity', paint.blossomOpacity)
+  return features
+}
+
+function featureCollection(season: Season): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: buildFeatures(season),
   }
+}
+
+function loadIcon(map: mapboxgl.Map, name: string, path: string) {
+  if (map.hasImage(name)) return Promise.resolve()
+
+  return new Promise<void>((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      if (!map.hasImage(name)) {
+        map.addImage(name, img, { sdf: false })
+      }
+      resolve()
+    }
+    img.onerror = () => resolve()
+    img.src = path
+  })
 }
 
 export default function SeasonalCanopyHighlights({ map, season }: Props) {
   useEffect(() => {
     if (!map) return
 
-    const apply = () => {
-      if (!map.isStyleLoaded() || !map.getSource(STREETS_SOURCE)) return
+    let cancelled = false
 
-      const beforeId = map.getStyle().layers?.find((layer) => layer.type === 'symbol')?.id
+    const apply = async () => {
+      if (!map.isStyleLoaded()) return
 
-      if (!map.getLayer(LANDUSE_LAYER)) {
-        map.addLayer({
-          id: LANDUSE_LAYER,
-          type: 'fill',
-          source: STREETS_SOURCE,
-          'source-layer': 'landuse',
-          filter: ['in', ['get', 'class'], ['literal', PARK_CLASSES]],
-          paint: {
-            'fill-color': SEASON_PAINT[season].fill,
-            'fill-opacity': SEASON_PAINT[season].opacity,
-            'fill-outline-color': SEASON_PAINT[season].outline,
-          },
-        }, beforeId)
-      }
+      await Promise.all([
+        loadIcon(map, 'seasonal-tree-spring', '/icons/tree-spring.svg'),
+        loadIcon(map, 'seasonal-tree-fall', '/icons/tree-fall.svg'),
+        loadIcon(map, 'seasonal-tree-winter', '/icons/tree-winter.svg'),
+      ])
+      if (cancelled) return
 
-      if (!map.getSource(BLOSSOM_SOURCE)) {
-        map.addSource(BLOSSOM_SOURCE, {
+      if (!map.getSource(SOURCE_ID)) {
+        map.addSource(SOURCE_ID, {
           type: 'geojson',
-          data: BLOSSOMS,
+          data: featureCollection(season),
         })
+      } else {
+        const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource
+        source.setData(featureCollection(season))
       }
 
-      if (!map.getLayer(BLOSSOM_LAYER)) {
+      if (!map.getLayer(LAYER_ID)) {
+        const beforeId = map.getStyle().layers?.find((layer) => layer.type === 'symbol')?.id
         map.addLayer({
-          id: BLOSSOM_LAYER,
-          type: 'circle',
-          source: BLOSSOM_SOURCE,
-          paint: {
-            'circle-pitch-alignment': 'map',
-            'circle-radius': [
+          id: LAYER_ID,
+          type: 'symbol',
+          source: SOURCE_ID,
+          minzoom: 13,
+          layout: {
+            'icon-image': ['get', 'icon'],
+            'icon-size': [
               'interpolate',
-              ['exponential', 1.35],
+              ['linear'],
               ['zoom'],
-              11, ['*', ['get', 'weight'], 20],
-              14, ['*', ['get', 'weight'], 64],
-              17, ['*', ['get', 'weight'], 142],
+              13, ['*', ['get', 'size'], 0.24],
+              15, ['*', ['get', 'size'], 0.42],
+              17, ['*', ['get', 'size'], 0.70],
             ],
-            'circle-color': '#F2A8BD',
-            'circle-blur': 0.7,
-            'circle-opacity': SEASON_PAINT[season].blossomOpacity,
-            'circle-stroke-color': '#FFE8EF',
-            'circle-stroke-opacity': 0.12,
-            'circle-stroke-width': 2,
+            'icon-rotate': ['get', 'rotate'],
+            'icon-pitch-alignment': 'map',
+            'icon-rotation-alignment': 'map',
+            'icon-allow-overlap': false,
+            'icon-ignore-placement': false,
+          },
+          paint: {
+            'icon-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              13, 0.35,
+              14.2, 0.72,
+              16, 0.92,
+            ],
           },
         }, beforeId)
       }
-
-      setPaint(map, season)
     }
 
     if (map.isStyleLoaded()) apply()
@@ -149,6 +163,7 @@ export default function SeasonalCanopyHighlights({ map, season }: Props) {
     map.on('idle', apply)
 
     return () => {
+      cancelled = true
       map.off('style.load', apply)
       map.off('idle', apply)
     }

@@ -1,7 +1,6 @@
 import { memo, useEffect } from 'react'
 import type mapboxgl from 'mapbox-gl'
 import type { LayerVisibility } from '@/app/types/map'
-import BuildingsLayer from './layers/BuildingsLayer'
 import MuseumsLayer from './layers/MuseumsLayer'
 import RoadDetailsLayer from './layers/RoadDetailsLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
@@ -31,7 +30,6 @@ export const MapLayers = memo(function MapLayers({
 
   return (
     <>
-      <BuildingsLayer />
       <RoadDetailsLayer visible={true} />
       <MuseumsLayer
         visible={layersVisible.museums}
