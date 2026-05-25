@@ -219,10 +219,10 @@ export default function StateManager({ children }: StateManagerProps) {
   useEffect(() => {
     if (!map) return
     try {
-      // Mapbox Standard's 3D tree meshes are always leafy green. Keep them
-      // for spring/summer, but hide them in fall/winter so the scene does not
-      // show summer trees under fall color or winter snow.
-      map.setConfigProperty('basemap', 'show3dTrees', currentSeason === 'spring' || currentSeason === 'summer')
+      // Keep Mapbox's real 3D trees whenever leafy trees make sense. Winter
+      // is the only season where the always-green native meshes become more
+      // misleading than useful.
+      map.setConfigProperty('basemap', 'show3dTrees', currentSeason !== 'winter')
     } catch {
       // Non-Standard styles do not expose basemap config.
     }

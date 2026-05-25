@@ -6,7 +6,6 @@ import ParticleEffect from '../map/effects/ParticleEffect'
 import DiscoveryRadius from '../map/effects/DiscoveryRadius'
 import BreadcrumbTrail from '../map/effects/BreadcrumbTrail'
 import MonumentLights from '../map/effects/MonumentLights'
-import SeasonalCanopyHighlights from '../map/effects/SeasonalCanopyHighlights'
 import WaypointLayer from '../map/WaypointLayer'
 import { useMap } from '@/app/lib/MapContext'
 
@@ -135,9 +134,6 @@ export default function MapSection({
 
       {/* Floodlit monuments at dusk and night */}
       <MonumentLights landmarks={landmarks} lightPreset={lightPreset} />
-
-      {/* Localized seasonal canopy zones: visible seasonal mood without fake tree dots. */}
-      <SeasonalCanopyHighlights map={map} season={currentSeason} />
 
       {/* Breadcrumb Trail */}
       <BreadcrumbTrail
