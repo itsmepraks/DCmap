@@ -6,6 +6,14 @@ import { STREETS_SOURCE } from '@/app/hooks/useMapInitialization'
 
 const LAYER_ID = 'dc-building-extrusions'
 
+const HEIGHT_EXPR: any[] = [
+  'coalesce',
+  ['to-number', ['get', 'height']],
+  ['to-number', ['get', 'render_height']],
+  ['*', ['coalesce', ['to-number', ['get', 'levels']], 2.8], 3.4],
+  11,
+]
+
 export default function BuildingsLayer() {
   const { map } = useMap()
   const initializedRef = useRef(false)
@@ -29,31 +37,24 @@ export default function BuildingsLayer() {
         type: 'fill-extrusion',
         source: STREETS_SOURCE,
         'source-layer': 'building',
-        minzoom: 14,
+        minzoom: 13.2,
         paint: {
           'fill-extrusion-color': [
             'interpolate',
             ['linear'],
-            ['zoom'],
-            14,
-            '#D8CCBA',
-            17,
-            '#CDBFA9',
+            HEIGHT_EXPR,
+            8, '#D9D0BF',
+            28, '#C8B9A5',
+            70, '#B5A28A',
           ],
           'fill-extrusion-height': [
             'interpolate',
             ['linear'],
             ['zoom'],
-            14,
+            13.2,
             0,
             15.2,
-            [
-              'coalesce',
-              ['get', 'height'],
-              ['get', 'render_height'],
-              ['*', ['coalesce', ['get', 'levels'], 2], 3],
-              10,
-            ],
+            HEIGHT_EXPR,
           ],
           'fill-extrusion-base': [
             'coalesce',
@@ -61,8 +62,9 @@ export default function BuildingsLayer() {
             ['get', 'render_min_height'],
             0,
           ],
-          'fill-extrusion-opacity': 0.72,
-          'fill-extrusion-ambient-occlusion-intensity': 0.35,
+          'fill-extrusion-opacity': 0.88,
+          'fill-extrusion-ambient-occlusion-intensity': 0.58,
+          'fill-extrusion-ambient-occlusion-radius': 3,
           'fill-extrusion-vertical-gradient': true,
         },
       }, firstSymbolId)

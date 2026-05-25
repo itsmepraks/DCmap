@@ -216,6 +216,18 @@ export default function StateManager({ children }: StateManagerProps) {
     setCurrentSeason(season)
   }, [])
 
+  useEffect(() => {
+    if (!map) return
+    try {
+      // Mapbox Standard's 3D tree meshes are always leafy green. Keep them
+      // for spring/summer, but hide them in fall/winter so the scene does not
+      // show summer trees under fall color or winter snow.
+      map.setConfigProperty('basemap', 'show3dTrees', currentSeason === 'spring' || currentSeason === 'summer')
+    } catch {
+      // Non-Standard styles do not expose basemap config.
+    }
+  }, [map, currentSeason])
+
   const handleToggle3D = useCallback(() => {
     stopOrbit360()
     setIs3DView(prev => {

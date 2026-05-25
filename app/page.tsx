@@ -13,7 +13,6 @@ import GameOverlay from './components/ui/GameOverlay'
 import OnboardingTutorial from './components/ui/OnboardingTutorial'
 import FeedbackToastContainer from './components/ui/FeedbackToast'
 import SeasonalParticles from './components/map/effects/SeasonalParticles'
-import SeasonalGrade from './components/map/effects/SeasonalGrade'
 import TimeOfDayGrade from './components/map/effects/TimeOfDayGrade'
 import SearchPalette from './components/ui/SearchPalette'
 import MysteryCard from './components/game/MysteryCard'
@@ -56,9 +55,8 @@ export default function Home() {
                     lightPreset={state.lightPreset}
                   />
 
-                  {/* Cinematic color grading — time-of-day (under) + season (over). */}
+                  {/* Cinematic color grading — time-of-day only. Seasonal color is handled in the map layers. */}
                   <TimeOfDayGrade preset={state.lightPreset} />
-                  <SeasonalGrade season={state.currentSeason} />
 
                   {/* Ambient seasonal particles (cherry petals / leaves / snow / dust) */}
                   <SeasonalParticles season={state.currentSeason} />

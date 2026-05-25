@@ -66,7 +66,7 @@ export function useMapInitialization(
           basemap: {
             lightPreset: 'day',
             show3dObjects: true,
-            show3dBuildings: false,
+            show3dBuildings: true,
             show3dTrees: true,
             show3dLandmarks: true,
             show3dFacades: false,
@@ -87,7 +87,7 @@ export function useMapInitialization(
         try {
           mapInstance.setConfigProperty('basemap', 'lightPreset', 'day')
           mapInstance.setConfigProperty('basemap', 'show3dObjects', true)
-          mapInstance.setConfigProperty('basemap', 'show3dBuildings', false)
+          mapInstance.setConfigProperty('basemap', 'show3dBuildings', true)
           mapInstance.setConfigProperty('basemap', 'show3dTrees', true)
           mapInstance.setConfigProperty('basemap', 'show3dLandmarks', true)
           mapInstance.setConfigProperty('basemap', 'show3dFacades', false)
