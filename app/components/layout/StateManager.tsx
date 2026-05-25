@@ -14,6 +14,7 @@ import { useTimeOfDay, type LightPreset } from '@/app/hooks/useTimeOfDay'
 import { useIdleCameraDrift } from '@/app/hooks/useIdleCameraDrift'
 import { STANDARD_STYLE, SATELLITE_STYLE } from '@/app/hooks/useMapInitialization'
 import { useGuideMode } from '@/app/hooks/useGuideMode'
+import { createMuseumTour } from '@/app/lib/tours'
 
 // Washington Monument — anchor point for the cinematic 3D entry.
 const WASHINGTON_MONUMENT: [number, number] = [-77.0353, 38.8895]
@@ -425,8 +426,9 @@ export default function StateManager({ children }: StateManagerProps) {
   // guide once you finish a tour). Includes ALL landmarks so users can
   // re-listen to places they have already discovered.
   const guideNearby = useMemo(() => {
-    if (!playerPosition || !landmarksState.landmarks?.length) return []
-    return landmarksState.landmarks
+    if (!playerPosition) return []
+
+    const landmarkGuides = (landmarksState.landmarks ?? [])
       .map((l: { id: string; name: string; coordinates: [number, number] }) => ({
         id: l.id,
         name: l.name,
@@ -435,10 +437,23 @@ export default function StateManager({ children }: StateManagerProps) {
           lat: l.coordinates[1],
         }),
       }))
-      .sort((a: { distance: number }, b: { distance: number }) => a.distance - b.distance)
-  }, [playerPosition, landmarksState.landmarks])
 
-  const guide = useGuideMode({ nearbyLandmarks: guideNearby })
+    const museumGuides = (museumsState.museums ?? [])
+      .map((m: { id: string; name: string; description?: string; address?: string; coordinates: [number, number] }) => ({
+        id: `museum-${m.id}`,
+        name: m.name,
+        distance: calculateDistance(playerPosition, {
+          lng: m.coordinates[0],
+          lat: m.coordinates[1],
+        }),
+        tour: createMuseumTour(m),
+      }))
+
+    return [...landmarkGuides, ...museumGuides]
+      .sort((a: { distance: number }, b: { distance: number }) => a.distance - b.distance)
+  }, [playerPosition, landmarksState.landmarks, museumsState.museums])
+
+  const guide = useGuideMode({ nearbyPlaces: guideNearby })
 
   // Check completion status
   const allLandmarksVisited = landmarksState.landmarks.length > 0 &&

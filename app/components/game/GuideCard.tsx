@@ -29,7 +29,7 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
   const [started, setStarted] = useState(false)
   const advanceTimeoutRef = useRef<number | null>(null)
   const reduceMotion = useReducedMotion()
-  const { play, pause, resume, stop, state, isPlaying, isPaused } = useTourNarration()
+  const { play, speak, pause, resume, stop, state, isPlaying, isPaused } = useTourNarration()
 
   const card = tour.cards[idx]
   const isLast = idx === tour.cards.length - 1
@@ -44,8 +44,7 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
         window.clearTimeout(advanceTimeoutRef.current)
         advanceTimeoutRef.current = null
       }
-      const src = tourAudioSrc(tour.id, next.kind)
-      play(src, {
+      const playOptions = {
         onEnd: () => {
           if (cardIdx < tour.cards.length - 1) {
             advanceTimeoutRef.current = window.setTimeout(() => {
@@ -55,9 +54,15 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
             }, 650)
           }
         },
-      })
+      }
+      if (tour.audioMode === 'speech') {
+        speak(next.voice, playOptions)
+      } else {
+        const src = tourAudioSrc(tour.id, next.kind)
+        play(src, playOptions)
+      }
     },
-    [tour, play]
+    [tour, play, speak]
   )
 
   // Stop narration on unmount.

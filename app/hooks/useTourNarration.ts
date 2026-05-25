@@ -19,9 +19,14 @@ export type NarrationState = 'idle' | 'loading' | 'playing' | 'paused' | 'ended'
 export function useTourNarration() {
   const [state, setState] = useState<NarrationState>('idle')
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const onEndRef = useRef<(() => void) | null>(null)
 
   const cleanup = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    utteranceRef.current = null
     const a = audioRef.current
     onEndRef.current = null
     if (!a) return
@@ -93,10 +98,20 @@ export function useTourNarration() {
   )
 
   const pause = useCallback(() => {
+    if (utteranceRef.current && window.speechSynthesis?.speaking) {
+      window.speechSynthesis.pause()
+      setState('paused')
+      return
+    }
     audioRef.current?.pause()
   }, [])
 
   const resume = useCallback(() => {
+    if (utteranceRef.current && window.speechSynthesis?.paused) {
+      window.speechSynthesis.resume()
+      setState('playing')
+      return
+    }
     audioRef.current?.play().catch((err) => {
       console.warn('[guide] resume rejected:', err)
     })
@@ -112,13 +127,56 @@ export function useTourNarration() {
 
   const supported = typeof window !== 'undefined' && typeof Audio !== 'undefined'
 
+  const speak = useCallback(
+    (text: string, opts?: { onEnd?: () => void }) => {
+      cleanup()
+      if (typeof window === 'undefined' || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+        setState('error')
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 0.92
+      utterance.pitch = 1.02
+      utterance.volume = 1
+
+      const voices = window.speechSynthesis.getVoices()
+      const preferredVoice = voices.find((voice) =>
+        /samantha|ava|allison|victoria|karen|daniel|google us english/i.test(voice.name)
+      )
+      if (preferredVoice) utterance.voice = preferredVoice
+
+      utterance.onstart = () => {
+        if (utteranceRef.current === utterance) setState('playing')
+      }
+      utterance.onend = () => {
+        if (utteranceRef.current !== utterance) return
+        utteranceRef.current = null
+        setState('ended')
+        opts?.onEnd?.()
+      }
+      utterance.onerror = () => {
+        if (utteranceRef.current !== utterance) return
+        utteranceRef.current = null
+        setState('error')
+      }
+
+      utteranceRef.current = utterance
+      setState('loading')
+      window.speechSynthesis.cancel()
+      window.speechSynthesis.speak(utterance)
+    },
+    [cleanup]
+  )
+
   return {
     state,
     play,
+    speak,
     pause,
     resume,
     stop,
-    supported,
+    supported: supported || (typeof window !== 'undefined' && 'speechSynthesis' in window),
     isPlaying: state === 'playing',
     isPaused: state === 'paused',
   }

@@ -3,17 +3,18 @@
 import { useCallback, useMemo, useState } from 'react'
 import { getTour, type Tour } from '@/app/lib/tours'
 
-const PROXIMITY_M = 200 // metres — close enough to qualify as "at" the landmark
+const PROXIMITY_M = 200 // metres — close enough to qualify as "at" the place
 
-interface NearbyLandmark {
+interface NearbyGuidePlace {
   id: string
   name: string
   distance: number
+  tour?: Tour
 }
 
 interface UseGuideModeOpts {
   /** Sorted nearest-first. */
-  nearbyLandmarks: NearbyLandmark[]
+  nearbyPlaces: NearbyGuidePlace[]
   /** Disable while certain modes are active (e.g. modal flows). */
   disabled?: boolean
 }
@@ -33,36 +34,36 @@ interface GuideState {
 
 /**
  * Surfaces an "audio tour available" affordance when the user reaches a
- * landmark we have content for. Click-to-open only — never auto-opens.
+ * landmark or museum we have content for. Click-to-open only — never auto-opens.
  * Dismissed tours stay dismissed for the rest of the session for that
- * specific landmark.
+ * specific place.
  */
-export function useGuideMode({ nearbyLandmarks, disabled }: UseGuideModeOpts): GuideState {
-  const [activeId, setActiveId] = useState<string | null>(null)
+export function useGuideMode({ nearbyPlaces, disabled }: UseGuideModeOpts): GuideState {
+  const [activeTour, setActiveTour] = useState<Tour | null>(null)
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set())
 
-  // Closest landmark in range that we have a tour for and that hasn't been
+  // Closest place in range that has a tour and hasn't been
   // dismissed in this session.
   const candidate = useMemo(() => {
     if (disabled) return null
-    for (const l of nearbyLandmarks) {
-      if (l.distance >= PROXIMITY_M) break // sorted, so we can stop
-      if (dismissed.has(l.id)) continue
-      if (!getTour(l.id)) continue
-      return l
+    for (const place of nearbyPlaces) {
+      if (place.distance >= PROXIMITY_M) break // sorted, so we can stop
+      if (dismissed.has(place.id)) continue
+      const tour = place.tour ?? getTour(place.id)
+      if (!tour) continue
+      return { ...place, tour }
     }
     return null
-  }, [nearbyLandmarks, dismissed, disabled])
+  }, [nearbyPlaces, dismissed, disabled])
 
-  const availableTour = candidate ? getTour(candidate.id) ?? null : null
-  const activeTour = activeId ? getTour(activeId) ?? null : null
+  const availableTour = candidate?.tour ?? null
 
   const openTour = useCallback(() => {
-    if (candidate) setActiveId(candidate.id)
+    if (candidate?.tour) setActiveTour(candidate.tour)
   }, [candidate])
 
   const closeTour = useCallback(() => {
-    setActiveId(null)
+    setActiveTour(null)
   }, [])
 
   const dismissAvailable = useCallback(() => {

@@ -21,7 +21,15 @@ export interface Tour {
   id: string
   name: string
   intro: string
+  audioMode?: 'file' | 'speech'
   cards: TourCard[]
+}
+
+interface MuseumTourSource {
+  id: string
+  name: string
+  description?: string
+  address?: string
 }
 
 export const TOURS: Record<string, Tour> = {
@@ -419,4 +427,59 @@ export const TOURS: Record<string, Tour> = {
 
 export function getTour(landmarkId: string): Tour | undefined {
   return TOURS[landmarkId]
+}
+
+function museumVoiceName(name: string) {
+  return name.replace(/^Smithsonian\s+/i, '').replace(/^National\s+/i, '')
+}
+
+export function createMuseumTour(museum: MuseumTourSource): Tour {
+  const shortName = museumVoiceName(museum.name)
+  const description = museum.description || `${museum.name} is one of Washington, D.C.'s museum stops.`
+  const address = museum.address || 'Check the museum website for the exact entrance and current visitor details.'
+  const isSmithsonian = /smithsonian/i.test(museum.name)
+  const isNational = /^national| national /i.test(museum.name)
+
+  return {
+    id: `museum-${museum.id}`,
+    name: museum.name,
+    intro: `You've reached ${museum.name}.`,
+    audioMode: 'speech',
+    cards: [
+      {
+        kind: 'pitch',
+        title: 'What this place is',
+        display: description,
+        voice:
+          `You are at ${museum.name}. Here is the quick guide version: ${description} This is the kind of stop where it helps to pick one thing you are curious about, then let the exhibits pull you deeper.`,
+      },
+      {
+        kind: 'history',
+        title: 'Why it belongs in D.C.',
+        display: isNational
+          ? 'D.C. museums often work like public memory: they collect the objects, stories, science, and culture that help visitors understand the country from many angles.'
+          : 'D.C. museums are part of the city’s real tourist rhythm: monuments outside, collections inside, and a lot of history packed into walkable distance.',
+        voice: isNational
+          ? `${shortName} fits right into D.C.'s role as a public memory city. Around here, museums are not just rooms full of objects. They are how the country explains itself, argues with itself, and saves what matters.`
+          : `${shortName} is part of what makes D.C. so good for exploring. You can move from monuments to museums in minutes, and the city keeps switching between big outdoor symbolism and very specific indoor stories.`,
+      },
+      {
+        kind: 'surprise',
+        title: 'Guide note',
+        display: isSmithsonian
+          ? 'Smithsonian museums are generally free to enter, which makes them perfect for short visits. You do not have to “finish” one museum; pick a gallery and enjoy it well.'
+          : 'Museum visits are better when you do not try to see everything. Choose one gallery, one object, or one question, and let that shape the stop.',
+        voice: isSmithsonian
+          ? `Guide tip: most Smithsonian museums are free, so do not treat this like a paid ticket you have to maximize. Pop in, choose one gallery, and enjoy it properly. That is usually better than sprinting through five floors.`
+          : `Here is the trick: do not try to conquer the whole museum. Choose one question before you walk in. What surprised people here? What changed because of this place? That makes the visit feel alive instead of like homework.`,
+      },
+      {
+        kind: 'tip',
+        title: 'If you were here',
+        display: `Address: ${address}. Check current hours before you commit, and if it is near the National Mall, pair it with a monument walk before sunset.`,
+        voice:
+          `If you were here with a guide, I would tell you to check the current hours first, then give yourself a clean mission. The address is ${address}. If you are near the Mall, pair the museum with a slow monument walk when the light gets good.`,
+      },
+    ],
+  }
 }
