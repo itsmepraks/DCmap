@@ -479,7 +479,9 @@ export default function StateManager({ children }: StateManagerProps) {
 
   // Check completion status
   const allLandmarksVisited = landmarksState.landmarks.length > 0 &&
-    gameState.gameProgress.visitedLandmarks.size >= landmarksState.landmarks.length
+    landmarksState.landmarks.every((landmark: { id: string }) =>
+      gameState.gameProgress.visitedLandmarks.has(landmark.id)
+    )
 
   // Show completion notification when status changes
   useEffect(() => {
@@ -487,7 +489,7 @@ export default function StateManager({ children }: StateManagerProps) {
       setShowCompletion(true)
       setLastCompletionState(prev => ({ ...prev, landmarks: true }))
     }
-  }, [allLandmarksVisited, lastCompletionState])
+  }, [allLandmarksVisited, lastCompletionState.landmarks])
 
   const handleNavigateToLandmark = useCallback((coordinates: [number, number]) => {
     if (!map) return
