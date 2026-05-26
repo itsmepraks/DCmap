@@ -32,6 +32,7 @@ const MIN_ALTITUDE = 3 // minimum altitude in meters
 const MAX_ALTITUDE = 200 // maximum altitude in meters
 const SAFE_BUILDING_CLEARANCE = 5 // meters above buildings
 const COLLISION_CHECK_RADIUS = 25 // meters - check buildings within this radius
+const BUILDING_LAYER_HINTS = ['building', 'extrusion', 'roof', 'realistic-buildings', 'building-roofs']
 
 // Smooth interpolation function
 function lerp(start: number, end: number, factor: number): number {
@@ -44,12 +45,32 @@ function easeOutCubic(t: number): number {
 }
 
 // Get building height at a position
+function getQueryableBuildingLayers(map: mapboxgl.Map): string[] {
+  const layers = map.getStyle().layers ?? []
+
+  return layers
+    .filter((layer) => {
+      if (!map.getLayer(layer.id)) return false
+      const id = layer.id.toLowerCase()
+      return (
+        layer.type === 'fill-extrusion' ||
+        BUILDING_LAYER_HINTS.some((hint) => id.includes(hint))
+      )
+    })
+    .map((layer) => layer.id)
+}
+
 function getBuildingHeightAtPosition(
   map: mapboxgl.Map,
   position: [number, number],
   radius: number
 ): number {
   try {
+    if (!map.isStyleLoaded()) return 0
+
+    const buildingLayers = getQueryableBuildingLayers(map)
+    if (buildingLayers.length === 0) return 0
+
     const point = map.project(position)
     const pixels = radius * (map.getZoom() / 18)
 
@@ -59,7 +80,7 @@ function getBuildingHeightAtPosition(
         [point.x + pixels, point.y + pixels]
       ],
       {
-        layers: ['realistic-buildings', 'building-roofs'],
+        layers: buildingLayers,
         filter: ['has', 'height']
       }
     )
