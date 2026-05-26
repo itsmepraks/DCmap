@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
@@ -23,6 +23,16 @@ interface LandmarkExplorerProps {
 
 export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: LandmarkExplorerProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isCompact, setIsCompact] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const media = window.matchMedia('(max-width: 639px)')
+    const update = () => setIsCompact(media.matches)
+    update()
+    media.addEventListener?.('change', update)
+    return () => media.removeEventListener?.('change', update)
+  }, [])
 
   // Sort landmarks: Unvisited first, then visited
   const sortedLandmarks = [...landmarks].sort((a, b) => {
@@ -40,12 +50,13 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
 
   return (
     <motion.div 
-      className="fixed top-20 left-4 z-45 cursor-move"
-      drag
+      className="fixed left-2 top-[4.65rem] z-45 cursor-default sm:left-4 sm:top-20 sm:cursor-move"
+      drag={!isCompact}
       dragMomentum={false}
       dragConstraints={dragConstraints}
       style={{
-        maxWidth: '300px',
+        width: isCompact ? 'calc(50vw - 0.75rem)' : '300px',
+        maxWidth: isCompact ? '190px' : '300px',
         maxHeight: 'calc(100vh - 200px)'
       }}
     >
@@ -54,7 +65,7 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full py-2.5 px-3 flex items-center justify-between rounded-xl"
+        className="min-h-11 w-full rounded-xl px-2 py-2 sm:px-3 sm:py-2.5 flex items-center justify-between"
         style={{
           background: `linear-gradient(135deg, #C65D3B 0%, #A04830 100%)`,
           border: `2px solid #8B3A24`,
@@ -64,13 +75,13 @@ export default function LandmarkExplorer({ landmarks, onNavigate, onSelect }: La
           cursor: 'grab',
         }}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🧭</span>
-          <span className="font-semibold text-sm tracking-wide">LANDMARKS</span>
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <span className="shrink-0 text-base sm:text-lg">🧭</span>
+          <span className="truncate text-[11px] font-semibold tracking-wide sm:text-sm">LANDMARKS</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <span 
-            className="text-xs font-bold px-2 py-0.5 rounded-full"
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold sm:px-2 sm:text-xs"
             style={{
               background: 'rgba(255,255,255,0.2)',
               backdropFilter: 'blur(4px)'

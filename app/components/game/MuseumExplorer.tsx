@@ -21,6 +21,16 @@ interface MuseumExplorerProps {
 export default function MuseumExplorer({ isVisible, visitedLandmarks, onNavigate, onSelect }: MuseumExplorerProps) {
   const [museums, setMuseums] = useState<Museum[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isCompact, setIsCompact] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const media = window.matchMedia('(max-width: 639px)')
+    const update = () => setIsCompact(media.matches)
+    update()
+    media.addEventListener?.('change', update)
+    return () => media.removeEventListener?.('change', update)
+  }, [])
   
   useEffect(() => {
     fetch('/data/museums.geojson')
@@ -57,15 +67,16 @@ export default function MuseumExplorer({ isVisible, visitedLandmarks, onNavigate
 
   return (
     <motion.div 
-      className="fixed top-36 left-4 z-45 cursor-move"
+      className="fixed right-2 top-[4.65rem] z-45 cursor-default sm:left-4 sm:right-auto sm:top-36 sm:cursor-move"
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: -100, opacity: 0 }}
-      drag
+      drag={!isCompact}
       dragMomentum={false}
       dragConstraints={dragConstraints}
       style={{
-        maxWidth: '300px',
+        width: isCompact ? 'calc(50vw - 0.75rem)' : '300px',
+        maxWidth: isCompact ? '190px' : '300px',
         maxHeight: 'calc(100vh - 200px)'
       }}
     >
@@ -74,7 +85,7 @@ export default function MuseumExplorer({ isVisible, visitedLandmarks, onNavigate
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full py-2.5 px-3 flex items-center justify-between rounded-xl"
+        className="min-h-11 w-full rounded-xl px-2 py-2 sm:px-3 sm:py-2.5 flex items-center justify-between"
         style={{
           background: `linear-gradient(135deg, #3B82C6 0%, #2563A0 100%)`,
           border: `2px solid #1E4B8B`,
@@ -84,13 +95,13 @@ export default function MuseumExplorer({ isVisible, visitedLandmarks, onNavigate
           cursor: 'grab',
         }}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🎨</span>
-          <span className="font-semibold text-sm tracking-wide">MUSEUMS</span>
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <span className="shrink-0 text-base sm:text-lg">🎨</span>
+          <span className="truncate text-[11px] font-semibold tracking-wide sm:text-sm">MUSEUMS</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <span 
-            className="text-xs font-bold px-2 py-0.5 rounded-full"
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold sm:px-2 sm:text-xs"
             style={{
               background: 'rgba(255,255,255,0.2)',
               backdropFilter: 'blur(4px)'

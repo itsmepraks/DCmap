@@ -55,10 +55,10 @@ export default function ControlDock({
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       whileHover={{ opacity: 1, y: -2 }}
-      className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-3 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:block sm:px-0"
+      className="fixed inset-x-0 bottom-2 z-50 flex justify-center px-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:block sm:px-0"
     >
       <div
-        className="relative flex w-fit max-w-[calc(100vw-1.5rem)] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-2xl p-1.5 shadow-2xl sm:gap-1.5 sm:p-2"
+        className="relative flex w-fit max-w-[calc(100vw-1rem)] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-2xl p-1.5 shadow-2xl sm:gap-1.5 sm:p-2"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}F2 0%, ${minecraftTheme.colors.beige.light}F2 100%)`,
           border: `2px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -131,7 +131,7 @@ export default function ControlDock({
         )}
 
         {keyboardCapable && (
-          <>
+          <div className="hidden contents sm:contents">
             <div className="hidden h-7 w-px shrink-0 bg-gradient-to-b from-transparent via-[#B8860B]/28 to-transparent sm:block" />
 
             {/* Fly Mode (desktop only — requires WASD + mouse) */}
@@ -143,7 +143,7 @@ export default function ControlDock({
               color="#4A90E2"
               activeColor="#6BB3FF"
             />
-          </>
+          </div>
         )}
       </div>
       
@@ -178,7 +178,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       aria-label={label}
       aria-pressed={isActive}
       title={label}
-      className="group relative flex h-12 min-h-12 w-[3.15rem] shrink-0 flex-col items-center justify-center overflow-hidden rounded-xl transition-all sm:h-[3.35rem] sm:w-[3.45rem] lg:h-14 lg:w-14"
+      className="group relative flex h-11 min-h-11 w-11 shrink-0 flex-col items-center justify-center overflow-hidden rounded-xl transition-all sm:h-[3.35rem] sm:w-[3.45rem] lg:h-14 lg:w-14"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${activeColor || color}, ${color})`
@@ -209,9 +209,9 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
           filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'none',
           transform: isActive ? 'scale(1.1)' : 'scale(1)',
           fontSize:
-            icon === '+' || icon === '−' || icon === '⟳' ? 'clamp(1.35rem, 2vw, 1.55rem)'
-            : isTextIcon ? '1.05rem'
-            : '1.28rem',
+            icon === '+' || icon === '−' || icon === '⟳' ? 'clamp(1.25rem, 2vw, 1.5rem)'
+            : isTextIcon ? '0.98rem'
+            : '1.18rem',
           lineHeight: 1,
           fontWeight: isTextIcon ? 900 : undefined,
           letterSpacing: isTextIcon ? '0.04em' : undefined,
@@ -221,7 +221,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
         {icon}
       </span>
       <span 
-        className="relative z-10 max-w-full truncate px-0.5 text-center font-mono text-[8px] font-bold uppercase leading-none tracking-wide sm:text-[9px]"
+        className="relative z-10 max-w-full truncate px-0.5 text-center font-mono text-[7px] font-bold uppercase leading-none tracking-wide sm:text-[9px]"
         style={{ 
           color: isActive ? '#FFF' : '#5D4037', 
           textShadow: isActive ? '0 1px 2px rgba(0,0,0,0.5)' : 'none' 

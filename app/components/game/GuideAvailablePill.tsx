@@ -23,12 +23,12 @@ export default function GuideAvailablePill({ landmarkName, onOpen, onDismiss }: 
         animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
         exit={reduceMotion ? { opacity: 0 } : { y: 30, opacity: 0 }}
         transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', damping: 24, stiffness: 280 }}
-        className="pointer-events-none fixed inset-x-0 bottom-32 z-40 flex justify-center px-3 sm:bottom-40"
+        className="pointer-events-none fixed inset-x-0 bottom-[5.75rem] z-40 flex justify-center px-3 sm:bottom-40"
       >
         <div
           role="region"
           aria-label={`Audio tour available for ${landmarkName}`}
-          className="pointer-events-auto flex w-full min-w-0 max-w-[min(28rem,calc(100vw-1rem))] items-center gap-2 rounded-full border px-1.5 py-1.5 shadow-xl"
+          className="pointer-events-auto flex w-full min-w-0 max-w-[min(28rem,calc(100vw-1rem))] items-center gap-1.5 rounded-full border px-1.5 py-1.5 shadow-xl sm:gap-2"
           style={{
             background:
               'linear-gradient(180deg, rgba(255, 249, 235, 0.96) 0%, rgba(242, 222, 184, 0.95) 100%)',

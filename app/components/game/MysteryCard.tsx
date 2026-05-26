@@ -39,7 +39,7 @@ export default function MysteryCard({ landmarks, visited, onNavigate }: Props) {
           exit={reduceMotion ? { opacity: 0 } : { y: -10, opacity: 0 }}
           transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', damping: 24, stiffness: 280 }}
           onClick={() => setExpanded(true)}
-          className="fixed right-3 top-24 z-40 min-h-10 rounded-full border border-amber-400/35 bg-amber-50/90 px-3 text-xs font-black uppercase tracking-[0.18em] text-amber-900 shadow-lg backdrop-blur-md transition hover:bg-amber-100 active:scale-[0.96] sm:right-5"
+          className="fixed right-2 top-[7.75rem] z-40 min-h-9 rounded-full border border-amber-400/35 bg-amber-50/90 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-amber-900 shadow-lg backdrop-blur-md transition hover:bg-amber-100 active:scale-[0.96] sm:right-5 sm:top-24 sm:min-h-10 sm:px-3 sm:text-xs"
           aria-label="Open mystery of the day"
         >
           <span aria-hidden="true" className="mr-1.5">🕵️</span>
@@ -57,7 +57,7 @@ export default function MysteryCard({ landmarks, visited, onNavigate }: Props) {
         animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
         exit={reduceMotion ? { opacity: 0 } : { y: -16, opacity: 0 }}
         transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', damping: 24, stiffness: 280 }}
-        className="fixed right-3 top-24 z-40 w-[82%] max-w-xs sm:right-5 sm:top-24"
+        className="fixed right-2 top-[7.75rem] z-40 w-[calc(100vw-1rem)] max-w-xs sm:right-5 sm:top-24 sm:w-[82%]"
       >
         <div className="rounded-2xl border border-amber-400/35 bg-gradient-to-b from-amber-50/92 to-yellow-100/88 px-3.5 py-3 shadow-lg backdrop-blur-md">
           <div className="flex items-start gap-2.5">

@@ -305,3 +305,17 @@ body {
   border: 2px solid rgba(33, 150, 243, 0.3) !important;
 }
 
+@media (max-width: 639px) {
+  .mapboxgl-ctrl-bottom-left,
+  .mapboxgl-ctrl-bottom-right {
+    bottom: 4.9rem !important;
+  }
+
+  .mapboxgl-ctrl-bottom-left {
+    left: 0.35rem !important;
+  }
+
+  .mapboxgl-ctrl-attrib {
+    max-width: calc(100vw - 1rem) !important;
+  }
+}

@@ -74,15 +74,15 @@ export default function MiniStatsBar({
           onOpenStats()
         }
       }}
-      className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 cursor-pointer"
+      className="fixed left-2 top-2 z-50 max-w-[calc(100vw-1rem)] cursor-pointer sm:left-4 sm:top-4"
       whileHover={{ scale: 1.02, x: 2 }}
       whileTap={{ scale: 0.98 }}
     >
       <div
-        className="px-2 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 sm:gap-2.5 relative"
+        className="relative flex items-center gap-1.5 px-2 py-1.5 sm:gap-2.5 sm:px-4 sm:py-2"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}F8, ${minecraftTheme.colors.beige.light}F5)`,
-          border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
+          border: `2px solid ${minecraftTheme.colors.terracotta.base}`,
           borderRadius: '12px',
           boxShadow: `${minecraftTheme.minecraft.shadowRaised}, 0 8px 24px rgba(0,0,0,0.15)`,
           backdropFilter: 'blur(12px)',
@@ -110,7 +110,7 @@ export default function MiniStatsBar({
         )}
 
         {/* Points */}
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(255, 215, 0, 0.15)' }}>
+        <div className="flex min-w-0 items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background: 'rgba(255, 215, 0, 0.15)' }}>
           <span className="text-sm">⭐</span>
           <span
             className="text-xs font-bold"
@@ -120,7 +120,8 @@ export default function MiniStatsBar({
               textShadow: '0 1px 2px rgba(0,0,0,0.2)'
             }}
           >
-            {points.toLocaleString()}
+                <span className="sm:hidden">{points >= 1000 ? `${Math.floor(points / 100) / 10}k` : points.toLocaleString()}</span>
+                <span className="hidden sm:inline">{points.toLocaleString()}</span>
           </span>
         </div>
 
@@ -128,7 +129,7 @@ export default function MiniStatsBar({
         <div className="w-px h-4" style={{ background: minecraftTheme.colors.terracotta.light }} />
 
         {/* Landmarks - Green */}
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(46, 125, 50, 0.12)' }}>
+        <div className="flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background: 'rgba(46, 125, 50, 0.12)' }}>
           <span className="text-sm">🏛️</span>
           <span
             className="text-xs font-bold"
@@ -142,7 +143,7 @@ export default function MiniStatsBar({
         </div>
 
         {/* Museums - Blue */}
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(25, 118, 210, 0.12)' }}>
+        <div className="flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background: 'rgba(25, 118, 210, 0.12)' }}>
           <span className="text-sm">🎨</span>
           <span
             className="text-xs font-bold"
