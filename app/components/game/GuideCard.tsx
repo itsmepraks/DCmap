@@ -128,10 +128,10 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
         animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
         exit={reduceMotion ? { opacity: 0 } : { y: 60, opacity: 0 }}
         transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', damping: 26, stiffness: 280 }}
-        className="pointer-events-none fixed inset-x-0 bottom-28 z-40 flex justify-center px-3 sm:bottom-32"
+        className="pointer-events-none fixed inset-x-0 bottom-32 z-40 flex justify-center px-3 sm:bottom-40"
       >
         <div
-          className="pointer-events-auto w-full max-w-lg overflow-hidden rounded-[1.35rem] shadow-2xl"
+          className="pointer-events-auto w-full min-w-0 max-w-[min(32rem,calc(100vw-1rem))] overflow-hidden rounded-[1.35rem] shadow-2xl"
           style={{
             background:
               'linear-gradient(180deg, rgba(255, 249, 235, 0.97) 0%, rgba(246, 231, 201, 0.96) 100%)',
@@ -160,7 +160,7 @@ export default function GuideCard({ tour, onClose }: GuideCardProps) {
               </div>
               <div className="truncate text-base font-black text-stone-950">{tour.name}</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               {isPlaying && (
                 <motion.span
                   aria-hidden="true"
