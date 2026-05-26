@@ -79,9 +79,9 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
         9, 35,
         11, 65,
         13, 75,
-        15, 110,
-        17, 150,
-        19, 220,
+        15, 92,
+        17, 128,
+        19, 185,
       ],
       'circle-opacity': 0,
       'circle-emissive-strength': 1,
@@ -103,9 +103,9 @@ function ensureLayers(map: mapboxgl.Map, geo: GeoJSON.FeatureCollection) {
         9, 14,
         11, 28,
         13, 34,
-        15, 52,
-        17, 78,
-        19, 120,
+        15, 44,
+        17, 66,
+        19, 96,
       ],
       'circle-opacity': 0,
       'circle-emissive-strength': 1,
@@ -181,10 +181,10 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
         map.setPaintProperty(BEACON_LAYER, 'circle-opacity-transition', { duration: 1600, delay: 0 } as any)
         // At night: bright opaque spotlight pools + warm halo + diffuse skyline.
         // At day: zero.
-        map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', target * 0.42)
-        map.setPaintProperty(GLOW_LAYER, 'circle-opacity', target * 0.68)
-        map.setPaintProperty(CORE_LAYER, 'circle-opacity', target * 0.78)
-        map.setPaintProperty(BEACON_LAYER, 'circle-opacity', target * 0.82)
+        map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', target * 0.32)
+        map.setPaintProperty(GLOW_LAYER, 'circle-opacity', target * 0.6)
+        map.setPaintProperty(CORE_LAYER, 'circle-opacity', target * 0.72)
+        map.setPaintProperty(BEACON_LAYER, 'circle-opacity', target * 0.64)
       } catch {
         // Layers may not be ready before style.load; the style.load handler retries.
       }
@@ -204,11 +204,11 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
         if (!map.getLayer(SKYLINE_LAYER)) return
         t += 0.05
         try {
-          const base = glowFor(lightPreset) * 0.42
+          const base = glowFor(lightPreset) * 0.32
           const opacity = Math.max(0, base + Math.sin(t) * pulseAmplitude * base)
           map.setPaintProperty(SKYLINE_LAYER, 'circle-opacity', opacity)
           if (map.getLayer(BEACON_LAYER)) {
-            map.setPaintProperty(BEACON_LAYER, 'circle-opacity', Math.max(0, glowFor(lightPreset) * 0.9 + Math.sin(t + 1) * 0.05))
+            map.setPaintProperty(BEACON_LAYER, 'circle-opacity', Math.max(0, glowFor(lightPreset) * 0.66 + Math.sin(t + 1) * 0.04))
           }
         } catch {}
       }, 80)

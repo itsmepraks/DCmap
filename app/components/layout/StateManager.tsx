@@ -8,7 +8,7 @@ import { useFlyController } from '@/app/hooks/useFlyController'
 import { useWaypointSystem } from '@/app/hooks/useWaypointSystem'
 import { useExperience } from '@/app/hooks/useExperience'
 import { useMap } from '@/app/lib/MapContext'
-import { calculateDistance, type Coordinates } from '@/app/lib/proximity'
+import { calculateDistance, isVisitedPlace, type Coordinates } from '@/app/lib/proximity'
 import { useAnnounce } from '@/app/components/ui/LiveAnnouncer'
 import { useTimeOfDay, type LightPreset } from '@/app/hooks/useTimeOfDay'
 import { useIdleCameraDrift } from '@/app/hooks/useIdleCameraDrift'
@@ -410,38 +410,57 @@ export default function StateManager({ children }: StateManagerProps) {
     return mapCenter
   }, [flyControllerState.position, mapCenter])
 
-  // Compute nearest undiscovered landmark for HUD (single source for both
-  // the "nearest undiscovered" card and the "recommended" card).
+  // Compute nearest undiscovered place for HUD (single source for both the
+  // "nearest undiscovered" card and the "recommended" card). Landmarks and
+  // museums share one progress set, so use alias-aware checks.
   const nearestUndiscovered = useMemo(() => {
-    if (!playerPosition || landmarksState.landmarks.length === 0) return null
+    if (!playerPosition) return null
 
-    const undiscovered = landmarksState.landmarks.filter(
-      (l: { id: string }) => !gameState.gameProgress.visitedLandmarks.has(l.id)
-    )
+    const landmarkCandidates = (landmarksState.landmarks ?? [])
+      .filter((l: { id: string; name: string }) =>
+        !isVisitedPlace(gameState.gameProgress.visitedLandmarks, l.id, l.name)
+      )
+      .map((l: { id: string; name: string; coordinates: [number, number] }) => ({
+        id: l.id,
+        name: l.name,
+        coordinates: l.coordinates,
+      }))
+
+    const museumCandidates = (museumsState.museums ?? [])
+      .filter((m: { id: string; name: string }) =>
+        !isVisitedPlace(gameState.gameProgress.visitedLandmarks, m.id, m.name)
+      )
+      .map((m: { id: string; name: string; coordinates: [number, number] }) => ({
+        id: `museum-${m.id}`,
+        name: m.name,
+        coordinates: m.coordinates,
+      }))
+
+    const undiscovered = [...landmarkCandidates, ...museumCandidates]
 
     if (undiscovered.length === 0) return null
 
     let nearest = null
     let minDistance = Infinity
 
-    undiscovered.forEach((landmark: { id: string; name: string; coordinates: [number, number] }) => {
+    undiscovered.forEach((place: { id: string; name: string; coordinates: [number, number] }) => {
       const distance = calculateDistance(playerPosition, {
-        lng: landmark.coordinates[0],
-        lat: landmark.coordinates[1]
+        lng: place.coordinates[0],
+        lat: place.coordinates[1]
       })
       if (distance < minDistance) {
         minDistance = distance
         nearest = {
-          id: landmark.id,
-          name: landmark.name,
+          id: place.id,
+          name: place.name,
           distance,
-          coordinates: landmark.coordinates
+          coordinates: place.coordinates
         }
       }
     })
 
     return nearest
-  }, [playerPosition, landmarksState.landmarks, gameState.gameProgress.visitedLandmarks])
+  }, [playerPosition, landmarksState.landmarks, museumsState.museums, gameState.gameProgress.visitedLandmarks])
 
   // Audio tour guide proximity — independent of the `nearbyLandmarks` list
   // (that one filters visited landmarks, which would silently disable the

@@ -249,21 +249,28 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 0.35,   // Visible at far zoom
-              10, 0.45,
-              12, 0.55,
-              14, 0.65,
-              16, 0.75,
-              18, 0.85   // Full size when close
+              12, 0.18,
+              13.5, 0.34,
+              15, 0.52,
+              17, 0.72,
+              18, 0.82
             ],
-            'icon-allow-overlap': true, // Always show museums
-            'icon-ignore-placement': true, // Make sure they are always visible
+            'icon-allow-overlap': false,
+            'icon-ignore-placement': false,
             'icon-pitch-alignment': 'viewport',
             'visibility': initialVisibility
           }
 
           const paint: SymbolPaint = {
-            'icon-opacity': 1,
+            'icon-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              12.6, 0,
+              13.2, 0.42,
+              14.5, 0.82,
+              16, 1
+            ],
             'icon-halo-color': [
               'case',
               ['boolean', ['feature-state', 'selected'], false],
@@ -297,9 +304,9 @@ export default function MuseumsLayer({ visible, onSelect, onMuseumDiscovered }: 
               'interpolate',
               ['linear'],
               ['zoom'],
-              13, 0,    // Fully transparent below zoom 13
-              14, 0,
-              15, 1     // Visible at zoom 15+
+              15, 0,
+              15.8, 0,
+              16.5, 1
             ]
 
             paint['text-color'] = '#4A3728' // Darker brown for text

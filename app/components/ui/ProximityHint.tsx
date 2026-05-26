@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
 import { useState } from 'react'
+import { isVisitedPlace } from '@/app/lib/proximity'
 
 interface NearbyLandmark {
   id: string
@@ -32,7 +33,7 @@ export default function ProximityHint({ nearbyLandmarks, visitedLandmarks = new 
   // Show up to 3 nearest unvisited landmarks for better exploration guidance
   // This ensures the hint updates as user progresses and discovers landmarks
   const unvisitedLandmarks = nearbyLandmarks
-    .filter(l => !visitedLandmarks.has(l.id))
+    .filter(l => !isVisitedPlace(visitedLandmarks, l.id, l.name))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 3) // Show top 3 nearest
 

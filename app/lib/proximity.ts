@@ -167,7 +167,7 @@ export function getNearbyLandmarks(
 
   landmarks.forEach(landmark => {
     // Skip visited landmarks
-    if (visitedLandmarks.has(landmark.id)) return
+    if (isVisitedPlace(visitedLandmarks, landmark.id, landmark.name)) return
 
     const landmarkPos: [number, number] = [
       landmark.coordinates[0],
@@ -193,6 +193,44 @@ export function getNearbyLandmarks(
 
   // Sort by distance (closest first)
   return nearbyLandmarks.sort((a, b) => a.distance - b.distance)
+}
+
+export function slugifyPlaceName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function isVisitedPlace(visited: Set<string>, id?: string, name?: string): boolean {
+  const candidates = new Set<string>()
+  const normalizedVisited = new Set<string>()
+
+  const addNormalized = (set: Set<string>, value?: string) => {
+    if (!value) return
+    set.add(value)
+    set.add(value.toLowerCase())
+    set.add(slugifyPlaceName(value))
+  }
+
+  for (const item of visited) {
+    addNormalized(normalizedVisited, item)
+  }
+
+  if (id) {
+    addNormalized(candidates, id)
+    addNormalized(candidates, `museum-${id}`)
+    addNormalized(candidates, `museum-${slugifyPlaceName(id)}`)
+  }
+
+  if (name) {
+    addNormalized(candidates, name)
+    addNormalized(candidates, `museum-${name}`)
+    addNormalized(candidates, `museum-${slugifyPlaceName(name)}`)
+  }
+
+  return Array.from(candidates).some((candidate) => normalizedVisited.has(candidate))
 }
 
 // Get bearing from player to landmark (for compass arrow)
