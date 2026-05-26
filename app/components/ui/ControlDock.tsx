@@ -58,7 +58,7 @@ export default function ControlDock({
       className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:block sm:px-0"
     >
       <div
-        className="relative grid max-w-[calc(100vw-1rem)] grid-flow-col auto-cols-[3.25rem] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1.5 shadow-2xl sm:auto-cols-[3.65rem] sm:gap-2 sm:rounded-2xl sm:p-2.5 lg:auto-cols-[4rem]"
+        className="relative flex w-fit max-w-[calc(100vw-1rem)] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1.5 shadow-2xl sm:gap-2 sm:rounded-2xl sm:p-2.5"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}FF 0%, ${minecraftTheme.colors.beige.light}FF 100%)`,
           border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -77,7 +77,7 @@ export default function ControlDock({
           color={minecraftTheme.colors.terracotta.base}
         />
 
-        <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
+        <div className="hidden h-8 w-px shrink-0 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
 
         <DockButton
           icon="−"
@@ -95,7 +95,7 @@ export default function ControlDock({
           color="#8C6A46"
         />
 
-        <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
+        <div className="hidden h-8 w-px shrink-0 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
 
         {/* 3D Toggle */}
         <DockButton
@@ -118,7 +118,7 @@ export default function ControlDock({
 
         {onCycleTimeOfDay && timeOfDayIcon && timeOfDayLabel && (
           <>
-            <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
+            <div className="hidden h-8 w-px shrink-0 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
             <DockButton
               icon={timeOfDayIcon}
               label={timeLabel.toUpperCase()}
@@ -132,7 +132,7 @@ export default function ControlDock({
 
         {keyboardCapable && (
           <>
-            <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
+            <div className="hidden h-8 w-px shrink-0 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
 
             {/* Fly Mode (desktop only — requires WASD + mouse) */}
             <DockButton
@@ -184,7 +184,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       aria-label={label}
       aria-pressed={isActive}
       title={label}
-      className="relative flex h-12 min-h-12 w-full shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg transition-all group sm:h-14 sm:rounded-xl lg:h-16"
+      className="relative flex h-12 min-h-12 w-[3.25rem] shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg transition-all group sm:h-14 sm:w-[3.65rem] sm:rounded-xl lg:h-16 lg:w-16"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${activeColor || color}, ${color})`
@@ -212,7 +212,7 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       <span 
         className="relative z-10 mb-0.5 transition-all sm:mb-1"
         style={{ 
-          filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'grayscale(80%) opacity(0.7)',
+          filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'none',
           transform: isActive ? 'scale(1.1)' : 'scale(1)',
           fontSize:
             icon === '+' || icon === '−' || icon === '↻' ? 'clamp(1.45rem, 2vw, 1.7rem)'
