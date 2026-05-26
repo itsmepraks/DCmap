@@ -69,7 +69,7 @@ export function useMapInitialization(
             show3dBuildings: true,
             show3dTrees: true,
             show3dLandmarks: true,
-            show3dFacades: false,
+            show3dFacades: true,
             showPedestrianRoads: true,
             showPointOfInterestLabels: false,
             showTransitLabels: false,
@@ -90,7 +90,7 @@ export function useMapInitialization(
           mapInstance.setConfigProperty('basemap', 'show3dBuildings', true)
           mapInstance.setConfigProperty('basemap', 'show3dTrees', true)
           mapInstance.setConfigProperty('basemap', 'show3dLandmarks', true)
-          mapInstance.setConfigProperty('basemap', 'show3dFacades', false)
+          mapInstance.setConfigProperty('basemap', 'show3dFacades', true)
           mapInstance.setConfigProperty('basemap', 'showPedestrianRoads', true)
           mapInstance.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
           mapInstance.setConfigProperty('basemap', 'showTransitLabels', false)

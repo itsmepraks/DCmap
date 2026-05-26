@@ -48,6 +48,8 @@ export default function ControlDock({
   onCycleTimeOfDay,
 }: ControlDockProps) {
   const keyboardCapable = useIsKeyboardCapable()
+  const timeLabel = timeOfDayLabel ? (timeOfDayLabel === 'day' ? 'Noon' : timeOfDayLabel) : ''
+
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
@@ -55,8 +57,8 @@ export default function ControlDock({
       whileHover={{ opacity: 1, y: -2 }}
       className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:block sm:px-0"
     >
-      <div 
-        className="relative flex max-w-full items-center gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1.5 shadow-2xl sm:gap-3 sm:rounded-2xl sm:p-3"
+      <div
+        className="relative grid max-w-[calc(100vw-1rem)] grid-flow-col auto-cols-[3.25rem] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-xl p-1.5 shadow-2xl sm:auto-cols-[3.65rem] sm:gap-2 sm:rounded-2xl sm:p-2.5 lg:auto-cols-[4rem]"
         style={{
           background: `linear-gradient(135deg, ${minecraftTheme.colors.beige.base}FF 0%, ${minecraftTheme.colors.beige.light}FF 100%)`,
           border: `3px solid ${minecraftTheme.colors.terracotta.base}`,
@@ -68,18 +70,18 @@ export default function ControlDock({
       >
         {/* Layers Button */}
         <DockButton
-          icon="🗺️"
-          label="LAYERS"
+          icon="LAY"
+          label="Layers"
           isActive={false}
           onClick={onToggleLayers}
           color={minecraftTheme.colors.terracotta.base}
         />
 
-        <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+        <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
 
         <DockButton
           icon="−"
-          label="OUT"
+          label="Out"
           isActive={false}
           onClick={onZoomOut}
           color="#8C6A46"
@@ -87,18 +89,18 @@ export default function ControlDock({
 
         <DockButton
           icon="+"
-          label="IN"
+          label="In"
           isActive={false}
           onClick={onZoomIn}
           color="#8C6A46"
         />
 
-        <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+        <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
 
         {/* 3D Toggle */}
         <DockButton
-          icon="🧊"
-          label="3D VIEW"
+          icon="3D"
+          label="View"
           isActive={is3D}
           onClick={onToggle3D}
           color="#D4501E"
@@ -116,10 +118,10 @@ export default function ControlDock({
 
         {onCycleTimeOfDay && timeOfDayIcon && timeOfDayLabel && (
           <>
-            <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+            <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
             <DockButton
               icon={timeOfDayIcon}
-              label={timeOfDayLabel.toUpperCase()}
+              label={timeLabel.toUpperCase()}
               isActive={true}
               onClick={onCycleTimeOfDay}
               color="#7B5FB8"
@@ -130,12 +132,12 @@ export default function ControlDock({
 
         {keyboardCapable && (
           <>
-            <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent" />
+            <div className="hidden h-8 w-px bg-gradient-to-b from-transparent via-[#B8860B]/40 to-transparent sm:block" />
 
             {/* Fly Mode (desktop only — requires WASD + mouse) */}
             <DockButton
-              icon="🦅"
-              label="FLY"
+              icon="NAV"
+              label="Fly"
               isActive={isFlying}
               onClick={onToggleFly}
               color="#4A90E2"
@@ -172,6 +174,8 @@ interface DockButtonProps {
 }
 
 function DockButton({ icon, label, isActive, onClick, color, activeColor }: DockButtonProps) {
+  const isTextIcon = icon.length > 1
+
   return (
     <motion.button
       whileHover={{ scale: 1.12, y: -4 }}
@@ -179,7 +183,8 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       onClick={onClick}
       aria-label={label}
       aria-pressed={isActive}
-      className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg transition-all group sm:h-16 sm:w-16 sm:rounded-xl"
+      title={label}
+      className="relative flex h-12 min-h-12 w-full shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg transition-all group sm:h-14 sm:rounded-xl lg:h-16"
       style={{
         background: isActive 
           ? `linear-gradient(135deg, ${activeColor || color}, ${color})`
@@ -205,18 +210,24 @@ function DockButton({ icon, label, isActive, onClick, color, activeColor }: Dock
       )}
       
       <span 
-        className="relative z-10 mb-0.5 text-xl transition-all sm:mb-1 sm:text-2xl"
+        className="relative z-10 mb-0.5 transition-all sm:mb-1"
         style={{ 
           filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'grayscale(80%) opacity(0.7)',
           transform: isActive ? 'scale(1.1)' : 'scale(1)',
-          fontSize: icon === '+' || icon === '−' || icon === '↻' ? 'clamp(1.55rem, 2vw, 1.85rem)' : undefined,
-          lineHeight: icon === '+' || icon === '−' || icon === '↻' ? 1 : undefined,
+          fontSize:
+            icon === '+' || icon === '−' || icon === '↻' ? 'clamp(1.45rem, 2vw, 1.7rem)'
+            : isTextIcon ? '0.82rem'
+            : '1.3rem',
+          lineHeight: 1,
+          fontWeight: isTextIcon ? 900 : undefined,
+          letterSpacing: isTextIcon ? '0.04em' : undefined,
+          fontFamily: isTextIcon ? 'monospace' : undefined,
         }}
       >
         {icon}
       </span>
       <span 
-        className="relative z-10 max-w-full px-0.5 text-center font-mono text-[10px] font-bold uppercase leading-none tracking-wide sm:text-xs sm:tracking-wider"
+        className="relative z-10 max-w-full truncate px-0.5 text-center font-mono text-[9px] font-bold uppercase leading-none tracking-wide sm:text-[10px]"
         style={{ 
           color: isActive ? '#FFF' : '#5D4037', 
           textShadow: isActive ? '0 1px 2px rgba(0,0,0,0.5)' : 'none' 

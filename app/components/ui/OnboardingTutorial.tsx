@@ -25,17 +25,17 @@ const SLIDES: Slide[] = [
   },
   {
     eyebrow: 'Discover',
-    title: 'Find 10 iconic landmarks',
+    title: 'Find landmarks and museums',
     body:
-      'Click any landmark marker to discover it. Earn points, unlock museums, and complete the daily Mystery of the Day card up top.',
-    hint: 'Get within 50 m of a landmark in Fly Mode to discover it on foot.',
+      'Click landmark and museum markers to discover places, earn points, unlock guide cards, and complete the daily Mystery of the Day.',
+    hint: 'When a tour pill appears, open it for the guide story behind that place.',
   },
   {
     eyebrow: 'Shape the scene',
     title: 'Time-of-day and seasons',
     body:
-      'The dock in the bottom-right cycles Dawn → Day → Dusk → Night. Open Layers to switch seasons — the whole city changes colour, monuments light up at night.',
-    hint: 'Try toggling Fly mode for first-person navigation (desktop only).',
+      'Use the dock to move between 3D, 360, time of day, and Fly mode. Layers controls museums, landmarks, seasons, and imagery.',
+    hint: 'Fly mode is desktop-only; on touch screens, use 3D, 360, and search to explore.',
   },
 ]
 
