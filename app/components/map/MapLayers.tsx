@@ -2,7 +2,6 @@ import { memo, useEffect } from 'react'
 import type mapboxgl from 'mapbox-gl'
 import type { LayerVisibility } from '@/app/types/map'
 import MuseumsLayer from './layers/MuseumsLayer'
-import RoadDetailsLayer from './layers/RoadDetailsLayer'
 import LandmarksLayer from './layers/LandmarksLayer'
 import type { SelectedEntity } from '@/app/components/ui/EntityInfoPanel'
 
@@ -30,7 +29,6 @@ export const MapLayers = memo(function MapLayers({
 
   return (
     <>
-      <RoadDetailsLayer visible={true} />
       <MuseumsLayer
         visible={layersVisible.museums}
         onSelect={onSelectEntity}
