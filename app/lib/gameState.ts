@@ -1,6 +1,7 @@
 'use client'
 
 import { STORAGE_KEYS } from './storageKeys'
+import { readJsonFromStorage } from './safeStorage'
 
 const STORAGE_KEY = STORAGE_KEYS.gameProgress
 
@@ -24,34 +25,35 @@ export interface LandmarkInfo {
   icon: string
 }
 
-// Load game progress from localStorage
-export function loadGameProgress(): GameProgress {
-  if (typeof window === 'undefined') {
-    return {
-      visitedLandmarks: new Set(),
-      visitedLandmarksWithTime: [],
-      timestamp: Date.now()
-    }
-  }
+interface StoredGameProgress {
+  visited?: string[]
+  visitedWithTime?: VisitedLandmark[]
+  timestamp?: number
+}
 
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const data = JSON.parse(saved)
-      return {
-        visitedLandmarks: new Set(data.visited || []),
-        visitedLandmarksWithTime: data.visitedWithTime || [],
-        timestamp: data.timestamp || Date.now()
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load game progress:', error)
-  }
-
+function createEmptyProgress(): GameProgress {
   return {
     visitedLandmarks: new Set(),
     visitedLandmarksWithTime: [],
     timestamp: Date.now()
+  }
+}
+
+// Load game progress from localStorage
+export function loadGameProgress(): GameProgress {
+  if (typeof window === 'undefined') {
+    return createEmptyProgress()
+  }
+
+  const data = readJsonFromStorage<StoredGameProgress | null>(STORAGE_KEY, null)
+  if (!data) {
+    return createEmptyProgress()
+  }
+
+  return {
+    visitedLandmarks: new Set(Array.isArray(data.visited) ? data.visited : []),
+    visitedLandmarksWithTime: Array.isArray(data.visitedWithTime) ? data.visitedWithTime : [],
+    timestamp: typeof data.timestamp === 'number' ? data.timestamp : Date.now()
   }
 }
 

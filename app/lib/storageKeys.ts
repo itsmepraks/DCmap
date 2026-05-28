@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   gameProgress: 'dc-game-progress',
   experience: 'dc-experience',
   waypoints: 'dc-waypoints',
+  hintsSeen: 'dc-explorer-hints-seen',
   onboardingComplete: 'dc-explorer-onboarding-completed',
   quests: 'dc-explorer-quests',
   challenges: 'dc-daily-challenges',

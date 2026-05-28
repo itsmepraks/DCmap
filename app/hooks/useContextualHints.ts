@@ -2,8 +2,10 @@
 
 import { useCallback } from 'react'
 import { useFeedback } from '@/app/lib/FeedbackProvider'
+import { readJsonFromStorage } from '@/app/lib/safeStorage'
+import { STORAGE_KEYS } from '@/app/lib/storageKeys'
 
-const HINTS_STORAGE_KEY = 'dc-explorer-hints-seen'
+const HINTS_STORAGE_KEY = STORAGE_KEYS.hintsSeen
 
 export interface HintOptions {
     icon?: string
@@ -28,12 +30,8 @@ export function useContextualHints() {
      */
     const getSeenHints = useCallback((): Set<string> => {
         if (typeof window === 'undefined') return new Set()
-        try {
-            const stored = localStorage.getItem(HINTS_STORAGE_KEY)
-            return stored ? new Set(JSON.parse(stored)) : new Set()
-        } catch {
-            return new Set()
-        }
+        const seen = readJsonFromStorage<string[]>(HINTS_STORAGE_KEY, [])
+        return new Set(Array.isArray(seen) ? seen : [])
     }, [])
 
     /**

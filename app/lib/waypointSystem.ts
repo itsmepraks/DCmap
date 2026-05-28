@@ -1,8 +1,10 @@
 'use client'
 
 import { STORAGE_KEYS } from './storageKeys'
+import { readJsonFromStorage } from './safeStorage'
 
 const STORAGE_KEY = STORAGE_KEYS.waypoints
+const EMPTY_WAYPOINT_STATE: WaypointState = { waypoints: [], activeWaypointId: null }
 
 export interface Waypoint {
   id: string
@@ -20,19 +22,18 @@ export interface WaypointState {
 
 export function loadWaypoints(): WaypointState {
   if (typeof window === 'undefined') {
-    return { waypoints: [], activeWaypointId: null }
+    return EMPTY_WAYPOINT_STATE
   }
 
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      return JSON.parse(saved)
-    }
-  } catch (error) {
-    console.error('Failed to load waypoints:', error)
+  const state = readJsonFromStorage<Partial<WaypointState> | null>(STORAGE_KEY, null)
+  if (!state) {
+    return EMPTY_WAYPOINT_STATE
   }
 
-  return { waypoints: [], activeWaypointId: null }
+  return {
+    waypoints: Array.isArray(state.waypoints) ? state.waypoints : [],
+    activeWaypointId: typeof state.activeWaypointId === 'string' ? state.activeWaypointId : null
+  }
 }
 
 export function saveWaypoints(state: WaypointState): void {
@@ -75,4 +76,3 @@ export function setActiveWaypoint(waypointId: string | null, state: WaypointStat
   saveWaypoints(newState)
   return newState
 }
-

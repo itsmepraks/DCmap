@@ -47,7 +47,7 @@ export default function GuideAvailablePill({ landmarkName, onOpen, onDismiss }: 
           <button
             onClick={onDismiss}
             aria-label="Dismiss tour offer"
-            className="min-h-10 shrink-0 rounded-full px-2.5 py-1 text-xs text-stone-500 transition hover:bg-stone-900/5 hover:text-stone-900 active:scale-[0.96]"
+            className="min-h-11 min-w-11 shrink-0 rounded-full px-3 py-1 text-xs text-stone-500 transition hover:bg-stone-900/5 hover:text-stone-900 active:scale-[0.96]"
           >
             ✕
           </button>

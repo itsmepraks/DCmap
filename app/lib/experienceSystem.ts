@@ -1,6 +1,7 @@
 'use client'
 
 import { STORAGE_KEYS } from './storageKeys'
+import { readJsonFromStorage } from './safeStorage'
 
 const STORAGE_KEY = STORAGE_KEYS.experience
 
@@ -18,40 +19,35 @@ export interface ExperienceData {
 const XP_PER_LEVEL = 100
 const XP_FROM_LANDMARK = 50
 
-export function loadExperience(): ExperienceData {
-  if (typeof window === 'undefined') {
-    return {
-      totalXP: 0,
-      level: 1,
-      xpToNextLevel: XP_PER_LEVEL,
-      xpHistory: []
-    }
-  }
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const data = JSON.parse(saved)
-      // Calculate current level and XP to next level
-      const level = Math.floor(data.totalXP / XP_PER_LEVEL) + 1
-      const xpInCurrentLevel = data.totalXP % XP_PER_LEVEL
-      const xpToNextLevel = XP_PER_LEVEL - xpInCurrentLevel
-
-      return {
-        ...data,
-        level,
-        xpToNextLevel
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load experience:', error)
-  }
-
+function createEmptyExperience(): ExperienceData {
   return {
     totalXP: 0,
     level: 1,
     xpToNextLevel: XP_PER_LEVEL,
     xpHistory: []
+  }
+}
+
+export function loadExperience(): ExperienceData {
+  if (typeof window === 'undefined') {
+    return createEmptyExperience()
+  }
+
+  const data = readJsonFromStorage<Partial<ExperienceData> | null>(STORAGE_KEY, null)
+  if (!data || typeof data.totalXP !== 'number') {
+    return createEmptyExperience()
+  }
+
+  const totalXP = Math.max(0, data.totalXP)
+  const level = Math.floor(totalXP / XP_PER_LEVEL) + 1
+  const xpInCurrentLevel = totalXP % XP_PER_LEVEL
+  const xpToNextLevel = XP_PER_LEVEL - xpInCurrentLevel
+
+  return {
+    totalXP,
+    level,
+    xpToNextLevel,
+    xpHistory: Array.isArray(data.xpHistory) ? data.xpHistory : []
   }
 }
 
