@@ -5,13 +5,6 @@ export interface Coordinates {
   lat: number
 }
 
-export interface Landmark {
-  id: string
-  name: string
-  coordinates: Coordinates
-  distance?: number
-}
-
 export interface NearbyLandmark {
   id: string
   name: string
@@ -83,37 +76,6 @@ export function calculateBearing(
   const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
   const index = Math.round(bearing / 45) % 8
   return directions[index]
-}
-
-// Find the nearest landmark to the player
-export function findNearestLandmark(
-  playerPos: Coordinates,
-  landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
-): Landmark | null {
-  if (landmarks.length === 0) return null
-
-  let nearest: Landmark | null = null
-  let minDistance = Infinity
-
-  landmarks.forEach((landmark) => {
-    const landmarkPos: Coordinates = {
-      lng: landmark.coordinates[0],
-      lat: landmark.coordinates[1]
-    }
-    const distance = calculateDistance(playerPos, landmarkPos)
-
-    if (distance < minDistance) {
-      minDistance = distance
-      nearest = {
-        id: landmark.id,
-        name: landmark.name,
-        coordinates: landmarkPos,
-        distance
-      }
-    }
-  })
-
-  return nearest
 }
 
 // Check for nearby landmarks within discovery range

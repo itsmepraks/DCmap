@@ -106,8 +106,3 @@ export function getProgressToNextTier(
     museumsNeeded: Math.max(0, nextTier.minMuseums - museumsVisited)
   }
 }
-
-// Calculate total possible points for completion
-export function getTotalPossiblePoints(): number {
-  return (10 * 100) + (36 * 50) // 10 landmarks * 100 + 36 museums * 50
-}

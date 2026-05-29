@@ -32,8 +32,9 @@ function installLocalStorage(initial: Record<string, string> = {}) {
 }
 
 afterEach(() => {
-  delete (global as typeof globalThis & { window?: Window }).window
-  delete (global as typeof globalThis & { localStorage?: Storage }).localStorage
+  const globalRecord = global as unknown as Record<string, unknown>
+  delete globalRecord.window
+  delete globalRecord.localStorage
 })
 
 describe('safe storage', () => {
