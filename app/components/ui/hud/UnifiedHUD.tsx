@@ -21,6 +21,8 @@ interface UnifiedHUDProps {
   // Fly Mode Stats
   flySpeed?: number
   flyAltitude?: number
+  onSetFlightAltitude?: (height: number) => void
+  onFlightControl?: (key: string, pressed: boolean) => void
   flyPosition?: { lng: number; lat: number }
   flyBearing?: number
   nearestLandmark?: { name: string; distance: number }
@@ -37,6 +39,8 @@ export default function UnifiedHUD({
   onNavigateToRecommendation,
   flySpeed = 0,
   flyAltitude = 0,
+  onSetFlightAltitude,
+  onFlightControl,
   flyPosition,
   flyBearing = 0,
   nearestLandmark,
@@ -168,9 +172,19 @@ export default function UnifiedHUD({
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-bold" style={{ color: '#2C1810', fontFamily: 'monospace' }}>
-                  <span>Alt: {flyAltitude.toFixed(0)}m</span>
+                  <span>Height: {flyAltitude.toFixed(0)}m</span>
                   <span style={{ color: '#357ABD' }}>{getCardinalDirection(flyBearing)}</span>
                 </div>
+              </div>
+
+              <div className="flex gap-1" aria-label="Exploration height">
+                {[{ label: 'Street', height: 8 }, { label: 'Skyline', height: 100 }].map(preset => (
+                  <button key={preset.label} onClick={() => onSetFlightAltitude?.(preset.height)}
+                    className="flex-1 rounded border-2 px-2 py-2 text-xs font-bold shadow-sm"
+                    style={{ background: minecraftTheme.colors.beige.light, borderColor: minecraftTheme.colors.terracotta.base, color: minecraftTheme.colors.text.primary }}>
+                    {preset.label}
+                  </button>
+                ))}
               </div>
 
               {/* Nearest Landmark Card - Compact */}
@@ -270,6 +284,19 @@ export default function UnifiedHUD({
 
       </motion.div>
 
+      {mode === 'fly' && (
+        <div className="flight-touch-controls fixed bottom-28 left-4 z-40 grid-cols-3 gap-1" aria-label="Touch flight controls">
+          {[['a', 'Left'], ['w', 'Forward'], ['d', 'Right'], ['shift', 'Down'], ['s', 'Back'], [' ', 'Up']].map(([key, label]) => (
+            <button key={key} aria-label={label}
+              className="touch-none rounded border-2 px-3 py-3 text-xs font-bold"
+              style={{ background: minecraftTheme.colors.beige.light, borderColor: minecraftTheme.colors.terracotta.base, color: minecraftTheme.colors.text.primary }}
+              onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); onFlightControl?.(key, true) }}
+              onPointerUp={() => onFlightControl?.(key, false)}
+              onPointerCancel={() => onFlightControl?.(key, false)}
+              onLostPointerCapture={() => onFlightControl?.(key, false)}>{label}</button>
+          ))}
+        </div>
+      )}
       {/* Fly Mode: Collapsible Bottom Controls */}
       <AnimatePresence>
         {mode === 'fly' && (
@@ -277,13 +304,11 @@ export default function UnifiedHUD({
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
-            drag
-            dragMomentum={false}
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 cursor-move"
+            className="flight-keyboard-controls pointer-events-none fixed inset-x-3 bottom-28 z-30 flex justify-center"
           >
             <motion.div
               animate={{ scale: showFlyControls ? 1 : 0.9, opacity: showFlyControls ? 1 : 0.7 }}
-              className="px-4 py-2 shadow-lg relative"
+              className="pointer-events-auto max-w-full px-4 py-2 shadow-lg relative"
               onClick={() => setShowFlyControls(!showFlyControls)}
               onPointerDown={(e) => e.stopPropagation()} // Stop drag when clicking
               style={{
@@ -344,7 +369,7 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>D</kbd>
-                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Move</span>
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Move · R boost</span>
                     </div>
                     <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
                     <div className="flex items-center gap-1.5">
@@ -357,7 +382,7 @@ export default function UnifiedHUD({
                         fontWeight: 'bold',
                         boxShadow: '0 2px 0 ' + minecraftTheme.colors.terracotta.dark
                       }}>Mouse</kbd>
-                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Look</span>
+                      <span className="text-xs" style={{ color: minecraftTheme.colors.text.secondary }}>Drag to look</span>
                     </div>
                     <div className="w-px h-3" style={{ background: minecraftTheme.colors.terracotta.light }} />
                     <div className="flex items-center gap-1.5">

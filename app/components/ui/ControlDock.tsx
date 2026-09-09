@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { minecraftTheme } from '@/app/lib/theme'
 
@@ -19,20 +18,6 @@ interface ControlDockProps {
   onCycleTimeOfDay?: () => void
 }
 
-function useIsKeyboardCapable() {
-  // Fly mode requires WASD + mouse drag — no usable touch fallback yet.
-  const [capable, setCapable] = useState(true)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return
-    const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
-    const update = () => setCapable(mq.matches)
-    update()
-    mq.addEventListener?.('change', update)
-    return () => mq.removeEventListener?.('change', update)
-  }, [])
-  return capable
-}
-
 export default function ControlDock({
   is3D,
   onToggle3D,
@@ -47,7 +32,6 @@ export default function ControlDock({
   timeOfDayLabel,
   onCycleTimeOfDay,
 }: ControlDockProps) {
-  const keyboardCapable = useIsKeyboardCapable()
   const timeLabel = timeOfDayLabel ? (timeOfDayLabel === 'day' ? 'Day' : timeOfDayLabel) : ''
 
   return (
@@ -130,11 +114,11 @@ export default function ControlDock({
           </>
         )}
 
-        {keyboardCapable && (
+        {(
           <div className="hidden contents sm:contents">
             <div className="hidden h-7 w-px shrink-0 bg-gradient-to-b from-transparent via-[#B8860B]/28 to-transparent sm:block" />
 
-            {/* Fly Mode (desktop only — requires WASD + mouse) */}
+            {/* Fly mode supports keyboard and touch */}
             <DockButton
               icon="✈"
               label="Fly"

@@ -199,7 +199,7 @@ export default function MonumentLights({ landmarks, lightPreset }: Props) {
     if (pulseAmplitude > 0) {
       let t = 0
       pulseInterval = window.setInterval(() => {
-        if (!map.isStyleLoaded()) return
+        if (document.hidden || map.isMoving() || !map.isStyleLoaded()) return
         // Layer might not exist yet on the very first style.load tick.
         if (!map.getLayer(SKYLINE_LAYER)) return
         t += 0.05

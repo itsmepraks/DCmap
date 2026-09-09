@@ -22,7 +22,7 @@ export function useIdleCameraDrift({ map, disabled }: Options) {
   const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!map) return
+    if (!map || disabled) return
 
     let canvas: HTMLElement | null = null
     const events = ['mousedown', 'wheel', 'touchstart', 'keydown'] as const

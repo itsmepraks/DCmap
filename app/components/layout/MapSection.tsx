@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Map from '../map/Map'
 import ParticleEffect from '../map/effects/ParticleEffect'
 import DiscoveryRadius from '../map/effects/DiscoveryRadius'
@@ -23,6 +23,7 @@ interface MapSectionProps {
   }
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   is3D: boolean
+  isFlying?: boolean
 
   // Game state
   landmarks: Landmark[]
@@ -54,6 +55,7 @@ export default function MapSection({
   layersVisible,
   currentSeason,
   is3D,
+  isFlying,
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
@@ -71,6 +73,15 @@ export default function MapSection({
   const [particleEffect, setParticleEffect] = useState<{ coordinates: [number, number]; icon: string } | null>(null)
   const { map } = useMap()
 
+  const discoveryLandmarks = useMemo(() => landmarks.map(l => ({
+    id: l.id, coordinates: l.coordinates, visited: visitedLandmarks.has(l.id)
+  })), [landmarks, visitedLandmarks])
+  const trailLandmarks = useMemo(() => gameProgress.visitedLandmarksWithTime.map((v: any) => ({
+    id: v.id,
+    coordinates: landmarks.find(l => l.id === v.id)?.coordinates || [0, 0],
+    visitedAt: v.visitedAt
+  })), [gameProgress.visitedLandmarksWithTime, landmarks])
+
   // Clear particle effect after animation
   useEffect(() => {
     if (particleEffect) {
@@ -85,6 +96,7 @@ export default function MapSection({
         layersVisible={layersVisible}
         currentSeason={currentSeason}
         is3DView={is3D}
+        isFlying={isFlying}
         landmarks={landmarks}
         visitedLandmarks={visitedLandmarks}
         onSelect={onSelectEntity}
@@ -115,11 +127,7 @@ export default function MapSection({
       {/* Discovery Radius Visualization */}
       <DiscoveryRadius
         map={map}
-        landmarks={landmarks.map(l => ({
-          id: l.id,
-          coordinates: l.coordinates,
-          visited: visitedLandmarks.has(l.id)
-        }))}
+        landmarks={discoveryLandmarks}
       />
 
       {/* Particle Effects */}
@@ -138,11 +146,7 @@ export default function MapSection({
       {/* Breadcrumb Trail */}
       <BreadcrumbTrail
         map={map}
-        visitedLandmarks={gameProgress.visitedLandmarksWithTime.map((v: any) => ({
-          id: v.id,
-          coordinates: landmarksState.getLandmarkById(v.id)?.coordinates || [0, 0],
-          visitedAt: v.visitedAt
-        }))}
+        visitedLandmarks={trailLandmarks}
       />
     </>
   )

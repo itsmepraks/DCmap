@@ -1,0 +1,33 @@
+import { geographicPosition } from '../world/districtPlaces'
+export type ExhibitKind = 'elephant' | 'diamond' | 'fossil' | 'flyer' | 'capsule' | 'suit' | 'flag' | 'train' | 'slippers'
+export interface Exhibit { id:string; name:string; gallery:string; kind:ExhibitKind; x:number; z:number; story:string; question:string; choices:string[]; answer:number; source:string }
+export interface Museum { id:string; name:string; shortName:string; theme:string; color:string; entrance:ReturnType<typeof geographicPosition>; exhibits:Exhibit[] }
+export const MUSEUMS:Museum[]=[
+ {id:'natural-history',name:'National Museum of Natural History',shortName:'Natural History',theme:'Life, deep time & a blue diamond',color:'#597660',entrance:geographicPosition(-77.0260,38.89065),exhibits:[
+  {id:'henry',name:'African bush elephant',gallery:'Rotunda',kind:'elephant',x:0,z:0,story:'The African bush elephant anchors the museum’s rotunda. Its display explores elephant ecology, poaching, and the long evolutionary history of elephants.',question:'What connects this elephant to the wider museum?',choices:['Ecology and evolutionary history','The history of powered flight','Steam railway engineering'],answer:0,source:'https://naturalhistory.si.edu/exhibits/african-bush-elephant'},
+  {id:'hope',name:'Hope Diamond',gallery:'Gems & minerals',kind:'diamond',x:-14,z:-17,story:'The Hope Diamond is famous for its deep grayish-blue color. The Smithsonian’s collection history records its arrival at the museum in 1958.',question:'Which color distinguishes the Hope Diamond?',choices:['Emerald green','Deep grayish-blue','Amber orange'],answer:1,source:'https://naturalhistory.si.edu/explore/collections/hope-diamond'},
+  {id:'deep-time',name:'Deep Time',gallery:'Fossil hall',kind:'fossil',x:14,z:-17,story:'The Hall of Fossils — Deep Time explores life across Earth’s immense history. Fossils provide evidence of ancient organisms and changing environments. This skeletal display is an original dinosaur illustration, not a scan of a museum specimen.',question:'What makes fossils useful to scientists?',choices:['They preserve evidence of past life','They predict tomorrow’s weather','They record modern flight paths'],answer:0,source:'https://naturalhistory.si.edu/exhibits/david-h-koch-hall-fossils-deep-time'}]},
+ {id:'air-space',name:'National Air and Space Museum',shortName:'Air and Space',theme:'From the first Flyer to the Moon',color:'#496d88',entrance:geographicPosition(-77.0205,38.8884),exhibits:[
+  {id:'wright',name:'1903 Wright Flyer',gallery:'The aerial age',kind:'flyer',x:0,z:0,story:'The original 1903 Wright Flyer is the centerpiece of The Wright Brothers & The Invention of the Aerial Age. The exhibition follows Wilbur and Orville Wright’s work to invent the airplane.',question:'Which year belongs to this landmark Flyer?',choices:['1831','1903','1969'],answer:1,source:'https://airandspace.si.edu/exhibitions/wright-brothers'},
+  {id:'columbia',name:'Command module Columbia',gallery:'Destination Moon',kind:'capsule',x:-14,z:-17,story:'Apollo 11’s command module Columbia is featured in Destination Moon. It was the only part of the Apollo 11 spacecraft to return to Earth.',question:'What makes Columbia’s return remarkable?',choices:['It was the only spacecraft section to return','It landed on Mars','It was a wooden airplane'],answer:0,source:'https://airandspace.si.edu/sites/default/files/documents/Destination%20Moon%20Fact%20Sheet.pdf'},
+  {id:'armstrong',name:'Neil Armstrong’s spacesuit',gallery:'Destination Moon',kind:'suit',x:14,z:-17,story:'Destination Moon brings Neil Armstrong’s Apollo 11 spacesuit together with Columbia. The suit represents the equipment needed for a human to work beyond Earth’s atmosphere.',question:'What mission connects this suit and Columbia?',choices:['Apollo 11','The Wrights’ first flight','The John Bull railway'],answer:0,source:'https://airandspace.si.edu/multimedia-gallery/image/52393114432a34212b16dkjpg'}]},
+ {id:'american-history',name:'National Museum of American History',shortName:'American History',theme:'Objects that carry a nation’s stories',color:'#925b48',entrance:geographicPosition(-77.0300,38.8906),exhibits:[
+  {id:'banner',name:'The Star-Spangled Banner',gallery:'A flag & its legacy',kind:'flag',x:0,z:0,story:'This is the flag that inspired the national anthem. The museum presents its story through war, the flag, the song, and its legacy. The real flag is displayed under low light to protect its fabric.',question:'Why is the real flag displayed in low light?',choices:['To protect its fabric','To make it change color','To power the gallery'],answer:0,source:'https://americanhistory.si.edu/explore/exhibitions/star-spangled-banner'},
+  {id:'john-bull',name:'John Bull locomotive',gallery:'Moving a nation',kind:'train',x:-14,z:-17,story:'John Bull is an 1831 steam locomotive in the museum’s collection. Its display links early railway technology with the history of transportation in America.',question:'What powered John Bull?',choices:['Solar panels','Steam','A jet engine'],answer:1,source:'https://americanhistory.si.edu/explore/exhibitions/john-bull-locomotive'},
+  {id:'ruby',name:'Dorothy’s ruby slippers',gallery:'Entertainment & memory',kind:'slippers',x:14,z:-17,story:'The museum’s ruby slippers are a mismatched pair associated with Judy Garland. Donated anonymously in 1979, they have undergone extensive research and conservation.',question:'What surprising detail did research reveal?',choices:['They are a mismatched pair','They are carved from stone','They were made for astronauts'],answer:0,source:'https://americanhistory.si.edu/press/fact-sheets/dorothys-ruby-slippers'}]}
+]
+export const ALL_EXHIBITS=MUSEUMS.flatMap(m=>m.exhibits)
+export type MuseumProgress={seen:string[];solved:string[]}
+export const MUSEUM_SAVE_KEY='dc-smithsonian-passport-v1'
+export function normalizeProgress(value:unknown):MuseumProgress {
+ const raw=value as Partial<MuseumProgress>|null
+ const ids=new Set(ALL_EXHIBITS.map(e=>e.id))
+ const seen=Array.isArray(raw?.seen)?[...new Set(raw.seen.filter(id=>typeof id==='string'&&ids.has(id)))]:[]
+ return {seen,solved:Array.isArray(raw?.solved)?[...new Set(raw.solved.filter(id=>seen.includes(id)))]:[]}
+}
+export function recordDiscovery(progress:MuseumProgress,id:string,solved=false):MuseumProgress {
+ if(!ALL_EXHIBITS.some(e=>e.id===id))return progress
+ return normalizeProgress({seen:[...progress.seen,id],solved:solved?[...progress.solved,id]:progress.solved})
+}
+export function passportXP(p:MuseumProgress){return p.seen.length*25+p.solved.length*50}
+export function museumComplete(m:Museum,p:MuseumProgress){return m.exhibits.every(e=>p.solved.includes(e.id))}
