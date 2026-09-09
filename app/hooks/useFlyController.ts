@@ -1,9 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
+import { insideBuilding } from '@/app/lib/buildingCollision'
+import { STREETS_SOURCE } from './useMapInitialization'
 import { checkNearbyLandmarks } from '@/app/lib/proximity'
 import { usePlayerState } from '@/app/lib/playerState'
+import { DC_BOUNDS } from '@/app/lib/worldBorder'
+import { BOOST_SPEED, FLIGHT_SPEED, MIN_FLIGHT_ALTITUDE, MAX_FLIGHT_ALTITUDE, damp, movementInput, movePosition } from '@/app/lib/flightPhysics'
 
 interface UseFlyControllerOptions {
   map: mapboxgl.Map | null
@@ -13,426 +17,229 @@ interface UseFlyControllerOptions {
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
   onPositionChange?: (position: { lng: number; lat: number; bearing: number }) => void
 }
-
 export interface FlyControllerState {
   isMoving: boolean
-  speed: number // Speed in km/h for display
+  speed: number
   altitude: number
   position?: { lng: number; lat: number }
   bearing?: number
 }
+const CONTROL_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift', 'q', 'e', 'r'])
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
-const METERS_PER_DEG_LAT = 111132
-const MAX_SPEED = 50 // Maximum meters per second (180 km/h) - fast and responsive
-const ACCELERATION = 120 // meters per second squared - very snappy response
-const DECELERATION = 40 // meters per second squared - smooth but quick stop
-const CAMERA_PITCH = 75 // degrees - looking down at street level
-const CAMERA_ZOOM = 18.5 // close zoom for street view
-const MIN_ALTITUDE = 3 // minimum altitude in meters
-const MAX_ALTITUDE = 200 // maximum altitude in meters
-const SAFE_BUILDING_CLEARANCE = 5 // meters above buildings
-const COLLISION_CHECK_RADIUS = 25 // meters - check buildings within this radius
-const BUILDING_LAYER_HINTS = ['building', 'extrusion', 'roof', 'realistic-buildings', 'building-roofs']
-
-// Smooth interpolation function
-function lerp(start: number, end: number, factor: number): number {
-  return start + (end - start) * factor
-}
-
-// Cubic ease-out for smooth transitions
-function easeOutCubic(t: number): number {
-  return 1 - Math.pow(1 - t, 3)
-}
-
-// Get building height at a position
-function getQueryableBuildingLayers(map: mapboxgl.Map): string[] {
-  const layers = map.getStyle().layers ?? []
-
-  return layers
-    .filter((layer) => {
-      if (!map.getLayer(layer.id)) return false
-      const id = layer.id.toLowerCase()
-      return (
-        layer.type === 'fill-extrusion' ||
-        BUILDING_LAYER_HINTS.some((hint) => id.includes(hint))
-      )
-    })
-    .map((layer) => layer.id)
-}
-
-function getBuildingHeightAtPosition(
-  map: mapboxgl.Map,
-  position: [number, number],
-  radius: number
-): number {
-  try {
-    if (!map.isStyleLoaded()) return 0
-
-    const buildingLayers = getQueryableBuildingLayers(map)
-    if (buildingLayers.length === 0) return 0
-
-    const point = map.project(position)
-    const pixels = radius * (map.getZoom() / 18)
-
-    const features = map.queryRenderedFeatures(
-      [
-        [point.x - pixels, point.y - pixels],
-        [point.x + pixels, point.y + pixels]
-      ],
-      {
-        layers: buildingLayers,
-        filter: ['has', 'height']
-      }
-    )
-
-    if (features.length === 0) return 0
-
-    let maxHeight = 0
-    features.forEach(feature => {
-      const height = feature.properties?.height
-      if (typeof height === 'number' && height > maxHeight) {
-        maxHeight = height
-      }
-    })
-
-    return maxHeight
-  } catch {
-    return 0
-  }
-}
-
-export function useFlyController({
-  map,
-  isActive,
-  landmarks,
-  visitedLandmarks,
-  onLandmarkDiscovered,
-  onPositionChange
-}: UseFlyControllerOptions) {
+export function useFlyController(options: UseFlyControllerOptions) {
+  const { map, isActive } = options
+  const altitudeCommand = useRef<number | null>(null)
+  const heldControls = useRef(new Set<string>())
+  const setFlightAltitude = useCallback((height: number) => { altitudeCommand.current = height }, [])
+  const setControl = useCallback((key: string, pressed: boolean) => {
+    if (pressed) heldControls.current.add(key)
+    else heldControls.current.delete(key)
+  }, [])
   const { updatePose } = usePlayerState()
-  const [controllerState, setControllerState] = useState<FlyControllerState>({
-    isMoving: false,
-    speed: 0,
-    altitude: 40,
-    position: undefined,
-    bearing: undefined
-  })
-
-  // Use refs for callbacks and changing data to prevent effect re-runs
-  const landmarkCallbackRef = useRef(onLandmarkDiscovered)
-  const positionCallbackRef = useRef(onPositionChange)
-  const landmarksRef = useRef(landmarks)
-  const visitedLandmarksRef = useRef(visitedLandmarks)
-  const updatePoseRef = useRef(updatePose)
-
-  // Keep refs in sync with latest values
-  useEffect(() => {
-    landmarkCallbackRef.current = onLandmarkDiscovered
-  }, [onLandmarkDiscovered])
+  const latest = useRef({ ...options, updatePose })
+  useEffect(() => { latest.current = { ...options, updatePose } })
+  const [state, setState] = useState<FlyControllerState>({ isMoving: false, speed: 0, altitude: 40 })
 
   useEffect(() => {
-    positionCallbackRef.current = onPositionChange
-  }, [onPositionChange])
-
-  useEffect(() => {
-    landmarksRef.current = landmarks
-  }, [landmarks])
-
-  useEffect(() => {
-    visitedLandmarksRef.current = visitedLandmarks
-  }, [visitedLandmarks])
-
-  useEffect(() => {
-    updatePoseRef.current = updatePose
-  }, [updatePose])
-
-  // Main fly controller effect - only depends on map and isActive
-  useEffect(() => {
-    if (typeof window === 'undefined' || !map || !isActive) return
-
-    // Track pressed keys
-    const keys = new Set<string>()
-
-    // Track player position and altitude
-    const center = map.getCenter()
-    let position: [number, number] = [center.lng, center.lat]
-    let bearing = map.getBearing()
-    let targetAltitude = 40
-    let currentAltitude = 40
-
-    // Momentum system - velocity in meters per second
-    let velocityForward = 0
-    let velocityRight = 0
-    let currentSpeed = 0 // Track actual speed for display
-
-    // Store original interaction state
-    const originalState = {
-      dragPan: map.dragPan.isEnabled(),
-      dragRotate: map.dragRotate.isEnabled(),
-      scrollZoom: map.scrollZoom.isEnabled(),
-      doubleClickZoom: map.doubleClickZoom.isEnabled(),
-      touchZoomRotate: map.touchZoomRotate.isEnabled()
-    }
-
-    // Disable map controls
-    map.dragPan.disable()
-    map.dragRotate.disable()
-    map.scrollZoom.disable()
-    map.doubleClickZoom.disable()
-    map.touchZoomRotate.disable()
-
-    // Smooth entry transition with longer duration and cubic easing
-    map.easeTo({
-      center: position,
-      zoom: CAMERA_ZOOM,
-      pitch: CAMERA_PITCH,
-      bearing: bearing,
-      duration: 1500,
-      easing: easeOutCubic
-    })
-
-    // Mouse look
-    let isMouseDown = false
+    if (!map || !isActive) return
+    map.stop()
     const canvas = map.getCanvas()
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase()
-
-      // Movement keys
-      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-        e.preventDefault()
-        keys.add(key)
-      }
-
-      // Altitude UP - Space key
-      if (e.key === ' ' || e.code === 'Space') {
-        e.preventDefault()
-        targetAltitude = Math.min(targetAltitude + 15, MAX_ALTITUDE)
-      }
-
-      // Altitude DOWN - Shift key
-      if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-        e.preventDefault()
-        targetAltitude = Math.max(targetAltitude - 15, MIN_ALTITUDE)
-      }
-    }
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keys.delete(e.key.toLowerCase())
-    }
-
-    const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 0) {
-        isMouseDown = true
-        canvas.style.cursor = 'grabbing'
-      }
-    }
-
-    const handleMouseUp = () => {
-      isMouseDown = false
-      canvas.style.cursor = ''
-    }
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isMouseDown) return
-      bearing += e.movementX * 0.5
-      const currentPitch = map.getPitch()
-      const newPitch = Math.max(50, Math.min(85, currentPitch - e.movementY * 0.3))
-      map.setBearing(bearing)
-      map.setPitch(newPitch)
-    }
-
-    // Animation loop
+    const oldCursor = canvas.style.cursor
+    const oldMaxZoom = map.getMaxZoom()
+    // A low camera needs a closer zoom limit than the overview map.
+    map.setMaxZoom(24)
+    const handlers = [map.dragPan, map.dragRotate, map.scrollZoom, map.doubleClickZoom, map.touchZoomRotate, map.keyboard, map.touchPitch, map.boxZoom]
+    const enabled = handlers.map(handler => handler.isEnabled())
+    handlers.forEach(handler => handler.disable())
+    const keys = heldControls.current
+    keys.clear()
+    altitudeCommand.current = null
+    const camera = map.getFreeCameraOptions()
+    const initial = camera.position?.toLngLat() ?? map.getCenter()
+    let position = { lng: initial.lng, lat: initial.lat }
+    let altitude = clamp(camera.position?.toAltitude() ?? 40, MIN_FLIGHT_ALTITUDE, MAX_FLIGHT_ALTITUDE)
+    let targetAltitude = altitude
+    let targetPitch = clamp(map.getPitch(), 35, 85)
+    let bearing = map.getBearing()
+    let pitch = clamp(map.getPitch(), 35, 85)
+    let forward = 0
+    let right = 0
+    let vertical = 0
+    let dirty = true
+    let dragging = false
     let lastTime = performance.now()
-    let animationFrameId: number
-    let lastLandmarkCheck = 0
-    let frameCount = 0
-
-    const animate = (currentTime: number) => {
-      if (!map || !isActive) return
-
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.05) // Cap delta time
-      lastTime = currentTime
-
-      // Calculate target movement direction from keys
-      let targetForward = 0
-      let targetRight = 0
-
-      if (keys.has('w') || keys.has('arrowup')) targetForward = 1
-      if (keys.has('s') || keys.has('arrowdown')) targetForward = -1
-      if (keys.has('a') || keys.has('arrowleft')) targetRight = -1
-      if (keys.has('d') || keys.has('arrowright')) targetRight = 1
-
-      const hasInput = targetForward !== 0 || targetRight !== 0
-
-      // Apply acceleration/deceleration for momentum
-      if (hasInput) {
-        // Accelerate towards target velocity
-        const targetVelocityForward = targetForward * MAX_SPEED
-        const targetVelocityRight = targetRight * MAX_SPEED
-
-        velocityForward = lerp(velocityForward, targetVelocityForward, Math.min(dt * ACCELERATION / MAX_SPEED, 1))
-        velocityRight = lerp(velocityRight, targetVelocityRight, Math.min(dt * ACCELERATION / MAX_SPEED, 1))
-      } else {
-        // Decelerate with momentum (gradual slow down)
-        const decelerationFactor = Math.min(dt * DECELERATION / MAX_SPEED, 1)
-        velocityForward = lerp(velocityForward, 0, decelerationFactor)
-        velocityRight = lerp(velocityRight, 0, decelerationFactor)
-
-        // Snap to zero when very slow to avoid endless tiny movements
-        if (Math.abs(velocityForward) < 0.1) velocityForward = 0
-        if (Math.abs(velocityRight) < 0.1) velocityRight = 0
-      }
-
-      // Calculate actual speed from velocity
-      currentSpeed = Math.sqrt(velocityForward * velocityForward + velocityRight * velocityRight)
-      const isMoving = currentSpeed > 0.1
-
-      // Smooth altitude interpolation
-      const altitudeLerpFactor = Math.min(dt * 5, 1)
-      currentAltitude = lerp(currentAltitude, targetAltitude, altitudeLerpFactor)
-
-      // Check for building collisions (throttled)
-      if (currentTime - lastLandmarkCheck > 200) {
-        const buildingHeight = getBuildingHeightAtPosition(map, position, COLLISION_CHECK_RADIUS)
-        const requiredAltitude = buildingHeight + SAFE_BUILDING_CLEARANCE
-
-        if (requiredAltitude > targetAltitude) {
-          targetAltitude = Math.min(requiredAltitude, MAX_ALTITUDE)
-        }
-      }
-
-      if (isMoving) {
-        // Calculate movement using velocity
-        const bearingRad = (bearing * Math.PI) / 180
-        const metersPerDegLng = METERS_PER_DEG_LAT * Math.cos((position[1] * Math.PI) / 180)
-
-        // Forward/backward movement based on velocity
-        const forwardLng = (Math.sin(bearingRad) * velocityForward * dt) / metersPerDegLng
-        const forwardLat = (Math.cos(bearingRad) * velocityForward * dt) / METERS_PER_DEG_LAT
-
-        // Left/right strafe movement based on velocity
-        const strafeBearingRad = bearingRad + Math.PI / 2
-        const strafeLng = (Math.sin(strafeBearingRad) * velocityRight * dt) / metersPerDegLng
-        const strafeLat = (Math.cos(strafeBearingRad) * velocityRight * dt) / METERS_PER_DEG_LAT
-
-        // Update position
-        position[0] += forwardLng + strafeLng
-        position[1] += forwardLat + strafeLat
-
-        // Update camera altitude by adjusting pitch/zoom
-        const altitudeFactor = Math.max(0, Math.min(1, (currentAltitude - MIN_ALTITUDE) / 100))
-        const dynamicPitch = CAMERA_PITCH - (altitudeFactor * 25)
-        const dynamicZoom = CAMERA_ZOOM - (altitudeFactor * 3)
-
-        // OPTIMIZED: Batch all camera updates into a single jumpTo call
-        map.jumpTo({
-          center: [position[0], position[1]],
-          bearing: bearing,
-          pitch: dynamicPitch,
-          zoom: dynamicZoom
-        })
-
-        // Update player state via ref
-        updatePoseRef.current({
-          position: { lng: position[0], lat: position[1] },
-          heading: bearing,
-          velocity: {
-            lng: (forwardLng + strafeLng) / dt,
-            lat: (forwardLat + strafeLat) / dt
-          }
-        })
-
-        // Reduced throttle for more responsive UI (every 3 frames instead of 5)
-        frameCount++
-        if (frameCount % 3 === 0) {
-          // Calculate actual speed in km/h
-          const speedKmh = Math.round(currentSpeed * 3.6)
-          setControllerState({
-            isMoving: true,
-            speed: speedKmh,
-            altitude: Math.round(currentAltitude),
-            position: { lng: position[0], lat: position[1] },
-            bearing: bearing
-          })
-        }
-      } else {
-        // When stopped, just ensure sync
-        if (map.getBearing() !== bearing) {
-          map.setBearing(bearing)
-        }
-        if (map.getCenter().lng !== position[0] || map.getCenter().lat !== position[1]) {
-          map.setCenter([position[0], position[1]])
-        }
-
-        frameCount++
-        if (frameCount % 6 === 0) {
-          setControllerState(prev => ({
-            ...prev,
-            isMoving: false,
-            speed: 0,
-            altitude: Math.round(currentAltitude),
-            position: { lng: position[0], lat: position[1] },
-            bearing: bearing
-          }))
-        }
-      }
-
-      // Update position callback (throttled)
-      if (positionCallbackRef.current && frameCount % 3 === 0) {
-        positionCallbackRef.current({
-          lng: position[0],
-          lat: position[1],
-          bearing
-        })
-      }
-
-      // Check landmarks (throttled) - use refs to get latest values
-      if (currentTime - lastLandmarkCheck > 500) {
-        lastLandmarkCheck = currentTime
-        const playerPos = { lng: position[0], lat: position[1] }
-
-        // 1. Check Landmarks
-        const nearby = checkNearbyLandmarks(playerPos, landmarksRef.current, visitedLandmarksRef.current, 40)
-        nearby.forEach(hit => {
-          const landmarkData = landmarksRef.current.find(l => l.id === hit.id)
-          if (landmarkData) {
-            landmarkCallbackRef.current?.(hit.id, landmarkData)
-          }
-        })
-
-      }
-
-      animationFrameId = requestAnimationFrame(animate)
+    let lastUI = -Infinity
+    let lastDiscovery = -Infinity
+    let lastCollision = -Infinity
+    let groundClearance = MIN_FLIGHT_ALTITUDE
+    let buildings: mapboxgl.MapboxGeoJSONFeature[] = []
+    let buildingsDirty = true
+    const sourceChanged = (event: mapboxgl.MapSourceDataEvent) => {
+      if (event.sourceId === STREETS_SOURCE) buildingsDirty = true
     }
+    map.on('sourcedata', sourceChanged)
+    const collisionLayer = 'dc-flight-footprints'
+    const loadFootprints = () => {
+      if (map.getSource(STREETS_SOURCE) && !map.getLayer(collisionLayer)) {
+        map.addLayer({ id: collisionLayer, type: 'fill', source: STREETS_SOURCE, 'source-layer': 'building', paint: { 'fill-opacity': 0 } })
+      }
+      buildingsDirty = true
+    }
+    loadFootprints()
+    map.on('style.load', loadFootprints)
+    let frame = 0
+    let lastPublished = ''
+    const discovered = new Set<string>()
 
-    animationFrameId = requestAnimationFrame(animate)
+    const clearInput = () => { keys.clear(); dragging = false; canvas.style.cursor = 'grab' }
+    const keyDown = (event: KeyboardEvent) => {
+      if ((event.target as HTMLElement)?.closest?.('input, textarea, select, button, [contenteditable="true"], [role="dialog"]')) return
+      if (event.metaKey || event.altKey) return
+      const key = event.key.toLowerCase()
+      if (CONTROL_KEYS.has(key)) { event.preventDefault(); keys.add(key) }
+    }
+    const keyUp = (event: KeyboardEvent) => { keys.delete(event.key.toLowerCase()) }
+    let lastPointerX = 0
+    let lastPointerY = 0
+    const mouseDown = (event: PointerEvent) => {
+      if (event.button !== 0) return
+      dragging = true
+      lastPointerX = event.clientX
+      lastPointerY = event.clientY
+      canvas.setPointerCapture(event.pointerId)
+      canvas.focus({ preventScroll: true })
+      canvas.style.cursor = 'grabbing'
+    }
+    const mouseUp = () => { dragging = false; canvas.style.cursor = 'grab' }
+    const mouseMove = (event: PointerEvent) => {
+      if (!dragging) return
+      const dx = event.clientX - lastPointerX
+      const dy = event.clientY - lastPointerY
+      lastPointerX = event.clientX
+      lastPointerY = event.clientY
+      bearing = ((bearing + dx * 0.18) % 360 + 360) % 360
+      targetPitch = clamp(targetPitch - dy * 0.15, 20, 85)
+      dirty = true
+    }
+    const visibility = () => { clearInput(); lastTime = performance.now() }
+    canvas.style.cursor = 'grab'
+    canvas.focus({ preventScroll: true })
 
-    // Add event listeners
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    canvas.addEventListener('mousedown', handleMouseDown)
-    window.addEventListener('mouseup', handleMouseUp)
-    window.addEventListener('mousemove', handleMouseMove)
-
+    const animate = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05)
+      lastTime = now
+      if (!document.hidden) {
+        if (altitudeCommand.current !== null) {
+          targetAltitude = clamp(altitudeCommand.current, MIN_FLIGHT_ALTITUDE, MAX_FLIGHT_ALTITUDE)
+          targetPitch = targetAltitude < 20 ? 83 : 65
+          altitudeCommand.current = null
+        }
+        const input = movementInput(
+          Number(keys.has('w') || keys.has('arrowup')) - Number(keys.has('s') || keys.has('arrowdown')),
+          Number(keys.has('d') || keys.has('arrowright')) - Number(keys.has('a') || keys.has('arrowleft')),
+          (keys.has('r') ? BOOST_SPEED : FLIGHT_SPEED) * (altitude < 20 ? 0.22 : 1),
+        )
+        forward = damp(forward, input.forward, 8, dt)
+        right = damp(right, input.right, 8, dt)
+        vertical = damp(vertical, (Number(keys.has(' ') || keys.has('e')) - Number(keys.has('shift') || keys.has('q'))) * 22, 8, dt)
+        // Independent 4 Hz footprint query, with a short look-ahead to clear roofs.
+        // Standard's imported model layers are not queryable by root layer ID.
+        if (now - lastCollision >= 250 && map.getSource(STREETS_SOURCE)) {
+          lastCollision = now
+          const ahead = movePosition(position.lng, position.lat, forward, right, bearing, 0.5)
+          groundClearance = MIN_FLIGHT_ALTITUDE
+          if (buildingsDirty) {
+            buildings = map.querySourceFeatures(STREETS_SOURCE, { sourceLayer: 'building' })
+            buildingsDirty = false
+          }
+          for (const feature of buildings) {
+            if (feature.geometry.type !== 'Polygon' && feature.geometry.type !== 'MultiPolygon') continue
+            if (insideBuilding([position.lng, position.lat], feature.geometry) || insideBuilding([ahead.lng, ahead.lat], feature.geometry)) {
+              const height = Number(feature.properties?.height ?? feature.properties?.render_height ?? 0)
+              if (Number.isFinite(height)) groundClearance = Math.max(groundClearance, height + 6)
+            }
+          }
+        }
+        targetAltitude = clamp(targetAltitude + vertical * dt, groundClearance, MAX_FLIGHT_ALTITUDE)
+        const nextAltitude = damp(altitude, targetAltitude, 3, dt)
+        const nextPitch = damp(pitch, targetPitch, 5, dt)
+        if (altitude !== nextAltitude || pitch !== nextPitch) dirty = true
+        altitude = Math.max(groundClearance, nextAltitude)
+        pitch = nextPitch
+        const moving = Math.hypot(forward, right, vertical) > 0
+        if (moving || dirty) {
+          const next = movePosition(position.lng, position.lat, forward, right, bearing, dt)
+          position = {
+            lng: clamp(next.lng, DC_BOUNDS[0][0] + 0.001, DC_BOUNDS[1][0] - 0.001),
+            lat: clamp(next.lat, DC_BOUNDS[0][1] + 0.001, DC_BOUNDS[1][1] - 0.001),
+          }
+          camera.position = mapboxgl.MercatorCoordinate.fromLngLat(position, altitude)
+          camera.setPitchBearing(pitch, bearing)
+          map.setFreeCameraOptions(camera)
+          // Read back the applied camera, including Mapbox's zoom/bounds constraints.
+          const applied = map.getFreeCameraOptions().position
+          if (applied) {
+            const actual = applied.toLngLat()
+            position = { lng: actual.lng, lat: actual.lat }
+            altitude = applied.toAltitude()
+          }
+          dirty = false
+        }
+        // React, proximity, and context run at 5 Hz, never at rendering frequency.
+        if (now - lastUI >= 200) {
+          lastUI = now
+          const snapshot = { isMoving: moving, speed: Math.round(Math.hypot(forward, right) * 3.6), altitude: Math.round(altitude), position: { ...position }, bearing }
+          const signature = JSON.stringify(snapshot)
+          if (signature !== lastPublished) {
+            lastPublished = signature
+            setState(snapshot)
+            latest.current.updatePose({ position: { ...position }, heading: bearing, velocity: (() => { const v = movePosition(0, position.lat, forward, right, bearing, 1); return { lng: v.lng, lat: v.lat - position.lat } })() })
+            latest.current.onPositionChange?.({ ...position, bearing })
+          }
+        }
+        if (now - lastDiscovery >= 500) {
+          lastDiscovery = now
+          const { landmarks, visitedLandmarks, onLandmarkDiscovered } = latest.current
+          for (const hit of checkNearbyLandmarks(position, landmarks, visitedLandmarks, 40)) {
+            if (discovered.has(hit.id)) continue
+            const landmark = landmarks.find(item => item.id === hit.id)
+            if (landmark) { discovered.add(hit.id); onLandmarkDiscovered(hit.id, landmark) }
+          }
+        }
+      }
+      frame = requestAnimationFrame(animate)
+    }
+    frame = requestAnimationFrame(animate)
+    window.addEventListener('keydown', keyDown)
+    window.addEventListener('keyup', keyUp)
+    window.addEventListener('blur', clearInput)
+    document.addEventListener('visibilitychange', visibility)
+    canvas.addEventListener('pointerdown', mouseDown)
+    window.addEventListener('pointerup', mouseUp)
+    canvas.addEventListener('pointercancel', mouseUp)
+    canvas.addEventListener('lostpointercapture', mouseUp)
+    window.addEventListener('pointermove', mouseMove)
     return () => {
-      cancelAnimationFrame(animationFrameId)
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-      canvas.removeEventListener('mousedown', handleMouseDown)
-      window.removeEventListener('mouseup', handleMouseUp)
-      window.removeEventListener('mousemove', handleMouseMove)
-
-      // Restore map controls
-      if (originalState.dragPan) map.dragPan.enable()
-      if (originalState.dragRotate) map.dragRotate.enable()
-      if (originalState.scrollZoom) map.scrollZoom.enable()
-      if (originalState.doubleClickZoom) map.doubleClickZoom.enable()
-      if (originalState.touchZoomRotate) map.touchZoomRotate.enable()
-
-      canvas.style.cursor = ''
+      cancelAnimationFrame(frame)
+      keys.clear()
+      map.off('sourcedata', sourceChanged)
+      map.off('style.load', loadFootprints)
+      if (map.getLayer(collisionLayer)) map.removeLayer(collisionLayer)
+      window.removeEventListener('keydown', keyDown)
+      window.removeEventListener('keyup', keyUp)
+      window.removeEventListener('blur', clearInput)
+      document.removeEventListener('visibilitychange', visibility)
+      canvas.removeEventListener('pointerdown', mouseDown)
+      window.removeEventListener('pointerup', mouseUp)
+      canvas.removeEventListener('pointercancel', mouseUp)
+      canvas.removeEventListener('lostpointercapture', mouseUp)
+      window.removeEventListener('pointermove', mouseMove)
+      handlers.forEach((handler, index) => { if (enabled[index]) handler.enable() })
+      map.setMaxZoom(oldMaxZoom)
+      canvas.style.cursor = oldCursor
+      latest.current.updatePose({ velocity: { lng: 0, lat: 0 } })
     }
-  }, [map, isActive]) // Only depend on map and isActive - everything else via refs
-
-  return controllerState
+  }, [map, isActive])
+  return { ...state, setFlightAltitude, setControl }
 }
