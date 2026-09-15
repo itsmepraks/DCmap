@@ -177,7 +177,6 @@ body {
    ======================================== */
 .mapboxgl-canvas-container {
   cursor: grab;
-  image-rendering: -webkit-optimize-contrast;
 }
 
 .mapboxgl-canvas-container:active {
@@ -185,8 +184,7 @@ body {
 }
 
 .mapboxgl-canvas {
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  image-rendering: auto;
 }
 
 /* Improve marker click targets */
@@ -318,4 +316,10 @@ body {
   .mapboxgl-ctrl-attrib {
     max-width: calc(100vw - 1rem) !important;
   }
+}
+
+.flight-touch-controls { display: none; }
+@media (pointer: coarse) {
+  .flight-touch-controls { display: grid; }
+  .flight-keyboard-controls { display: none; }
 }

@@ -16,16 +16,15 @@ export default function BreadcrumbTrail({ map, visitedLandmarks }: BreadcrumbTra
   useEffect(() => {
     if (!map || visitedLandmarks.length < 2) return
 
-    // Wait for map to be fully loaded
-    if (!map.loaded()) {
-      map.once('load', () => addBreadcrumbTrail())
-      return
-    }
-
+    let applied = false
+    const styleLoaded = () => { applied = false; addBreadcrumbTrail() }
     addBreadcrumbTrail()
+    map.on('style.load', styleLoaded)
+    map.on('idle', addBreadcrumbTrail)
 
     function addBreadcrumbTrail() {
-      if (!map) return
+      if (!map || applied || !map.isStyleLoaded()) return
+      applied = true
 
       // Check if style is available
       try {
@@ -156,6 +155,8 @@ export default function BreadcrumbTrail({ map, visitedLandmarks }: BreadcrumbTra
     }
 
     return () => {
+      map.off('style.load', styleLoaded)
+      map.off('idle', addBreadcrumbTrail)
       if (!map || !map.getStyle()) return
       if (map.getLayer('breadcrumb-labels')) {
         map.removeLayer('breadcrumb-labels')

@@ -65,11 +65,11 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
 
     const THROTTLE_MS = 200
     let lastRun = 0
-    let pending = false
+    let timer: ReturnType<typeof setTimeout> | undefined
     let lastNearbyIds = ''
 
     const recompute = () => {
-      pending = false
+      timer = undefined
       lastRun = performance.now()
 
       const center = map.getCenter()
@@ -77,7 +77,7 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
 
       const nearby = getNearbyLandmarks(currentPos, landmarks, 1000, visitedLandmarks)
 
-      const nextIds = nearby.map(l => l.id).join('|')
+      const nextIds = nearby.map(l => `${l.id}:${Math.round(l.distance)}`).join('|')
       if (nextIds !== lastNearbyIds) {
         lastNearbyIds = nextIds
         setNearbyLandmarks(nearby)
@@ -92,10 +92,9 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
     }
 
     const schedule = () => {
-      if (pending) return
+      if (timer !== undefined) return
       const wait = Math.max(0, THROTTLE_MS - (performance.now() - lastRun))
-      pending = true
-      window.setTimeout(recompute, wait)
+      timer = setTimeout(recompute, wait)
     }
 
     // Initial compute, then drive updates from map.move only.
@@ -104,6 +103,7 @@ export function useLandmarks(visitedLandmarks: Set<string>) {
 
     return () => {
       map.off('move', schedule)
+      clearTimeout(timer)
     }
   }, [map, landmarks, visitedLandmarks, currentPosition])
 

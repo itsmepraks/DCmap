@@ -18,16 +18,15 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
   useEffect(() => {
     if (!map || !landmarks.length) return
 
-    // Wait for map to be fully loaded
-    if (!map.loaded()) {
-      map.once('load', () => addRadiusLayers())
-      return
-    }
-
+    let applied = false
+    const styleLoaded = () => { applied = false; addRadiusLayers() }
     addRadiusLayers()
+    map.on('style.load', styleLoaded)
+    map.on('idle', addRadiusLayers)
 
     function addRadiusLayers() {
-      if (!map) return
+      if (!map || applied || !map.isStyleLoaded()) return
+      applied = true
 
       // Check if style is available
       try {
@@ -61,13 +60,13 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
           const [lng, lat] = landmark.coordinates
 
           // Create a circle polygon approximation
-          const steps = 64
+          const steps = 32
           const radius = DISCOVERY_RADIUS_METERS / 111320 // Convert meters to degrees
           const coordinates: [number, number][] = []
 
           for (let i = 0; i < steps; i++) {
             const angle = (i / steps) * 2 * Math.PI
-            const dx = radius * Math.cos(angle)
+            const dx = radius * Math.cos(angle) / Math.cos(lat * Math.PI / 180)
             const dy = radius * Math.sin(angle)
             coordinates.push([lng + dx, lat + dy])
           }
@@ -123,6 +122,8 @@ export default function DiscoveryRadius({ map, landmarks }: DiscoveryRadiusProps
     }
 
     return () => {
+      map.off('style.load', styleLoaded)
+      map.off('idle', addRadiusLayers)
       if (!map || !map.getStyle()) return
       if (map.getLayer('discovery-radius-outline')) {
         map.removeLayer('discovery-radius-outline')

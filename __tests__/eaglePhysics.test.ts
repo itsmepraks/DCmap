@@ -1,0 +1,8 @@
+import {launchEagle,stepEagle,EagleInput} from '../app/lib/world/eaglePhysics'
+const neutral:EagleInput={heading:0,pitch:.06,throttle:0,brake:false,power:false}
+function fly(input:EagleInput,seconds=3){let s=launchEagle(0);for(let i=0;i<seconds*60;i++)s=stepEagle(s,input,1/60);return s}
+test('gliding retains momentum without hovering or instant stopping',()=>{const s=fly(neutral);expect(Math.hypot(s.vx,s.vy,s.vz)).toBeGreaterThan(5);expect(s.flapping).toBe(0);expect(s.vy).toBeLessThan(0)})
+test('flapping adds energy compared with gliding',()=>{const a=fly(neutral),b=fly({...neutral,throttle:1});expect(Math.hypot(b.vx,b.vy,b.vz)).toBeGreaterThan(Math.hypot(a.vx,a.vy,a.vz));expect(b.flapping).toBe(1)})
+test('a dive gains speed while a climb trades forward speed for height',()=>{const dive=fly({...neutral,pitch:-.65}),climb=fly({...neutral,pitch:.4});expect(dive.vy).toBeLessThan(climb.vy);expect(Math.hypot(dive.vx,dive.vy,dive.vz)).toBeGreaterThan(Math.hypot(climb.vx,climb.vy,climb.vz))})
+test('banking turns progressively without strafing instantly',()=>{const first=stepEagle(launchEagle(0),{...neutral,heading:-1},1/60);expect(Math.abs(first.yaw)).toBeLessThan(.1);const turn=fly({...neutral,heading:-1,throttle:1});expect(turn.vx).toBeGreaterThan(0);expect(turn.yaw).toBeLessThan(0)})
+test('airbrake increases drag and stalled flight stays finite',()=>{const glide=fly(neutral),brake=fly({...neutral,brake:true});expect(Math.hypot(brake.vx,brake.vy,brake.vz)).toBeLessThan(Math.hypot(glide.vx,glide.vy,glide.vz));let s={...launchEagle(0),vx:0,vy:0,vz:0};s=stepEagle(s,{...neutral,pitch:.7},1/60);expect(s.stalled).toBe(true);expect(Object.values(s).every(v=>typeof v!=='number'||Number.isFinite(v))).toBe(true)})

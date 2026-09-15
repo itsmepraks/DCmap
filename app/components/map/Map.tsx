@@ -15,6 +15,7 @@ interface MapProps {
   }
   currentSeason: 'spring' | 'summer' | 'fall' | 'winter'
   is3DView: boolean
+  isFlying?: boolean
   landmarks: Array<{ id: string; name: string; coordinates: [number, number] }>
   visitedLandmarks: Set<string>
   onLandmarkDiscovered: (landmarkId: string, landmarkData: any) => void
@@ -26,6 +27,7 @@ export default function Map({
   layersVisible,
   currentSeason,
   is3DView,
+  isFlying,
   landmarks,
   visitedLandmarks,
   onLandmarkDiscovered,
@@ -33,6 +35,7 @@ export default function Map({
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const { map } = useMap()
+  const lastView = useRef<boolean | undefined>(undefined)
   const [isLoaded, setIsLoaded] = useState(false)
 
   // Initialize map
@@ -42,33 +45,23 @@ export default function Map({
   useEffect(() => {
     if (!map) return
 
-    if (map.loaded()) {
-      setIsLoaded(true)
-    } else {
-      const onMapLoad = () => setIsLoaded(true)
-      map.on('load', onMapLoad)
-
-      // Fallback: Force loaded state after 3 seconds if load event never fires
-      const timeout = setTimeout(() => {
-        if (!isLoaded) {
-          setIsLoaded(true)
-        }
-      }, 3000)
-
-      return () => {
-        map.off('load', onMapLoad)
-        clearTimeout(timeout)
-      }
+    const loaded = () => setIsLoaded(true)
+    if (map.isStyleLoaded()) loaded()
+    map.on('style.load', loaded)
+    return () => {
+      map.off('style.load', loaded)
     }
-  }, [map, isLoaded])
+  }, [map])
 
   // Handle 3D view toggle
   useEffect(() => {
     if (!map) return
+    const changed = lastView.current !== is3DView
+    lastView.current = is3DView
+    if (isFlying || !changed) return
 
     if (is3DView) {
       map.flyTo({
-        center: [-77.0353, 38.8895],
         zoom: Math.max(map.getZoom(), 16.25),
         pitch: 68,
         bearing: -28,
@@ -85,7 +78,7 @@ export default function Map({
         easing: (t) => 1 - Math.pow(1 - t, 3)
       })
     }
-  }, [map, is3DView])
+  }, [map, is3DView, isFlying])
 
   return (
     <div className="relative w-full h-full">

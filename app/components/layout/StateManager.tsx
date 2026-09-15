@@ -230,33 +230,18 @@ export default function StateManager({ children }: StateManagerProps) {
 
   const handleToggle3D = useCallback(() => {
     stopOrbit360()
-    setIs3DView(prev => {
-      const next = !prev
-      if (map) {
-        if (next) {
-          map.flyTo({
-            center: WASHINGTON_MONUMENT,
-            zoom: 16.35,
-            pitch: 68,
-            bearing: -28,
-            duration: 1800,
-            essential: true,
-            curve: 1.25,
-          })
-        } else {
-          map.easeTo({ pitch: 0, bearing: 0, duration: 1500 })
-        }
-      }
-      return next
-    })
-  }, [map, stopOrbit360])
+    setIsFlyMode(false)
+    setIs3DView(prev => !prev)
+  }, [stopOrbit360])
 
   const handleZoomIn = useCallback(() => {
+    setIsFlyMode(false)
     stopOrbit360()
     map?.zoomIn({ duration: 450 })
   }, [map, stopOrbit360])
 
   const handleZoomOut = useCallback(() => {
+    setIsFlyMode(false)
     stopOrbit360()
     if (!map) return
 
@@ -273,6 +258,7 @@ export default function StateManager({ children }: StateManagerProps) {
 
   const handleOrbit360 = useCallback(() => {
     if (!map) return
+    setIsFlyMode(false)
     if (orbitRafRef.current !== null) {
       stopOrbit360()
       return
@@ -378,6 +364,12 @@ export default function StateManager({ children }: StateManagerProps) {
     }
   })
 
+  useEffect(() => {
+    if (!isFlyMode) landmarksState.updateCurrentPosition(null)
+    // The setter is stable inside useLandmarks; the returned wrapper is not.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFlyMode])
+
   // Track the live map center so that anything depending on player position
   // (proximity hints, audio guide, recommendations) actually updates when the
   // user pans. Throttled to ~5Hz so this doesn't trigger a render storm.
@@ -406,9 +398,9 @@ export default function StateManager({ children }: StateManagerProps) {
   // Player position prefers the fly-controller (sub-frame accurate) but
   // falls back to the live map centre when fly mode is off.
   const playerPosition = useMemo((): Coordinates | null => {
-    if (flyControllerState.position) return flyControllerState.position
+    if (isFlyMode && flyControllerState.position) return flyControllerState.position
     return mapCenter
-  }, [flyControllerState.position, mapCenter])
+  }, [isFlyMode, flyControllerState.position, mapCenter])
 
   // Compute nearest undiscovered place for HUD (single source for both the
   // "nearest undiscovered" card and the "recommended" card). Landmarks and

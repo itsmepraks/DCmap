@@ -154,6 +154,8 @@ export default function HUDSystem({
         onNavigateToRecommendation={onNavigateToLandmark}
         flySpeed={flyControllerState.speed}
         flyAltitude={flyControllerState.altitude}
+        onSetFlightAltitude={flyControllerState.setFlightAltitude}
+        onFlightControl={flyControllerState.setControl}
         flyPosition={flyControllerState.position}
         flyBearing={flyControllerState.bearing || 0}
         nearestLandmark={
