@@ -1,8 +1,10 @@
+import { createEagle } from './eagleModel'
+import { launchEagle, stepEagle } from './eaglePhysics'
 import { createMapLabels } from './mapLabels'
 import { lawnColor } from './mapStyle'
 import * as THREE from 'three'
 import RAPIER from '@dimforge/rapier3d-compat'
-import { explorationSpeed, findLandingPoint, flightMovement } from './travelControls'
+import { explorationSpeed, findLandingPoint } from './travelControls'
 import { Sky } from 'three/examples/jsm/objects/Sky.js'
 import { buildDistrictTerrain, type TerrainData } from './terrain'
 import { LIGHTING, type WorldTime, type WorldSeason } from './atmosphere'
@@ -24,6 +26,7 @@ export interface WorldSnapshot {
   fps: number
   grounded: boolean
   locked: boolean
+  eagle?: {state:string;bank:number;airspeed:number}
   cruising: boolean
   navigation: string
   city: { loaded: number; loading: number; failed: boolean }
@@ -79,6 +82,7 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
   const city = await createCityStreaming(scene, physics, RAPIER, signal, terrain.heightAt).catch(error => { terrain.dispose(); physics.free(); renderer.dispose(); renderer.domElement.remove(); throw error })
   if (signal.aborted) { city.dispose(); terrain.dispose(); physics.free(); renderer.dispose(); renderer.domElement.remove(); throw new DOMException('Cancelled', 'AbortError') }
   const world = buildWorld(scene, physics, RAPIER, true)
+  const eagle=createEagle(scene)
   const mapLabels=createMapLabels(container,camera,terrain.heightAt)
   const sky = new Sky(); sky.scale.setScalar(40000); scene.add(sky)
   const skyUniforms = sky.material.uniforms
@@ -145,6 +149,9 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
   let mode: 'walk' | 'fly' = 'walk'
   let grounded = false, verticalVelocity = 0, velocityX = 0, velocityZ = 0
   let yaw = 0, pitch = 0, flyPosition = new THREE.Vector3(), travelTarget: string | null = null
+  let eagleState=launchEagle(0),eagleCameraReset=true
+  const eagleShape=new RAPIER.Ball(1.05),eagleRotation={x:0,y:0,z:0,w:1}
+  const chasePosition=new THREE.Vector3(),chaseTarget=new THREE.Vector3(),chaseOffset=new THREE.Vector3()
   const keys = new Set<string>()
   let pace=1,cruising=false,navigation='',pendingLanding:WorldPosition|null=null
   const land = (position:WorldPosition) => {
@@ -166,8 +173,8 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
     keys.clear(); cruising=false; velocityX=0;velocityZ=0;verticalVelocity=0
     pendingLanding=null;navigation=''
     if(mode===next)return
-    if(next==='fly'){flyPosition.copy(camera.position);body.setEnabled(false);mode='fly'}
-    else {pendingLanding={x:camera.position.x,y:camera.position.y,z:camera.position.z};navigation='Finding a clear place to walk…'}
+    if(next==='fly'){flyPosition.copy(camera.position);flyPosition.y+=3;pitch=.12;eagleState=launchEagle(yaw,pitch);eagleState.vy=5;eagleCameraReset=true;body.setEnabled(false);mode='fly'}
+    else {pendingLanding={x:flyPosition.x,y:flyPosition.y,z:flyPosition.z};navigation='Finding a clear place to walk…'}
     renderer.domElement.focus({preventScroll:true})
   }
   const travelTo = (position:WorldPosition) => {
@@ -179,7 +186,7 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
     city.update(destination.x,destination.z)
     pendingLanding=arrivalMode==='walk'?destination:null
     navigation=pendingLanding?'Preparing your arrival…':''
-    travelTarget='destination';pitch=-0.25
+    travelTarget='destination';pitch=.06;eagleState=launchEagle(yaw,pitch);eagleCameraReset=true
     renderer.domElement.focus({preventScroll:true})
   }
   const travel = (id: string) => {
@@ -190,7 +197,7 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
     if(!neighborhood&&pendingLanding){pendingLanding=stop.arrival;flyPosition.x=stop.arrival.x;flyPosition.z=stop.arrival.z}
     const dx=stop.lookAt.x-stop.arrival.x,dz=stop.lookAt.z-stop.arrival.z
     yaw=street?.yaw??Math.atan2(-dx,-dz)
-    if(!pendingLanding)pitch=Math.atan2(terrain.heightAt(stop.lookAt.x,stop.lookAt.z)+stop.lookAt.y-flyPosition.y,Math.hypot(dx,dz))
+    if(!pendingLanding){pitch=.06;eagleState=launchEagle(yaw,pitch);eagleCameraReset=true}
   }
   // Start on the known clear Lincoln arrival, without waiting for district travel.
   yaw=Math.atan2(80,34);pitch=0.12
@@ -306,12 +313,16 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
     const forward = Number(cruising || keys.has('w') || keys.has('arrowup')) - Number(keys.has('s') || keys.has('arrowdown'))
     const right = Number(keys.has('d') || keys.has('arrowright')) - Number(keys.has('a') || keys.has('arrowleft'))
     const speed = explorationSpeed(mode,keys.has('shift'),pace)
-    const input = mode==='fly'?flightMovement(forward,right,Number(keys.has(' ')||keys.has('e'))-Number(keys.has('q')),yaw,pitch,speed):{...movementVector(forward,right,yaw,speed),y:0}
+    const input={...movementVector(forward,right,yaw,speed),y:0}
+    const flightHeld=!!pendingLanding||!!document.activeElement?.closest('button,input,select,dialog,[data-world-controls]')
+    if(mode==='fly'&&!flightHeld)yaw-=right*dt*1.15
     while (accumulator >= step) {
+      if(mode==='walk'){
       velocityX = THREE.MathUtils.damp(velocityX, input.x, 24, step)
       velocityZ = THREE.MathUtils.damp(velocityZ, input.z, 24, step)
       if (Math.abs(velocityX) < 0.005) velocityX = 0
       if (Math.abs(velocityZ) < 0.005) velocityZ = 0
+      }
       if (mode === 'walk') {
         if (keys.has(' ') && grounded) { verticalVelocity = 6; grounded = false; keys.delete(' ') }
         verticalVelocity = Math.max(-35, verticalVelocity - 20 * step)
@@ -324,19 +335,44 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
         const next = clampWorldPosition({ x: p.x + corrected.x, y: p.y + corrected.y, z: p.z + corrected.z })
         if (!city.canWalk(next.x, next.z)) { next.x = p.x; next.z = p.z }
         body.setNextKinematicTranslation(next)
-      } else {
-        flyPosition.x += velocityX * step; flyPosition.z += velocityZ * step
-        verticalVelocity=THREE.MathUtils.damp(verticalVelocity,input.y,24,step)
-        flyPosition.y += verticalVelocity*step
-        flyPosition.copy(clampWorldPosition(flyPosition)); flyPosition.y = Math.max(terrain.heightAt(flyPosition.x,flyPosition.z)+1.7, flyPosition.y)
+      } else if(!flightHeld) {
+        const flightStep=step*pace
+        eagleState=stepEagle(eagleState,{heading:yaw,pitch:keys.has('q')?-.7:keys.has('e')?.45:THREE.MathUtils.clamp(pitch,-1,.65),throttle:Number(cruising||keys.has('w')||keys.has('arrowup')||keys.has(' ')||keys.has('e')||keys.has('shift')),brake:keys.has('s')||keys.has('arrowdown'),power:keys.has('shift')},flightStep)
+        desired.set(eagleState.vx*flightStep,eagleState.vy*flightStep,eagleState.vz*flightStep)
+        const hit=physics.castShape(flyPosition,eagleRotation,desired,eagleShape,.05,1,true,undefined,undefined,collider)
+        if(hit){
+          flyPosition.addScaledVector(desired,Math.max(0,hit.time_of_impact-.02))
+          const normal=new THREE.Vector3(hit.normal1.x,hit.normal1.y,hit.normal1.z)
+          if(normal.dot(desired)>0)normal.negate()
+          const velocity=new THREE.Vector3(eagleState.vx,eagleState.vy,eagleState.vz),into=velocity.dot(normal)
+          if(into<0)velocity.addScaledVector(normal,-into*1.15)
+          velocity.addScaledVector(normal,1.5);eagleState.vx=velocity.x;eagleState.vy=velocity.y;eagleState.vz=velocity.z
+          yaw=eagleState.yaw=Math.atan2(-velocity.x,-velocity.z);pitch=.18
+        }else flyPosition.add(desired)
+        const bounded=clampWorldPosition(flyPosition)
+        if(bounded.x!==flyPosition.x)eagleState.vx*=-.2
+        if(bounded.z!==flyPosition.z)eagleState.vz*=-.2
+        flyPosition.copy(bounded)
+        const floor=terrain.heightAt(flyPosition.x,flyPosition.z)+1.3
+        if(flyPosition.y<floor){flyPosition.y=floor;eagleState.vy=Math.max(1.5,-eagleState.vy*.15);pitch=.2}
+        if(flyPosition.y>=1600)eagleState.vy=Math.min(0,eagleState.vy)
+        velocityX=eagleState.vx;verticalVelocity=eagleState.vy;velocityZ=eagleState.vz
       }
       physics.timestep = step; physics.step(); accumulator -= step
     }
     const p = mode === 'walk' ? body.translation() : flyPosition
     if (travelTarget) { smoothedEye = p.y + (mode === 'walk' ? 0.75 : 0); travelTarget = null }
     smoothedEye = THREE.MathUtils.damp(smoothedEye, p.y + (mode === 'walk' ? 0.75 : 0), 22, dt)
-    camera.position.set(p.x, smoothedEye, p.z)
-    camera.rotation.set(pitch, yaw, 0, 'YXZ')
+    if(mode==='fly'&&!pendingLanding){
+      chaseOffset.set(Math.sin(eagleState.yaw)*7,2.4,Math.cos(eagleState.yaw)*7)
+      const distance=chaseOffset.length(),direction=chaseOffset.clone().normalize()
+      const obstruction=physics.castRay(new RAPIER.Ray(flyPosition,direction),distance,true,undefined,undefined,collider)
+      if(obstruction)chaseOffset.setLength(Math.max(.7,obstruction.timeOfImpact-.35))
+      chasePosition.copy(flyPosition).add(chaseOffset);chasePosition.y=Math.max(chasePosition.y,terrain.heightAt(chasePosition.x,chasePosition.z)+.6)
+      if(eagleCameraReset){camera.position.copy(chasePosition);eagleCameraReset=false}else camera.position.lerp(chasePosition,1-Math.exp(-7*dt))
+      chaseTarget.copy(flyPosition).add(new THREE.Vector3(-Math.sin(eagleState.yaw)*3,.2,-Math.cos(eagleState.yaw)*3));camera.lookAt(chaseTarget)
+    }else{camera.position.set(p.x,smoothedEye,p.z);camera.rotation.set(pitch,yaw,0,'YXZ');eagleCameraReset=true}
+    eagle.update(flyPosition,eagleState,flightHeld?0:dt,mode==='fly'&&!pendingLanding&&camera.position.distanceTo(flyPosition)>1.5,reducedMotion.matches)
     updateAtmosphere(dt,p)
     life.update(now,p)
     const texel=120/2048
@@ -370,7 +406,7 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
     if (now - lastPublish > 200) {
       lastPublish = now
       const near = [...ROUTE,...DISTRICT_PLACES].map(stop=>({stop,distance:Math.hypot(stop.position.x-p.x,stop.position.z-p.z)})).sort((a,b)=>a.distance-b.distance)[0]
-      publish({ position: { x: p.x, y: p.y, z: p.z }, heading: ((-yaw * 180 / Math.PI) % 360 + 360) % 360, speed: actualSpeed, mode, nearest: near.stop.id, distance: near.distance, fps, grounded, locked: document.pointerLockElement === canvas, city: city.status(), cruising, navigation })
+      publish({ position: { x: p.x, y: p.y, z: p.z }, heading: ((-(mode==='fly'?eagleState.yaw:yaw) * 180 / Math.PI) % 360 + 360) % 360, speed: actualSpeed, mode, nearest: near.stop.id, distance: near.distance, fps, grounded, eagle:mode==='fly'?{state:flightHeld?'Paused':eagleState.stalled?'Recovering':eagleState.flapping?'Flapping':eagleState.vy< -4?'Diving':'Gliding',bank:Math.round(eagleState.bank*180/Math.PI),airspeed:Math.hypot(eagleState.vx,eagleState.vy,eagleState.vz)}:undefined, locked: document.pointerLockElement === canvas, city: city.status(), cruising, navigation })
     }
     frameId = requestAnimationFrame(tick)
   }
@@ -378,7 +414,7 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
   return {
     setPaused:(value)=>{paused=value;clearInput();if(value){if(document.pointerLockElement===canvas)document.exitPointerLock();void audio?.suspend()}else{previous=performance.now();accumulator=0;if(sound)void audio?.resume();canvas.focus({preventScroll:true})}},
     setPlaces:labels.setPlaces,setInspectHandler:handler=>{inspectHandler=handler},clearInspection:()=>city.highlight(null),setPlaceLabels:labels.setEnabled,
-    input: (key, down) => { if (down) keys.add(key); else keys.delete(key) }, setMode, travel, travelTo, setPace:(value)=>{pace=value}, toggleCruise:(enabled)=>{canvas.focus({preventScroll:true});cruising=enabled??!cruising}, setTime, setSeason, setLife:life.setEnabled, visitBlossoms:()=>{const destination={...life.bloomArrival,y:1};travelTo(destination);flyPosition.x=destination.x;flyPosition.z=destination.z;if(pendingLanding)pendingLanding=destination;yaw=Math.atan2(destination.x-life.bloomTarget.x,destination.z-life.bloomTarget.z);pitch=pendingLanding?.1:-.5}, setQuality, setSound,
+    input: (key, down) => { if (down) keys.add(key); else keys.delete(key) }, setMode, travel, travelTo, setPace:(value)=>{pace=value}, toggleCruise:(enabled)=>{canvas.focus({preventScroll:true});cruising=enabled??!cruising}, setTime, setSeason, setLife:life.setEnabled, visitBlossoms:()=>{const destination={...life.bloomArrival,y:1};travelTo(destination);flyPosition.x=destination.x;flyPosition.z=destination.z;if(pendingLanding)pendingLanding=destination;yaw=Math.atan2(destination.x-life.bloomTarget.x,destination.z-life.bloomTarget.z);pitch=.06;eagleState=launchEagle(yaw,pitch);eagleCameraReset=true}, setQuality, setSound,
     dispose: () => {
       alive = false; cancelAnimationFrame(frameId); observer.disconnect()
       if (document.pointerLockElement === canvas) document.exitPointerLock()
@@ -387,7 +423,7 @@ export async function createWorldRuntime(container: HTMLElement, publish: (snaps
       document.removeEventListener('visibilitychange', clearInput); document.removeEventListener('pointerlockchange', lockChanged)
       canvas.removeEventListener('pointerdown', pointerDown); window.removeEventListener('pointermove', pointerMove)
       window.removeEventListener('pointerup', pointerUp); canvas.removeEventListener('pointercancel', pointerUp); canvas.removeEventListener('dblclick', lockMouse)
-      reducedMotion.removeEventListener('change',motionChanged);life.dispose();moon.geometry.dispose();moon.material.dispose();labels.dispose(); mapLabels.dispose(); city.dispose(); world.dispose(); terrain.dispose(); sky.geometry.dispose(); sky.material.dispose(); sun.shadow.map?.dispose()
+      reducedMotion.removeEventListener('change',motionChanged);life.dispose();eagle.dispose();moon.geometry.dispose();moon.material.dispose();labels.dispose(); mapLabels.dispose(); city.dispose(); world.dispose(); terrain.dispose(); sky.geometry.dispose(); sky.material.dispose(); sun.shadow.map?.dispose()
       physics.free(); renderer.dispose(); canvas.remove(); void audio?.close()
     },
   }
